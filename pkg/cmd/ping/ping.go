@@ -3,7 +3,6 @@ package ping
 import (
 	"github.com/spf13/cobra"
 
-	"nt/pkg/output"
 	"nt/pkg/sharedStruct"
 )
 
@@ -23,10 +22,10 @@ var pingCmd = &cobra.Command{
 func PingCommandFunc(cmd *cobra.Command, args []string) {
 
 	// GFlag -p
-	// path, _ := cmd.Flags().GetString("path")
+	path, _ := cmd.Flags().GetString("path")
 
 	// GFlag -r
-	// report, _ := cmd.Flags().GetBool("report")
+	report, _ := cmd.Flags().GetBool("report")
 
 	// Arg - dest
 	dest := args[0]
@@ -40,23 +39,13 @@ func PingCommandFunc(cmd *cobra.Command, args []string) {
 	// Flag -i
 	interval, _ := cmd.Flags().GetInt("interval")
 
-	// Start Ping Main Command
-
-	//// Start Probing Go Routine
-	ProbingChain := make(chan sharedStruct.NtResult)
-	defer close(ProbingChain)
-	go ProbingFunc(dest, count, size, interval, ProbingChain)
-
-	//// Start Output Go Routine
-	NtResultChain := make(chan sharedStruct.NtResult)
-	defer close(NtResultChain)
-	go output.Output(NtResultChain, 10)
-
-	// Loop ProbingChain
-	for ProbingItem := range ProbingChain {
-		NtResultChain <- ProbingItem
-		ntResults = append(ntResults, ProbingItem)
+	// Start Ping Main Command, manually input display Len
+	err := ProbingFunc(dest, count, size, interval, report, path, 10)
+	if err != nil {
+		panic(err)
 	}
+
+	
 
 	// fmt.Printf("ping: %v\n", dest)
 	// fmt.Printf("ping count: %v\n", count)

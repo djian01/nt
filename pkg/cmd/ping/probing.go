@@ -7,18 +7,23 @@ import (
 	"syscall"
 	"time"
 
+	"nt/pkg/output"
 	"nt/pkg/sharedStruct"
 
 	probing "github.com/prometheus-community/pro-bing"
 )
 
 // func - probingFunc
-func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan sharedStruct.NtResult) {
+func ProbingFunc(pingHost string, count, size, interval int, report bool, path string, displayLen int) error {
 
+	// initial sharedStruct.NtResult
+	NtResults := []sharedStruct.NtResult{}
+
+	// *********  Setup pinger ************
 	// Create a new ping instance for the given host
 	pinger, err := probing.NewPinger(pingHost)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Use the unprivileged mode
@@ -38,12 +43,20 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 	if interval != 1 {
 		pinger.Interval = time.Duration(interval) * time.Second
 	}
-
-	// Create a channel to signal when pinger.Run() is done
+	
+	// Channel - signal pinger.Run() is done
 	doneChannel := make(chan bool, 1)
 	defer close(doneChannel)
 
-	// missing receive packet
+	// Channel - probingChan
+	probingChan := make (chan sharedStruct.NtResult, 1)
+	defer close (probingChan)
+
+	// Go Routing - output
+	go output.Output(probingChan, displayLen)
+
+
+	// ********** func - pinger.OnSend ***********
 	processingPkgId := -1
 	pinger.OnSend = func(pkt *probing.Packet) {
 
@@ -60,7 +73,8 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 				Timestamp: time.Now().Format("2006-01-02 15:04:05"),
 				Seq:       pkt.Seq,
 			}
-			ProbingChain <- ntr
+			probingChan <- ntr
+			NtResults = append(NtResults, ntr)
 
 			// reset the processingPkgId
 			processingPkgId = pkt.Seq - 1
@@ -83,7 +97,8 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 							Timestamp: time.Now().Format("2006-01-02 15:04:05"),
 							Seq:       pkt.Seq,
 						}
-						ProbingChain <- ntr
+						probingChan <- ntr
+						NtResults = append(NtResults, ntr)
 
 						// close the doneChannel
 						doneChannel <- true
@@ -93,15 +108,15 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 		}
 	}
 
-	// Run the ping
+	// ********** func - pinger.OnRecv ***********
 	// fmt.Printf("PING %s (%s):\n", pinger.Addr(), pinger.IPAddr())
 	pinger.OnRecv = func(pkt *probing.Packet) {
 		// update processingPkgId
 		processingPkgId = pkt.Seq
 
 		// print receive packet info
-		fmt.Printf("%d bytes from %s: icmp_seq=%d time=%v\n",
-			pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt)
+		// fmt.Printf("%d bytes from %s: icmp_seq=%d time=%v\n",
+		// 	pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt)
 
 		// return result
 		stat := pinger.Statistics()
@@ -120,7 +135,8 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 			MaxRtt:      stat.MaxRtt,
 			AvgRtt:      stat.AvgRtt,
 		}
-		ProbingChain <- ntr
+		probingChan <- ntr
+		NtResults = append(NtResults, ntr)
 	}
 
 	// Create a channel to listen for SIGINT (Ctrl+C)
@@ -129,7 +145,7 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 
 	signal.Notify(interruptChannel, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// Run the pinger in a separate goroutine
+	// Go Routing - Monitor count is completed
 	go func() {
 		err = pinger.Run()
 		if err != nil {
@@ -138,6 +154,7 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 		doneChannel <- true
 	}()
 
+	// The "select statement" blocks and the go routing stops until one of the send/receive operations is ready
 	// Wait for either the completion of the ping or an interrupt signal
 	select {
 	case <-doneChannel:
@@ -155,5 +172,7 @@ func ProbingFunc(pingHost string, count, size, interval int, ProbingChain chan s
 	// 	stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss)
 	// fmt.Printf("round-trip min/avg/max/stddev = %v/%v/%v/%v\n",
 	// 	stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
+
+	return nil
 
 }
