@@ -1,4 +1,4 @@
-package ping
+package icmp
 
 import (
 	"github.com/spf13/cobra"
@@ -10,22 +10,25 @@ import (
 var ntResults []sharedStruct.NtResult
 
 // Iniital pingCmd
-var pingCmd = &cobra.Command{
+var icmpCmd = &cobra.Command{
 	Use:   "ping [flags] <host>", // Sub-command, shown in the -h, Usage field
 	Short: "Ping Test Module",
 	Long:  "Ping test Module for ICMP testing",
 	Args:  cobra.ExactArgs(1), // Only 1 Arg (dest) is required
-	Run:   PingCommandFunc,
+	Run:   IcmpCommandFunc,
 }
 
-// Func - PingCommandFunc
-func PingCommandFunc(cmd *cobra.Command, args []string) {
+// Func - PingCommandFunc: the linkage between cobra.Command and the Probing func
+func IcmpCommandFunc(cmd *cobra.Command, args []string) {
 
 	// GFlag -p
 	path, _ := cmd.Flags().GetString("path")
 
 	// GFlag -r
 	report, _ := cmd.Flags().GetBool("report")
+
+	// GFlag -d
+	displayRow, _ := cmd.Flags().GetInt("displayrow")
 
 	// Arg - dest
 	dest := args[0]
@@ -40,12 +43,10 @@ func PingCommandFunc(cmd *cobra.Command, args []string) {
 	interval, _ := cmd.Flags().GetInt("interval")
 
 	// Start Ping Main Command, manually input display Len
-	err := ProbingFunc(dest, count, size, interval, report, path, 10)
+	err := IcmpProbingFunc(dest, count, size, interval, report, path, displayRow)
 	if err != nil {
 		panic(err)
 	}
-
-	
 
 	// fmt.Printf("ping: %v\n", dest)
 	// fmt.Printf("ping count: %v\n", count)
@@ -57,8 +58,8 @@ func PingCommandFunc(cmd *cobra.Command, args []string) {
 }
 
 // Func - PingCommand
-func PingCommand() *cobra.Command {
-	return pingCmd
+func IcmpCommand() *cobra.Command {
+	return icmpCmd
 }
 
 // Func - init()
@@ -66,13 +67,13 @@ func init() {
 
 	// Flag - Ping count
 	var count int
-	pingCmd.Flags().IntVarP(&count, "count", "c", 0, "Ping Test Count")
+	icmpCmd.Flags().IntVarP(&count, "count", "c", 0, "Ping Test Count")
 
 	// Flag - Ping size
 	var size int
-	pingCmd.Flags().IntVarP(&size, "size", "s", 24, "Ping Test Packet Size (must be larger than 24 Bytes)")
+	icmpCmd.Flags().IntVarP(&size, "size", "s", 24, "Ping Test Packet Size (must be larger than 24 Bytes)")
 
 	// Flag - Ping interval
 	var interval int
-	pingCmd.Flags().IntVarP(&interval, "interval", "i", 1, "Ping Test Interval")
+	icmpCmd.Flags().IntVarP(&interval, "interval", "i", 1, "Ping Test Interval")
 }

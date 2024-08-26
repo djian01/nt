@@ -1,4 +1,4 @@
-package ping
+package icmp
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 )
 
 // func - probingFunc
-func ProbingFunc(pingHost string, count, size, interval int, report bool, path string, displayLen int) error {
+func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, path string, displayRow int) error {
 
 	// initial sharedStruct.NtResult
 	NtResults := []sharedStruct.NtResult{}
@@ -43,18 +43,17 @@ func ProbingFunc(pingHost string, count, size, interval int, report bool, path s
 	if interval != 1 {
 		pinger.Interval = time.Duration(interval) * time.Second
 	}
-	
+
 	// Channel - signal pinger.Run() is done
 	doneChannel := make(chan bool, 1)
 	defer close(doneChannel)
 
 	// Channel - probingChan
-	probingChan := make (chan sharedStruct.NtResult, 1)
-	defer close (probingChan)
+	probingChan := make(chan sharedStruct.NtResult, 1)
+	defer close(probingChan)
 
 	// Go Routing - output
-	go output.Output(probingChan, displayLen)
-
+	go output.Output(probingChan, displayRow)
 
 	// ********** func - pinger.OnSend ***********
 	processingPkgId := -1

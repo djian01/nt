@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 )
 
+// Table Print Func
 func TablePrint(displayTable *[]sharedStruct.NtResult, len int) {
 
 	// Clear the screen
@@ -50,7 +51,9 @@ func TablePrint(displayTable *[]sharedStruct.NtResult, len int) {
 			}
 
 		}
-		fmt.Printf("\033[%d;1H", 18)
+
+		// move the cursor to row
+		moveToRow(len + 8)
 
 	case "tcp":
 
@@ -58,10 +61,9 @@ func TablePrint(displayTable *[]sharedStruct.NtResult, len int) {
 
 	}
 
-	// Print
-
 }
 
+// Func - move cursor to x row
 func moveToRow(row int) {
 	// ANSI escape code to move the cursor to a specific row (1-based index)
 	fmt.Printf("\033[%d;1H", row)

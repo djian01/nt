@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"nt/pkg/cmd/ping"
+	"nt/pkg/cmd/icmp"
 
 	"github.com/spf13/cobra"
 )
@@ -28,6 +28,7 @@ func init() {
 	var _report bool
 	var _reportPath string
 	var _version bool
+	var _displayRow int
 
 	//// GFlag - report
 	rootCmd.PersistentFlags().BoolVarP(&_report, "report", "r", false, "Enable result-output report")
@@ -44,11 +45,14 @@ func init() {
 	//// GFlag - report path
 	rootCmd.PersistentFlags().StringVarP(&_reportPath, "path", "p", filePath, "The output path for result-output report")
 
-	//// GFlag - version
+	//// GFlag - display Row Length
+	rootCmd.PersistentFlags().IntVarP(&_displayRow, "displayrow", "d", 10, "Set the length of the dispaly row")
+
+	//// Flag - version
 	rootCmd.Flags().BoolVarP(&_version, "version", "v", false, "Show version")
 
 	// Add Sub-Commands
-	rootCmd.AddCommand(ping.PingCommand())
+	rootCmd.AddCommand(icmp.IcmpCommand())
 }
 
 // Func - RootCommandFunc()
