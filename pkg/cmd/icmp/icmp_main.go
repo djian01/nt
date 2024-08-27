@@ -11,9 +11,9 @@ var ntResults []sharedStruct.NtResult
 
 // Iniital pingCmd
 var icmpCmd = &cobra.Command{
-	Use:   "ping [flags] <host>", // Sub-command, shown in the -h, Usage field
-	Short: "Ping Test Module",
-	Long:  "Ping test Module for ICMP testing",
+	Use:   "icmp [flags] <host>", // Sub-command, shown in the -h, Usage field
+	Short: "ICMP Ping Test Module",
+	Long:  "ICMP Ping test Module for ICMP testing",
 	Args:  cobra.ExactArgs(1), // Only 1 Arg (dest) is required
 	Run:   IcmpCommandFunc,
 }
@@ -47,14 +47,6 @@ func IcmpCommandFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
-
-	// fmt.Printf("ping: %v\n", dest)
-	// fmt.Printf("ping count: %v\n", count)
-
-	// fmt.Printf("GFlag path: %v\n", path)
-	// fmt.Printf("GFlag report: %v\n", report)
-
-	// fmt.Println(ntResults)
 }
 
 // Func - PingCommand

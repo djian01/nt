@@ -2,6 +2,7 @@ package icmp
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,12 +17,18 @@ import (
 // func - probingFunc
 func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, path string, displayRow int) error {
 
+	// Check Name Resolution
+	targetIP, err := net.LookupIP(pingHost)
+	if err != nil {
+		return fmt.Errorf(fmt.Sprintf("Failed to resolve domain: %v", pingHost))
+	}
+
 	// initial sharedStruct.NtResult
 	NtResults := []sharedStruct.NtResult{}
 
 	// *********  Setup pinger ************
 	// Create a new ping instance for the given host
-	pinger, err := probing.NewPinger(pingHost)
+	pinger, err := probing.NewPinger(targetIP[0].String())
 	if err != nil {
 		return err
 	}
@@ -52,7 +59,7 @@ func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, pa
 	probingChan := make(chan sharedStruct.NtResult, 1)
 	defer close(probingChan)
 
-	// Go Routing - output
+	// Go Routine - output
 	go output.Output(probingChan, displayRow)
 
 	// ********** func - pinger.OnSend ***********
@@ -67,10 +74,11 @@ func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, pa
 			ntr := sharedStruct.NtResult{
 				HostName:  pingHost,
 				IP:        pkt.Addr,
-				Status:    "PING_Failed",
+				Status:    "ICMP_Failed",
 				RTT:       pkt.Rtt,
 				Timestamp: time.Now().Format("2006-01-02 15:04:05"),
 				Seq:       pkt.Seq,
+				Type:      "icmp",
 			}
 			probingChan <- ntr
 			NtResults = append(NtResults, ntr)
@@ -91,10 +99,11 @@ func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, pa
 						ntr := sharedStruct.NtResult{
 							HostName:  pingHost,
 							IP:        pkt.Addr,
-							Status:    "PING_Failed",
+							Status:    "ICMP_Failed",
 							RTT:       pkt.Rtt,
 							Timestamp: time.Now().Format("2006-01-02 15:04:05"),
 							Seq:       pkt.Seq,
+							Type:      "icmp",
 						}
 						probingChan <- ntr
 						NtResults = append(NtResults, ntr)
@@ -121,11 +130,12 @@ func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, pa
 		stat := pinger.Statistics()
 		ntr := sharedStruct.NtResult{
 			Seq:         pkt.Seq,
+			Type:        "icmp",
 			Timestamp:   time.Now().Format("2006-01-02 15:04:05"),
 			HostName:    pingHost,
 			IP:          pkt.Addr,
 			Size:        pkt.Nbytes,
-			Status:      "PING_OK",
+			Status:      "ICMP_OK",
 			RTT:         pkt.Rtt,
 			PacketsSent: stat.PacketsSent,
 			PacketsRecv: stat.PacketsRecv,
@@ -138,13 +148,15 @@ func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, pa
 		NtResults = append(NtResults, ntr)
 	}
 
+	// ********** Go Routine to run pinger ***********
+
 	// Create a channel to listen for SIGINT (Ctrl+C)
 	interruptChannel := make(chan os.Signal, 1)
 	defer close(interruptChannel)
 
 	signal.Notify(interruptChannel, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// Go Routing - Monitor count is completed
+	// Go Routine - Monitor count is completed
 	go func() {
 		err = pinger.Run()
 		if err != nil {
@@ -157,10 +169,13 @@ func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, pa
 	// Wait for either the completion of the ping or an interrupt signal
 	select {
 	case <-doneChannel:
-		// Ping count completed
+		// close(probingChan)
 	case <-interruptChannel:
 		// Ctrl+C pressed
-		fmt.Printf("\033[%d;1H", 22)
+		pinger.Stop()
+		// close(probingChan)
+
+		fmt.Printf("\033[%d;1H", (displayRow + 7))
 		fmt.Println("\n--- Interrupt received, stopping ping ---")
 	}
 

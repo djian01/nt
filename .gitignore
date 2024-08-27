@@ -1,3 +1,6 @@
 # Executable
 *.exe
 nt
+
+# log file
+*.log

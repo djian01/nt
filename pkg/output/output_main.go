@@ -2,6 +2,9 @@ package output
 
 import (
 	"nt/pkg/sharedStruct"
+	"os"
+	"os/exec"
+	"runtime"
 )
 
 // Main func for Output
@@ -14,12 +17,14 @@ func Output(NtResultChan chan sharedStruct.NtResult, len int) {
 		displayTable = append(displayTable, sharedStruct.NtResult{})
 	}
 
+	// clear the screen
+	clearScreen()
+
 	// process Display Table from Channel NtResultChan
 	for NtResult := range NtResultChan {
 		idx := GetAvailableSliceItem(&displayTable)
 		displayTable[idx] = NtResult
 		TablePrint(&displayTable, len)
-		// fmt.Println(displayTable)
 	}
 }
 
@@ -38,4 +43,16 @@ func GetAvailableSliceItem(displayTable *[]sharedStruct.NtResult) int {
 		(*displayTable)[i-1] = (*displayTable)[i]
 	}
 	return (len(*displayTable) - 1)
+}
+
+// Func - cleanScreen
+func clearScreen() {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	} else {
+		// Use ANSI escape codes for Linux or other OS
+		print("\033[H\033[2J")
+	}
 }

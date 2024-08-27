@@ -21,9 +21,23 @@ var rootCmd = &cobra.Command{
 	Run:   RootCommandFunc,
 }
 
+// Func - RootCommandFunc()
+func RootCommandFunc(cmd *cobra.Command, args []string) {
+	// Flag -v
+	vFlag, _ := cmd.Flags().GetBool("version")
+
+	if vFlag {
+		fmt.Printf("%v\n", version) // write output to Stdout for test verification
+	}
+}
+
+// Func - RootCommand()
+func RootCommand() *cobra.Command {
+	return rootCmd
+}
+
 // Func - init()
 func init() {
-
 	// Flag(s)
 	var _report bool
 	var _reportPath string
@@ -53,21 +67,4 @@ func init() {
 
 	// Add Sub-Commands
 	rootCmd.AddCommand(icmp.IcmpCommand())
-}
-
-// Func - RootCommandFunc()
-func RootCommandFunc(cmd *cobra.Command, args []string) {
-	// Flag -v
-	vFlag, _ := cmd.Flags().GetBool("version")
-
-	if vFlag {
-		fmt.Printf("%v\n", version) // write output to Stdout for test verification
-	}
-
-	//fmt.Fprintf(cmd.OutOrStdout(), "This is a Network Testing Tool Set.\n") // write output to Stdout for test verification
-}
-
-// Func - RootCommand()
-func RootCommand() *cobra.Command {
-	return rootCmd
 }
