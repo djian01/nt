@@ -39,13 +39,13 @@ func RootCommand() *cobra.Command {
 // Func - init()
 func init() {
 	// Flag(s)
-	var _report bool
+	var _recording bool
 	var _reportPath string
 	var _version bool
 	var _displayRow int
 
 	//// GFlag - report
-	rootCmd.PersistentFlags().BoolVarP(&_report, "report", "r", false, "Enable result-output report")
+	rootCmd.PersistentFlags().BoolVarP(&_recording, "recording", "r", false, "Enable result recording to CSV file")
 
 	//// Get the path of the current executable
 	exeFilePath, err := os.Executable()
@@ -56,7 +56,7 @@ func init() {
 	//// Get the folder containing the executable
 	filePath := filepath.Dir(exeFilePath)
 
-	//// GFlag - report path
+	//// GFlag - recording path
 	rootCmd.PersistentFlags().StringVarP(&_reportPath, "path", "p", filePath, "The output path for result-output report")
 
 	//// GFlag - display Row Length

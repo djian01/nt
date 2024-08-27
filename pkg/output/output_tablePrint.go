@@ -11,16 +11,13 @@ import (
 // Table Print Func
 func TablePrint(displayTable *[]sharedStruct.NtResult, len int) {
 
-	// Clear the screen
-	// clearScreen()
-
 	// Pring Table by "type"
 	switch (*displayTable)[0].Type {
 
 	case "icmp":
 		// Print the table header
 		fmt.Printf("\033[%d;1H", 1)
-		fmt.Printf("%-5s %-10s %-15s %-15s %-10s %-20s %-30s \n", "Seq", "Status", "HostName", "IP", "Size", "RTT", "Timestamp")
+		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Size", "RTT", "Timestamp")
 		fmt.Println(strings.Repeat("-", 106))
 
 		// Print the table & statistics data
@@ -29,17 +26,17 @@ func TablePrint(displayTable *[]sharedStruct.NtResult, len int) {
 			fmt.Printf("\033[%d;1H", idx+3)
 
 			if t.Timestamp == "" {
-				fmt.Printf("%-5s %-10s %-15s %-15s %-10s %-20s %-30s\n", "", "", "", "", "", "", "")
+				fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-15s %-30s\n", "", "", "", "", "", "", "")
 			} else {
 				if t.Status == "ICMP_OK" {
 					// When using the /fatih/color package, the colored string produced by color.GreenString(t.Status) is already
 					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
 					// which affects how the width specifier (like %-20s) is interpreted
-					Status := fmt.Sprintf("%-10s", t.Status)
-					fmt.Printf("%-5d %s %-15s %-15s %-10d %-20v %-30s       \n", t.Seq, color.GreenString(Status), t.HostName, t.IP, t.Size, t.RTT, t.Timestamp)
+					Status := fmt.Sprintf("%-15s", t.Status)
+					fmt.Printf("%-5d %s %-15s %-15s %-10d %-15v %-30s       \n", t.Seq, color.GreenString(Status), t.HostName, t.IP, t.Size, t.RTT, t.Timestamp)
 				} else if t.Status == "ICMP_Failed" {
-					Status := fmt.Sprintf("%-10s", t.Status)
-					fmt.Printf("%-5d %s %-15s %-20s %-5d %-25v %-30s       \n", t.Seq, color.RedString(Status), t.HostName, t.IP, t.Size, t.RTT, t.Timestamp)
+					Status := fmt.Sprintf("%-15s", t.Status)
+					fmt.Printf("%-5d %s %-15s %-20s %-5d %-15v %-30s       \n", t.Seq, color.RedString(Status), t.HostName, t.IP, t.Size, t.RTT, t.Timestamp)
 				}
 			}
 

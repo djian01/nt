@@ -1,13 +1,13 @@
 package icmp
 
 import (
+	"time"
+
 	"github.com/spf13/cobra"
 
+	"nt/pkg/record"
 	"nt/pkg/sharedStruct"
 )
-
-// result[]
-var ntResults []sharedStruct.NtResult
 
 // Iniital pingCmd
 var icmpCmd = &cobra.Command{
@@ -25,7 +25,7 @@ func IcmpCommandFunc(cmd *cobra.Command, args []string) {
 	path, _ := cmd.Flags().GetString("path")
 
 	// GFlag -r
-	report, _ := cmd.Flags().GetBool("report")
+	recording, _ := cmd.Flags().GetBool("recording")
 
 	// GFlag -d
 	displayRow, _ := cmd.Flags().GetInt("displayrow")
@@ -42,8 +42,21 @@ func IcmpCommandFunc(cmd *cobra.Command, args []string) {
 	// Flag -i
 	interval, _ := cmd.Flags().GetInt("interval")
 
+	// Start the ticker
+	if recording {
+
+		// accumulatedResults
+		accumulatedRecords := []sharedStruct.NtResult{}
+
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		// Go Routine: report func
+		go record.RecordFunc("icmp", path, &accumulatedRecords, ticker.C)
+	}
+
 	// Start Ping Main Command, manually input display Len
-	err := IcmpProbingFunc(dest, count, size, interval, report, path, displayRow)
+	err := IcmpProbingFunc(dest, count, size, interval, recording, displayRow)
 	if err != nil {
 		panic(err)
 	}

@@ -15,7 +15,7 @@ import (
 )
 
 // func - probingFunc
-func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, path string, displayRow int) error {
+func IcmpProbingFunc(pingHost string, count, size, interval int, report bool, displayRow int) error {
 
 	// Check Name Resolution
 	targetIP, err := net.LookupIP(pingHost)

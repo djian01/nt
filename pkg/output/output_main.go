@@ -8,7 +8,7 @@ import (
 )
 
 // Main func for Output
-func Output(NtResultChan chan sharedStruct.NtResult, len int) {
+func Output(NtResultChan <-chan sharedStruct.NtResult, len int) {
 
 	// initial displayRows
 	displayTable := []sharedStruct.NtResult{}
@@ -47,6 +47,19 @@ func GetAvailableSliceItem(displayTable *[]sharedStruct.NtResult) int {
 
 // Func - cleanScreen
 func clearScreen() {
+	print("\033[H\033[2J")
+	// if runtime.GOOS == "windows" {
+	// 	cmd := exec.Command("cmd", "/c", "cls")
+	// 	cmd.Stdout = os.Stdout
+	// 	cmd.Run()
+	// } else {
+	// 	// Use ANSI escape codes for Linux or other OS
+	// 	print("\033[H\033[2J")
+	// }
+}
+
+// Func - cleanScreen
+func clearScreen_OS() {
 	if runtime.GOOS == "windows" {
 		cmd := exec.Command("cmd", "/c", "cls")
 		cmd.Stdout = os.Stdout

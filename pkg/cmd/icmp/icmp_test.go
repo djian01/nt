@@ -20,7 +20,7 @@ func Test_ProbingFunc(t *testing.T) {
 	// }()
 
 	// call the func IcmpProbingFunc
-	err := icmp.IcmpProbingFunc("4.2.2.2", 15, 56, 1, false, "abc", 10)
+	err := icmp.IcmpProbingFunc("4.2.2.2", 15, 56, 1, false, 10)
 	if err != nil {
 		panic(err)
 	}
