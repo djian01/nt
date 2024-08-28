@@ -4,3 +4,6 @@ nt
 
 # log file
 *.log
+
+# CSV file
+*.csv

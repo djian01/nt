@@ -3,7 +3,6 @@ package root
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"nt/pkg/cmd/icmp"
 
@@ -48,16 +47,14 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&_recording, "recording", "r", false, "Enable result recording to CSV file")
 
 	//// Get the path of the current executable
-	exeFilePath, err := os.Executable()
+	exeFileFolder, err := os.Getwd()
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
 	}
-	//// Get the folder containing the executable
-	filePath := filepath.Dir(exeFilePath)
 
 	//// GFlag - recording path
-	rootCmd.PersistentFlags().StringVarP(&_reportPath, "path", "p", filePath, "The output path for result-output report")
+	rootCmd.PersistentFlags().StringVarP(&_reportPath, "path", "p", exeFileFolder, "The output path for result-output report")
 
 	//// GFlag - display Row Length
 	rootCmd.PersistentFlags().IntVarP(&_displayRow, "displayrow", "d", 10, "Set the length of the dispaly row")

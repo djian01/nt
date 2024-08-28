@@ -1,5 +1,5 @@
 // *************************
-// sudo go test -run ^Test_ProbingFunc$
+// sudo go test -run ^Test_IcmpCommandMain$
 // *************************
 
 package icmp_test
@@ -10,17 +10,19 @@ import (
 )
 
 // test ProbingFunc
-func Test_ProbingFunc(t *testing.T) {
+func Test_IcmpCommandMain(t *testing.T) {
 
-	// defer func() to capture the panic & debug stack messages
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		fmt.Println(r)
-	// 	}
-	// }()
+	// initial test vars
+	recording := false
+	path := "abc"
+	displayRow := 10
+	dest := "google.com"
+	count := 10
+	size := 24
+	interval := 1
 
 	// call the func IcmpProbingFunc
-	err := icmp.IcmpProbingFunc("4.2.2.2", 15, 56, 1, false, 10)
+	err := icmp.IcmpCommandMain(recording, path, displayRow, dest, count, size, interval)
 	if err != nil {
 		panic(err)
 	}

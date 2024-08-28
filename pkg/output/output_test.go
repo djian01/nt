@@ -25,7 +25,7 @@ func Test_Output(t *testing.T) {
 	defer close(c)
 
 	// starts func SliceProcessing
-	go output.Output(c, 10)
+	go output.OutputFunc(c, 10)
 
 	// create the input NtResult
 	for i := 0; i < 20; i++ {
