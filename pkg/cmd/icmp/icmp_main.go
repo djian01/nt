@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 	"nt/pkg/sharedStruct"
 )
 
-// Iniital pingCmd
+// Iniital icmpCmd
 var icmpCmd = &cobra.Command{
 	Use:   "icmp [flags] <host>", // Sub-command, shown in the -h, Usage field
 	Short: "ICMP Ping Test Module",
@@ -33,9 +34,6 @@ func IcmpCommandLink(cmd *cobra.Command, args []string) {
 	// GFlag -r
 	recording, _ := cmd.Flags().GetBool("recording")
 
-	// GFlag -p
-	recordingPath, _ := cmd.Flags().GetString("path")
-
 	// GFlag -d
 	displayRow, _ := cmd.Flags().GetInt("displayrow")
 
@@ -52,18 +50,17 @@ func IcmpCommandLink(cmd *cobra.Command, args []string) {
 	interval, _ := cmd.Flags().GetInt("interval")
 
 	// call func IcmpCommandMain
-	err := IcmpCommandMain(recording, recordingPath, displayRow, dest, count, size, interval)
+	err := IcmpCommandMain(recording, displayRow, dest, count, size, interval)
 	if err != nil {
 		panic(err)
 	}
 }
 
 // Func - IcmpCommandMain
-func IcmpCommandMain(recording bool, recordingPath string, displayRow int, dest string, count int, size int, interval int) error {
+func IcmpCommandMain(recording bool, displayRow int, dest string, count int, size int, interval int) error {
 
-	// Channel - signal pinger.Run() is done
-	doneChan := make(chan bool, 1)
-	defer close(doneChan)
+	// Wait Group
+	var wg sync.WaitGroup
 
 	// Channel - probingChan
 	probingChan := make(chan sharedStruct.NtResult, 1)
@@ -73,9 +70,12 @@ func IcmpCommandMain(recording bool, recordingPath string, displayRow int, dest 
 	outputChan := make(chan sharedStruct.NtResult, 1)
 	defer close(outputChan)
 
-	// Channel - recordingChan
+	// Channel - recordingChan, no need to defer close
 	recordingChan := make(chan sharedStruct.NtResult, 1)
-	defer close(recordingChan)
+
+	// Channel - signal pinger.Run() is done
+	doneChan := make(chan bool, 1)
+	defer close(doneChan)
 
 	// Create a channel to listen for SIGINT (Ctrl+C)
 	interruptChan := make(chan os.Signal, 1)
@@ -94,16 +94,33 @@ func IcmpCommandMain(recording bool, recordingPath string, displayRow int, dest 
 
 	// Recording
 	if recording {
+
+		// recordingFile Path
+		exeFileFolder, err := os.Getwd()
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+
+		// recordingFile Name
 		timeStamp := time.Now().Format("20060102150405")
 		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "icmp", dest, timeStamp)
-		recordingFilePath := filepath.Join(recordingPath, recordingFileName)
+		recordingFilePath := filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
-		go record.RecordingFunc("icmp", recordingFilePath, bucket, recordingChan)
+		go record.RecordingFunc("icmp", recordingFilePath, bucket, recordingChan, &wg)
 	}
 
 	// for loop for getting the ntResult
+	forLoopClose := false
+
 	for {
+		// check forLoopFlag
+		if forLoopClose {
+			break
+		}
+
+		// select chans
 		select {
 		case probingResult := <-probingChan:
 
@@ -116,30 +133,35 @@ func IcmpCommandMain(recording bool, recordingPath string, displayRow int, dest 
 			}
 
 		case <-doneChan:
+			// if recording is enabled, close the recordingchain and save the rest of the records to CSV
+			if recording {
+				wg.Add(1)
+				close(recordingChan)
+				// waiting the recording function to save the last records
+				wg.Wait()
+			}
+
 			fmt.Printf("\033[%d;1H", (displayRow + 7))
 			fmt.Println("\n--- testing completed ---")
 
-			// if recording is enabled, close the recordingchain and save the rest of the records to CSV
-			if recording {
-				close(recordingChan)
-				time.Sleep(1 * time.Second) // giving time for saving the records
-			}
-
-			return nil
+			forLoopClose = true
 
 		case <-interruptChan:
+			// if recording is enabled, close the recordingchain and save the rest of the records to CSV
+			if recording {
+				wg.Add(1)
+				close(recordingChan)
+				// waiting the recording function to save the last records
+				wg.Wait()
+			}
+
 			fmt.Printf("\033[%d;1H", (displayRow + 7))
 			fmt.Println("\n--- Interrupt received, stopping testing ---")
 
-			// if recording is enabled, close the recordingchain and save the rest of the records to CSV
-			if recording {
-				close(recordingChan)
-				time.Sleep(1 * time.Second) // giving time for saving the records
-			}
-
-			return nil
+			forLoopClose = true
 		}
 	}
+	return nil
 }
 
 // Func - IcmpCommand
@@ -152,7 +174,7 @@ func init() {
 
 	// Flag - Ping count
 	var count int
-	icmpCmd.Flags().IntVarP(&count, "count", "c", 0, "Ping Test Count")
+	icmpCmd.Flags().IntVarP(&count, "count", "c", 0, "Ping Test Count (default 0, Ping continuous till interruption)")
 
 	// Flag - Ping size
 	var size int

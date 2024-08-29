@@ -2,7 +2,6 @@ package root
 
 import (
 	"fmt"
-	"os"
 
 	"nt/pkg/cmd/icmp"
 
@@ -39,25 +38,14 @@ func RootCommand() *cobra.Command {
 func init() {
 	// Flag(s)
 	var _recording bool
-	var _reportPath string
 	var _version bool
 	var _displayRow int
 
 	//// GFlag - report
-	rootCmd.PersistentFlags().BoolVarP(&_recording, "recording", "r", false, "Enable result recording to CSV file")
-
-	//// Get the path of the current executable
-	exeFileFolder, err := os.Getwd()
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
-
-	//// GFlag - recording path
-	rootCmd.PersistentFlags().StringVarP(&_reportPath, "path", "p", exeFileFolder, "The output path for result-output report")
+	rootCmd.PersistentFlags().BoolVarP(&_recording, "recording", "r", false, "Enable result recording to a CSV file")
 
 	//// GFlag - display Row Length
-	rootCmd.PersistentFlags().IntVarP(&_displayRow, "displayrow", "d", 10, "Set the length of the dispaly row")
+	rootCmd.PersistentFlags().IntVarP(&_displayRow, "displayrow", "d", 10, "Set the number of the dispaly row(s)")
 
 	//// Flag - version
 	rootCmd.Flags().BoolVarP(&_version, "version", "v", false, "Show version")

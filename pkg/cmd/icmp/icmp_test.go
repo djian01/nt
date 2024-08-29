@@ -13,16 +13,15 @@ import (
 func Test_IcmpCommandMain(t *testing.T) {
 
 	// initial test vars
-	recording := false
-	path := "abc"
+	recording := true
 	displayRow := 10
 	dest := "google.com"
-	count := 10
+	count := 3
 	size := 24
 	interval := 1
 
 	// call the func IcmpProbingFunc
-	err := icmp.IcmpCommandMain(recording, path, displayRow, dest, count, size, interval)
+	err := icmp.IcmpCommandMain(recording, displayRow, dest, count, size, interval)
 	if err != nil {
 		panic(err)
 	}

@@ -7,10 +7,11 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"sync"
 )
 
 // Func - RecordingFunc, saving the accumulated results into CSV file
-func RecordingFunc(Type string, filePath string, bucket int, recordingChan <-chan sharedStruct.NtResult) {
+func RecordingFunc(Type string, filePath string, bucket int, recordingChan <-chan sharedStruct.NtResult, wg *sync.WaitGroup) {
 
 	// Initial the bucket
 	count := 0
@@ -33,6 +34,9 @@ func RecordingFunc(Type string, filePath string, bucket int, recordingChan <-cha
 			}
 			// reset bucket
 			accumulatedRecords = nil
+
+			// clear wait group
+			wg.Done()
 
 			break
 

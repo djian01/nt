@@ -1,12 +1,16 @@
 package ntTEST
 
 import (
+	"fmt"
 	"math/rand"
 	"nt/pkg/sharedStruct"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtResult) {
+func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtResult, doneChan chan bool) {
 
 	// statistics
 	var PacketsSent = 0
@@ -15,33 +19,76 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 	var MinRtt time.Duration
 	var AvgRtt time.Duration
 	var MaxRtt time.Duration
+	var status string
 
 	// initial loopCount
 	loopCount := 0
 
+	// random Source
+	source := rand.NewSource(time.Now().UnixNano())
+
+	// random Error Seed
+	errorMax := 10
+	errorMin := 1
+	errorSeed := rand.New(source).Intn(errorMax-errorMin+1) + errorMin
+
+	// Create a channel to listen for SIGINT (Ctrl+C)
+	interruptChan := make(chan os.Signal, 1)
+	defer close(interruptChan)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	// endless loop
 	if count == 0 {
 
+		// forLoopFlag
+		forLoopFlag := true
+
 		// create the input NtResult
 		for {
+
+			// check forLoopFlag
+			if !forLoopFlag {
+				break
+			}
+
+			// check Interrpution
+			select {
+			case <-interruptChan:
+				// if doneChan <- true if interrupted
+				fmt.Println("\n--- Interrupt received, stopping testing ---")
+				forLoopFlag = false
+				doneChan <- true
+			default:
+				// pass
+			}
+
 			loopCount++
 			PacketsSent++
-			PacketsRecv++
-			status := "OK"
 
-			// generate RTT
+			// error check
+			if PacketsSent%errorSeed != 0 {
+				PacketsRecv++
+				status = "OK"
+			} else {
+				status = "NOT_OK"
+			}
+
 			min := 200
 			max := 700
-			source := rand.NewSource(time.Now().UnixNano())
 			ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 
 			// setup the initial MinRtt, MaxRtt & AvgRtt. Based on the 1st "PING_OK" packet, set the MinRtt, MaxRtt & AvgRtt
 			if loopCount == 1 {
+				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 				MinRtt = ranRTT
 				MaxRtt = ranRTT
 				AvgRtt = ranRTT
 				// after Initialization
-			} else {
+			} else if status == "OK" {
+				// generate RTT
+				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
+
+				// RTT Statistics
 				if ranRTT > MaxRtt {
 					MaxRtt = ranRTT
 				} else if ranRTT < MinRtt {
@@ -80,22 +127,31 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 		for i := 0; i < count; i++ {
 
 			PacketsSent++
-			PacketsRecv++
-			status := "OK"
 
-			// generate RTT
+			// error check
+			if PacketsSent%errorSeed != 0 {
+				PacketsRecv++
+				status = "OK"
+			} else {
+				status = "NOT_OK"
+			}
+
 			min := 200
 			max := 700
-			source := rand.NewSource(time.Now().UnixNano())
 			ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 
 			// setup the initial MinRtt, MaxRtt & AvgRtt. Based on the 1st "PING_OK" packet, set the MinRtt, MaxRtt & AvgRtt
 			if i == 0 {
+				ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 				MinRtt = ranRTT
 				MaxRtt = ranRTT
 				AvgRtt = ranRTT
 				// after Initialization
 			} else {
+
+				// generate RTT
+				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
+
 				if ranRTT > MaxRtt {
 					MaxRtt = ranRTT
 				} else if ranRTT < MinRtt {
@@ -105,7 +161,7 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 			}
 
 			// generate statistic
-			PacketLoss = float64(PacketsRecv) / float64(PacketsSent)
+			PacketLoss = (1 - float64(PacketsRecv)/float64(PacketsSent))
 
 			NtResult := sharedStruct.NtResult{
 				Seq:       i,
@@ -129,5 +185,7 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 			time.Sleep(1 * time.Second)
 		}
 
+		// doneChan = true
+		doneChan <- true
 	}
 }

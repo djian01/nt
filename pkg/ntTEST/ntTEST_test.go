@@ -13,22 +13,36 @@ import (
 
 func Test_ResultGenerate(t *testing.T) {
 
-	count := 0
+	count := 5
 
+	// channel - NtResultChan: receiving results from probing
 	NtResultChan := make(chan sharedStruct.NtResult, 1)
 	defer close(NtResultChan)
 
-	go ntTEST.ResultGenerate(count, "icmp", NtResultChan)
+	// Channel - signal pinger.Run() is done
+	doneChan := make(chan bool, 1)
+	defer close(doneChan)
 
-	if count == 0 {
-		for r := range NtResultChan {
-			fmt.Println(r)
+	go ntTEST.ResultGenerate(count, "icmp", NtResultChan, doneChan)
+
+	// start Generating Test result
+	forLoopFlag := true
+
+	for {
+		// check forLoopFlag
+		if !forLoopFlag {
+			break
 		}
-	} else {
-		for i := 0; i < count; i++ {
-			r := <-NtResultChan
+		select {
+		case <-doneChan:
+			forLoopFlag = false
+			fmt.Println("\n--- testing completed ---")
+		case r := <-NtResultChan:
 			fmt.Println(r)
+			// default:
+			// 	// do something which will not pause the for loop
 		}
+
 	}
 
 }
