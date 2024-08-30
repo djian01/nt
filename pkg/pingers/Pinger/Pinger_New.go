@@ -1,4 +1,4 @@
-package tcppinger
+package customPinger
 
 import (
 	"time"
