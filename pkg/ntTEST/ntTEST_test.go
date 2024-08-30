@@ -13,7 +13,7 @@ import (
 
 func Test_ResultGenerate(t *testing.T) {
 
-	count := 5
+	count := 0
 
 	// channel - NtResultChan: receiving results from probing
 	NtResultChan := make(chan sharedStruct.NtResult, 1)

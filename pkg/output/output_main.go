@@ -5,7 +5,7 @@ import (
 )
 
 // Main func for Output
-func OutputFunc(outputChan <-chan sharedStruct.NtResult, len int) {
+func OutputFunc(outputChan <-chan sharedStruct.NtResult, len int, recording bool) {
 
 	// initial displayRows
 	displayTable := []sharedStruct.NtResult{}
@@ -17,11 +17,15 @@ func OutputFunc(outputChan <-chan sharedStruct.NtResult, len int) {
 	// clear the screen
 	clearScreen()
 
+	// initial displayIdx
+	displayIdx := 0
+
 	// process Display Table from Channel NtResultChan
 	for NtResult := range outputChan {
 		idx := GetAvailableSliceItem(&displayTable)
 		displayTable[idx] = NtResult
-		TablePrint(&displayTable, len)
+		TablePrint(&displayTable, len, recording, displayIdx)
+		displayIdx++
 	}
 }
 

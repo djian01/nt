@@ -14,7 +14,7 @@ func Test_IcmpCommandMain(t *testing.T) {
 
 	// initial test vars
 	recording := true
-	displayRow := 10
+	displayRow := 13
 	dest := "google.com"
 	count := 3
 	size := 24

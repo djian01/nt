@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
 	"nt/pkg/output"
@@ -62,6 +63,15 @@ func IcmpCommandMain(recording bool, displayRow int, dest string, count int, siz
 	// Wait Group
 	var wg sync.WaitGroup
 
+	// recording row
+	recordingRow := 0
+	if recording {
+		recordingRow = 1
+	}
+
+	// recordingFilePath
+	recordingFilePath := ""
+
 	// Channel - probingChan
 	probingChan := make(chan sharedStruct.NtResult, 1)
 	defer close(probingChan)
@@ -90,7 +100,7 @@ func IcmpCommandMain(recording bool, displayRow int, dest string, count int, siz
 
 	// Output
 	//// Go Routine: OutputFunc
-	go output.OutputFunc(outputChan, displayRow)
+	go output.OutputFunc(outputChan, displayRow, recording)
 
 	// Recording
 	if recording {
@@ -105,7 +115,7 @@ func IcmpCommandMain(recording bool, displayRow int, dest string, count int, siz
 		// recordingFile Name
 		timeStamp := time.Now().Format("20060102150405")
 		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "icmp", dest, timeStamp)
-		recordingFilePath := filepath.Join(exeFileFolder, recordingFileName)
+		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
 		go record.RecordingFunc("icmp", recordingFilePath, bucket, recordingChan, &wg)
@@ -141,7 +151,7 @@ func IcmpCommandMain(recording bool, displayRow int, dest string, count int, siz
 				wg.Wait()
 			}
 
-			fmt.Printf("\033[%d;1H", (displayRow + 7))
+			fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
 			fmt.Println("\n--- testing completed ---")
 
 			forLoopClose = true
@@ -155,11 +165,14 @@ func IcmpCommandMain(recording bool, displayRow int, dest string, count int, siz
 				wg.Wait()
 			}
 
-			fmt.Printf("\033[%d;1H", (displayRow + 7))
+			fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
 			fmt.Println("\n--- Interrupt received, stopping testing ---")
 
 			forLoopClose = true
 		}
+	}
+	if recording {
+		fmt.Printf("Recording CSV file is saved at: %s\n", color.GreenString(recordingFilePath))
 	}
 	return nil
 }

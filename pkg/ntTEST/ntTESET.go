@@ -28,9 +28,13 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 	source := rand.NewSource(time.Now().UnixNano())
 
 	// random Error Seed
-	errorMax := 10
-	errorMin := 1
+	errorMax := 12
+	errorMin := 2
 	errorSeed := rand.New(source).Intn(errorMax-errorMin+1) + errorMin
+
+	// response
+	success := "ICMP_OK"
+	fail := "ICMP_Failed"
 
 	// Create a channel to listen for SIGINT (Ctrl+C)
 	interruptChan := make(chan os.Signal, 1)
@@ -68,9 +72,9 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 			// error check
 			if PacketsSent%errorSeed != 0 {
 				PacketsRecv++
-				status = "OK"
+				status = success
 			} else {
-				status = "NOT_OK"
+				status = fail
 			}
 
 			min := 200
@@ -84,7 +88,7 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 				MaxRtt = ranRTT
 				AvgRtt = ranRTT
 				// after Initialization
-			} else if status == "OK" {
+			} else if status == success {
 				// generate RTT
 				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 
@@ -126,14 +130,24 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 		// create the input NtResult
 		for i := 0; i < count; i++ {
 
+			// check Interrpution
+			select {
+			case <-interruptChan:
+				// if doneChan <- true if interrupted
+				fmt.Println("\n--- Interrupt received, stopping testing ---")
+				doneChan <- true
+			default:
+				// pass
+			}
+
 			PacketsSent++
 
 			// error check
 			if PacketsSent%errorSeed != 0 {
 				PacketsRecv++
-				status = "OK"
+				status = success
 			} else {
-				status = "NOT_OK"
+				status = fail
 			}
 
 			min := 200
