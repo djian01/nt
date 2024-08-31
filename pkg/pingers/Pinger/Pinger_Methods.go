@@ -23,9 +23,9 @@ import (
 // ***************** type Methods ********************
 
 // Resolve does the DNS lookup for the Pinger address and sets IP protocol.
-func (p *TcpPinger) Resolve() error {
-	if len(p.addr) == 0 {
-		return errors.New("addr cannot be empty")
+func (p *Pinger) Resolve() error {
+	if len(p.destHost) == 0 {
+		return errors.New("Destination Host cannot be empty")
 	}
 	// Check Name Resolution
 	targetIP, err := net.LookupIP(p.addr)
@@ -39,12 +39,12 @@ func (p *TcpPinger) Resolve() error {
 }
 
 // Addr returns the string ip address of the target host.
-func (p *TcpPinger) Addr() string {
+func (p *Pinger) Addr() string {
 	return p.addr
 }
 
 // update pinger statistics
-func (p *TcpPinger) updateStatistics(pkt *TcpPacket) {
+func (p *Pinger) updateStatistics(pkt *Packet) {
 	p.statsMu.Lock()
 	defer p.statsMu.Unlock()
 

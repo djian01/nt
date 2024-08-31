@@ -8,6 +8,7 @@ import (
 
 // ***************** type Structs ********************
 type Packet struct {
+	Type          string
 	idx           int
 	addr          net.Addr
 	http_url      string
@@ -22,7 +23,10 @@ type Packet struct {
 	Rtt           time.Duration
 }
 
-type TcpPinger struct {
+type Pinger struct {
+
+	// Pinger Type (TCP, HTTP, DNS, ICMP)
+	Type string
 
 	// Count tells pinger to stop after sending (and receiving) Count echo
 	// packets. If this option is not specified, pinger will operate until
@@ -51,20 +55,23 @@ type TcpPinger struct {
 	addr   string
 	ipaddr net.IP
 
+	// destination host
+	destHost string
+
 	// OnSetup is called when Pinger has finished setting up the listening socket
 	OnSetup func()
 
 	// OnSend is called when Pinger sends a packet
-	OnSend func(*TcpPacket)
+	OnSend func(*Packet)
 
 	// OnRecv is called when Pinger receives and processes a packet
-	OnRecv func(*TcpPacket)
+	OnRecv func(*Packet)
 
 	// OnFinish is called when Pinger exits
 	OnFinish func(*Statistics)
 
 	// OnSendError is called when an error occurs while Pinger attempts to send a packet
-	OnSendError func(*TcpPacket, error)
+	OnSendError func(*Packet, error)
 
 	// OnRecvError is called when an error occurs while Pinger attempts to receive a packet
 	OnRecvError func(error)
