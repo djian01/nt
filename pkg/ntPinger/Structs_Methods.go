@@ -1,15 +1,10 @@
 package ntPinger
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net"
-	"os"
-	"os/signal"
-	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -58,19 +53,19 @@ type PacketTCP struct {
 	StatusDetails string
 }
 
-func (pkg PacketTCP) GetStatus() bool {
-	return pkg.Status
+func (pkt PacketTCP) GetStatus() bool {
+	return pkt.Status
 }
-func (pkg PacketTCP) GetRtt() time.Duration {
-	return pkg.RTT
+func (pkt PacketTCP) GetRtt() time.Duration {
+	return pkt.RTT
 }
-func (pkg *PacketTCP) UpdateStatistics(s Statistics) {
-	pkg.AvgRtt = s.AvgRtt
-	pkg.MaxRtt = s.MaxRtt
-	pkg.MinRtt = s.MinRtt
-	pkg.PacketsSent = s.PacketsSent
-	pkg.PacketsRecv = s.PacketsRecv
-	pkg.PacketLoss = s.PacketLoss
+func (pkt *PacketTCP) UpdateStatistics(s Statistics) {
+	pkt.AvgRtt = s.AvgRtt
+	pkt.MaxRtt = s.MaxRtt
+	pkt.MinRtt = s.MinRtt
+	pkt.PacketsSent = s.PacketsSent
+	pkt.PacketsRecv = s.PacketsRecv
+	pkt.PacketLoss = s.PacketLoss
 }
 
 // PacketHTTP Struct
@@ -99,19 +94,19 @@ type PacketHTTP struct {
 	StatusDetails string
 }
 
-func (pkg PacketHTTP) GetStatus() bool {
-	return pkg.Status
+func (pkt PacketHTTP) GetStatus() bool {
+	return pkt.Status
 }
-func (pkg PacketHTTP) GetRtt() time.Duration {
-	return pkg.RTT
+func (pkt PacketHTTP) GetRtt() time.Duration {
+	return pkt.RTT
 }
-func (pkg *PacketHTTP) UpdateStatistics(s Statistics) {
-	pkg.AvgRtt = s.AvgRtt
-	pkg.MaxRtt = s.MaxRtt
-	pkg.MinRtt = s.MinRtt
-	pkg.PacketsSent = s.PacketsSent
-	pkg.PacketsRecv = s.PacketsRecv
-	pkg.PacketLoss = s.PacketLoss
+func (pkt *PacketHTTP) UpdateStatistics(s Statistics) {
+	pkt.AvgRtt = s.AvgRtt
+	pkt.MaxRtt = s.MaxRtt
+	pkt.MinRtt = s.MinRtt
+	pkt.PacketsSent = s.PacketsSent
+	pkt.PacketsRecv = s.PacketsRecv
+	pkt.PacketLoss = s.PacketLoss
 }
 
 // PacketICMP Struct
@@ -137,19 +132,19 @@ type PacketICMP struct {
 	StatusDetails string
 }
 
-func (pkg PacketICMP) GetStatus() bool {
-	return pkg.Status
+func (pkt PacketICMP) GetStatus() bool {
+	return pkt.Status
 }
-func (pkg PacketICMP) GetRtt() time.Duration {
-	return pkg.RTT
+func (pkt PacketICMP) GetRtt() time.Duration {
+	return pkt.RTT
 }
-func (pkg *PacketICMP) UpdateStatistics(s Statistics) {
-	pkg.AvgRtt = s.AvgRtt
-	pkg.MaxRtt = s.MaxRtt
-	pkg.MinRtt = s.MinRtt
-	pkg.PacketsSent = s.PacketsSent
-	pkg.PacketsRecv = s.PacketsRecv
-	pkg.PacketLoss = s.PacketLoss
+func (pkt *PacketICMP) UpdateStatistics(s Statistics) {
+	pkt.AvgRtt = s.AvgRtt
+	pkt.MaxRtt = s.MaxRtt
+	pkt.MinRtt = s.MinRtt
+	pkt.PacketsSent = s.PacketsSent
+	pkt.PacketsRecv = s.PacketsRecv
+	pkt.PacketLoss = s.PacketLoss
 }
 
 // PacketDNS Struct
@@ -176,19 +171,19 @@ type PacketDNS struct {
 	StatusDetails string
 }
 
-func (pkg PacketDNS) GetStatus() bool {
-	return pkg.Status
+func (pkt PacketDNS) GetStatus() bool {
+	return pkt.Status
 }
-func (pkg PacketDNS) GetRtt() time.Duration {
-	return pkg.RTT
+func (pkt PacketDNS) GetRtt() time.Duration {
+	return pkt.RTT
 }
-func (pkg *PacketDNS) UpdateStatistics(s Statistics) {
-	pkg.AvgRtt = s.AvgRtt
-	pkg.MaxRtt = s.MaxRtt
-	pkg.MinRtt = s.MinRtt
-	pkg.PacketsSent = s.PacketsSent
-	pkg.PacketsRecv = s.PacketsRecv
-	pkg.PacketLoss = s.PacketLoss
+func (pkt *PacketDNS) UpdateStatistics(s Statistics) {
+	pkt.AvgRtt = s.AvgRtt
+	pkt.MaxRtt = s.MaxRtt
+	pkt.MinRtt = s.MinRtt
+	pkt.PacketsSent = s.PacketsSent
+	pkt.PacketsRecv = s.PacketsRecv
+	pkt.PacketLoss = s.PacketLoss
 }
 
 // Pinger Struct
@@ -230,7 +225,7 @@ func (p *Pinger) Resolve() error {
 	// Check Name Resolution
 	resolvedIPs, err := net.LookupIP(p.InputVars.DestHost)
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("Failed to resolve domain: %v", p.InputVars.DestHost))
+		return fmt.Errorf(fmt.Sprintf("failed to resolve domain: %v", p.InputVars.DestHost))
 	}
 
 	// Get the 1st IPv4 IP from resolved IPs
@@ -280,93 +275,15 @@ func (p *Pinger) UpdateStatistics(pkt Packet) {
 // Method (Pinger) - Update pinger statistics
 func (p *Pinger) Run() {
 
-	// Create a channel to listen for SIGINT (Ctrl+C)
-	interruptChan := make(chan os.Signal, 1)
-	defer close(interruptChan)
-	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// idx
-	idx := 0
-
-	// forLoopEnds Flag
-	forLoopEnds := false
-
 	switch p.InputVars.Type {
 
 	// Type: tcp
 	case "tcp":
-		// count
-		if p.InputVars.Count == 0 {
-			for {
-				if forLoopEnds {
-					break
-				}
+		// Go Routine - tcpProbingRun
+		go tcpProbingRun(p)
 
-				select {
-				case <-interruptChan: // case interruptChan, close the channel & break the loop
-					close(p.probeChan)
-					forLoopEnds = true
-				default:
-					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
-					defer cancel()
-
-					pkt, err := tcpProbing(ctx, idx, p.destAddr, p.InputVars.DestPort, 0)
-
-					if err != nil {
-						if strings.Contains(err.Error(), "timeout") {
-							// Probe Timeout
-						} else {
-							panic(err)
-						}
-					} else {
-						// Probe Success
-					}
-					p.UpdateStatistics(&pkt)
-					pkt.UpdateStatistics(p.Stat)
-					fmt.Println(pkt)
-					idx++
-				}
-
-			}
-
-		} else {
-			for i := 0; i < p.InputVars.Count; i++ {
-				if forLoopEnds {
-					break
-				}
-				select {
-				case <-interruptChan:
-					close(p.probeChan) // case interruptChan, close the channel & break the loop
-					forLoopEnds = true
-				default:
-					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
-					defer cancel()
-
-					pkt, err := tcpProbing(ctx, idx, p.destAddr, p.InputVars.DestPort, 0)
-
-					if err != nil {
-						if strings.Contains(err.Error(), "timeout") {
-							// Probe Timeout
-						} else {
-							panic(err)
-						}
-					} else {
-						// Probe Success
-					}
-					p.UpdateStatistics(&pkt)
-					pkt.UpdateStatistics(p.Stat)
-					fmt.Println(pkt)
-					idx++
-
-					// check the last loop of the probing, close probeChan
-					if i == (p.InputVars.Count - 1) {
-						close(p.probeChan)
-					}
-
-					// sleep for interval
-					time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval))
-				}
-			}
+		for pkg := range p.probeChan {
+			fmt.Println(pkg)
 		}
 
 	case "icmp":

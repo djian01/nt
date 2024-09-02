@@ -13,7 +13,7 @@ func Test_pingerTCP(t *testing.T) {
 
 	InputVar := ntPinger.InputVars{
 		Type:     "tcp",
-		Count:    10,
+		Count:    0,
 		Timeout:  1,
 		Interval: 1,
 		DestHost: "google.com",
