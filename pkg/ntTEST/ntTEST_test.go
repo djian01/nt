@@ -6,43 +6,27 @@ package ntTEST_test
 
 import (
 	"fmt"
+	"nt/pkg/ntPinger"
 	"nt/pkg/ntTEST"
-	"nt/pkg/sharedStruct"
 	"testing"
 )
 
 func Test_ResultGenerate(t *testing.T) {
 
-	count := 0
+	count := 20
+	Type := "icmp"
 
-	// channel - NtResultChan: receiving results from probing
-	NtResultChan := make(chan sharedStruct.NtResult, 1)
-	defer close(NtResultChan)
+	// channel - probeChan: receiving results from probing
+	// probeChan will be closed by the ResultGenerate()
+	probeChan := make(chan ntPinger.Packet, 1)
 
-	// Channel - signal pinger.Run() is done
-	doneChan := make(chan bool, 1)
-	defer close(doneChan)
-
-	go ntTEST.ResultGenerate(count, "icmp", NtResultChan, doneChan)
+	go ntTEST.ResultGenerate(count, Type, &probeChan)
 
 	// start Generating Test result
-	forLoopFlag := true
+	for pkt := range probeChan {
 
-	for {
-		// check forLoopFlag
-		if !forLoopFlag {
-			break
-		}
-		select {
-		case <-doneChan:
-			forLoopFlag = false
-			fmt.Println("\n--- testing completed ---")
-		case r := <-NtResultChan:
-			fmt.Println(r)
-			// default:
-			// 	// do something which will not pause the for loop
-		}
-
+		fmt.Println(pkt)
 	}
 
+	fmt.Println("\n--- ntTEST Testing Completed ---")
 }

@@ -23,7 +23,7 @@ func NewPinger(InputVars InputVars) (*Pinger, error) {
 		}
 
 		// initial probeChan
-		p.probeChan = make(chan Packet, 1)
+		p.ProbeChan = make(chan Packet, 1)
 
 		// statistic
 		p.Stat = Statistics{

@@ -5,6 +5,7 @@
 package ntPinger_test
 
 import (
+	"fmt"
 	"nt/pkg/ntPinger"
 	"testing"
 )
@@ -25,5 +26,10 @@ func Test_pingerTCP(t *testing.T) {
 		panic(err)
 	}
 
-	p.Run()
+	go p.Run()
+
+	for pkt := range p.ProbeChan {
+		fmt.Println(pkt.GetSendTime())
+
+	}
 }

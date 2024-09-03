@@ -1,22 +1,22 @@
 // *************************
-// sudo go test -run ^Test_Output$
+// sudo go test -run ^Test_OutputMain$
 // *************************
 
 package output_test
 
 import (
 	"fmt"
+	"nt/pkg/ntPinger"
 	"nt/pkg/ntTEST"
 	"nt/pkg/output"
-	"nt/pkg/sharedStruct"
 	"testing"
 )
 
 // test - func Output
 func Test_OutputMain(t *testing.T) {
 
-	count := 0
-	Type := "icmp"
+	count := 5
+	Type := "tcp"
 	recording := true
 	displayRow := 10
 
@@ -27,39 +27,31 @@ func Test_OutputMain(t *testing.T) {
 	}
 
 	// channel - NtResultChan: receiving results from probing
-	probingChan := make(chan sharedStruct.NtResult, 1)
-	defer close(probingChan)
+	probeChan := make(chan ntPinger.Packet, 1)
 
 	// channel - NtResultChan: receiving results from probing
-	OutputChan := make(chan sharedStruct.NtResult, 1)
+	OutputChan := make(chan ntPinger.Packet, 1)
 	defer close(OutputChan)
 
-	// Channel - signal pinger.Run() is done
-	doneChan := make(chan bool, 1)
-	defer close(doneChan)
-
 	// go routine, Result Generator
-	go ntTEST.ResultGenerate(count, Type, probingChan, doneChan)
+	go ntTEST.ResultGenerate(count, Type, &probeChan)
 
 	// starts func SliceProcessing
 	go output.OutputFunc(OutputChan, displayRow, recording)
 
-	// start Generating Test result
-	forLoopFlag := true
-
-	for {
-		// check forLoopFlag
-		if !forLoopFlag {
-			break
-		}
-		select {
-		case <-doneChan:
-			forLoopFlag = false
-			fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
-			fmt.Println("\n--- Output testing completed ---")
-		case r := <-probingChan:
-			OutputChan <- r
-		}
+	for pkt := range probeChan {
+		OutputChan <- pkt
 	}
 
+	// start Generating Test result
+	fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
+	fmt.Println("\n--- Output testing completed ---")
+
+}
+func Test_mytest(t *testing.T) {
+	pkt := &ntPinger.PacketTCP{}
+
+	if pkt.SendTime.String() == "0001-01-01 00:00:00 +0000 UTC" {
+		fmt.Println("ok")
+	}
 }

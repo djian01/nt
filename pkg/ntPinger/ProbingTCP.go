@@ -12,15 +12,15 @@ import (
 )
 
 // func: tcpProbingRun
-func tcpProbingRun (p *Pinger) {
+func tcpProbingRun(p *Pinger) {
 
 	// Create a channel to listen for SIGINT (Ctrl+C)
 	interruptChan := make(chan os.Signal, 1)
 	defer close(interruptChan)
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// idx
-	idx := 0
+	// Sequence
+	Seq := 0
 
 	// forLoopEnds Flag
 	forLoopEnds := false
@@ -34,13 +34,13 @@ func tcpProbingRun (p *Pinger) {
 
 			select {
 			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				close(p.probeChan)
+				close(p.ProbeChan)
 				forLoopEnds = true
 			default:
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(ctx, idx, p.destAddr, p.InputVars.DestPort, 0)
+				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestPort, 0)
 
 				if err != nil {
 					if strings.Contains(err.Error(), "timeout") {
@@ -53,8 +53,8 @@ func tcpProbingRun (p *Pinger) {
 				}
 				p.UpdateStatistics(&pkt)
 				pkt.UpdateStatistics(p.Stat)
-				p.probeChan <- &pkt
-				idx++
+				p.ProbeChan <- &pkt
+				Seq++
 
 				// sleep for interval
 				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval))
@@ -69,13 +69,13 @@ func tcpProbingRun (p *Pinger) {
 			}
 			select {
 			case <-interruptChan:
-				close(p.probeChan) // case interruptChan, close the channel & break the loop
+				close(p.ProbeChan) // case interruptChan, close the channel & break the loop
 				forLoopEnds = true
 			default:
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(ctx, idx, p.destAddr, p.InputVars.DestPort, 0)
+				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestPort, 0)
 
 				if err != nil {
 					if strings.Contains(err.Error(), "timeout") {
@@ -88,12 +88,12 @@ func tcpProbingRun (p *Pinger) {
 				}
 				p.UpdateStatistics(&pkt)
 				pkt.UpdateStatistics(p.Stat)
-				p.probeChan <- &pkt
-				idx++
+				p.ProbeChan <- &pkt
+				Seq++
 
 				// check the last loop of the probing, close probeChan
 				if i == (p.InputVars.Count - 1) {
-					close(p.probeChan)
+					close(p.ProbeChan)
 				}
 
 				// sleep for interval
@@ -103,14 +103,13 @@ func tcpProbingRun (p *Pinger) {
 	}
 }
 
-
 // func: tcpProbing
-func tcpProbing(ctx context.Context, idx int, destAddr string, destPort int, nbytes int) (PacketTCP, error) {
+func tcpProbing(ctx context.Context, Seq int, destAddr string, destPort int, nbytes int) (PacketTCP, error) {
 
 	// initial packet
 	pkt := PacketTCP{
 		Type:     "tcp",
-		Idx:      idx,
+		Seq:      Seq,
 		DestAddr: destAddr,
 		DestPort: destPort,
 		NBytes:   nbytes,

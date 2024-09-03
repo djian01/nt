@@ -29,13 +29,15 @@ type Packet interface {
 	GetStatus() bool
 	GetRtt() time.Duration
 	UpdateStatistics(s Statistics)
+	GetType() string
+	GetSendTime() time.Time
 }
 
 // PacketTCP Struct
 type PacketTCP struct {
 	Type     string
 	Status   bool
-	Idx      int
+	Seq      int
 	DestAddr string
 	DestHost string
 	DestPort int
@@ -53,11 +55,17 @@ type PacketTCP struct {
 	StatusDetails string
 }
 
+func (pkt PacketTCP) GetType() string {
+	return pkt.Type
+}
 func (pkt PacketTCP) GetStatus() bool {
 	return pkt.Status
 }
 func (pkt PacketTCP) GetRtt() time.Duration {
 	return pkt.RTT
+}
+func (pkt PacketTCP) GetSendTime() time.Time {
+	return pkt.SendTime
 }
 func (pkt *PacketTCP) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
@@ -72,7 +80,7 @@ func (pkt *PacketTCP) UpdateStatistics(s Statistics) {
 type PacketHTTP struct {
 	Type               string
 	Status             bool
-	Idx                int
+	Seq                int
 	DestAddr           string
 	DestHost           string
 	DestPort           int
@@ -94,11 +102,17 @@ type PacketHTTP struct {
 	StatusDetails string
 }
 
+func (pkt PacketHTTP) GetType() string {
+	return pkt.Type
+}
 func (pkt PacketHTTP) GetStatus() bool {
 	return pkt.Status
 }
 func (pkt PacketHTTP) GetRtt() time.Duration {
 	return pkt.RTT
+}
+func (pkt PacketHTTP) GetSendTime() time.Time {
+	return pkt.SendTime
 }
 func (pkt *PacketHTTP) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
@@ -113,10 +127,9 @@ func (pkt *PacketHTTP) UpdateStatistics(s Statistics) {
 type PacketICMP struct {
 	Type           string
 	Status         bool
-	Idx            int
+	Seq            int
 	DestAddr       string
 	DestHost       string
-	DestPort       int
 	NBytes         int
 	SendTime       time.Time
 	RTT            time.Duration
@@ -132,11 +145,17 @@ type PacketICMP struct {
 	StatusDetails string
 }
 
+func (pkt PacketICMP) GetType() string {
+	return pkt.Type
+}
 func (pkt PacketICMP) GetStatus() bool {
 	return pkt.Status
 }
 func (pkt PacketICMP) GetRtt() time.Duration {
 	return pkt.RTT
+}
+func (pkt PacketICMP) GetSendTime() time.Time {
+	return pkt.SendTime
 }
 func (pkt *PacketICMP) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
@@ -151,7 +170,7 @@ func (pkt *PacketICMP) UpdateStatistics(s Statistics) {
 type PacketDNS struct {
 	Type         string
 	Status       bool
-	Idx          int
+	Seq          int
 	DestAddr     string
 	DestHost     string
 	DestPort     int
@@ -171,11 +190,17 @@ type PacketDNS struct {
 	StatusDetails string
 }
 
+func (pkt PacketDNS) GetType() string {
+	return pkt.Type
+}
 func (pkt PacketDNS) GetStatus() bool {
 	return pkt.Status
 }
 func (pkt PacketDNS) GetRtt() time.Duration {
 	return pkt.RTT
+}
+func (pkt PacketDNS) GetSendTime() time.Time {
+	return pkt.SendTime
 }
 func (pkt *PacketDNS) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
@@ -197,15 +222,15 @@ type Pinger struct {
 	Stat Statistics
 
 	// statistics Mutex
-	statsMu sync.RWMutex
+	StatsMu sync.RWMutex
 
 	// source IP details
 	SourceAddr   string
 	SourceIpAddr net.IP
 
 	// destination IP details
-	destAddr   string
-	destIpAddr net.IP
+	DestAddr   string
+	DestIpAddr net.IP
 
 	// OnSend is called when Pinger sends a packet
 	OnSend func(Packet)
@@ -214,7 +239,7 @@ type Pinger struct {
 	OnRecv func(Packet)
 
 	// probeChan
-	probeChan chan Packet
+	ProbeChan chan Packet
 }
 
 // Method (Pinger) - Resolve does the DNS lookup for the Pinger address and sets IP protocol.
@@ -232,8 +257,8 @@ func (p *Pinger) Resolve() error {
 	for _, ip := range resolvedIPs {
 		// To4() returns nil if it's not an IPv4 address
 		if ip.To4() != nil {
-			p.destIpAddr = ip
-			p.destAddr = ip.String()
+			p.DestIpAddr = ip
+			p.DestAddr = ip.String()
 			break
 		}
 	}
@@ -244,8 +269,8 @@ func (p *Pinger) Resolve() error {
 func (p *Pinger) UpdateStatistics(pkt Packet) {
 
 	// lock the Statistic
-	p.statsMu.Lock()
-	defer p.statsMu.Unlock()
+	p.StatsMu.Lock()
+	defer p.StatsMu.Unlock()
 
 	// PacketsSent
 	p.Stat.PacketsSent++
@@ -281,10 +306,6 @@ func (p *Pinger) Run() {
 	case "tcp":
 		// Go Routine - tcpProbingRun
 		go tcpProbingRun(p)
-
-		for pkg := range p.probeChan {
-			fmt.Println(pkg)
-		}
 
 	case "icmp":
 

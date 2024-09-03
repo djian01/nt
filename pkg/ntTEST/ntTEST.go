@@ -1,16 +1,15 @@
 package ntTEST
 
 import (
-	"fmt"
 	"math/rand"
-	"nt/pkg/sharedStruct"
+	"nt/pkg/ntPinger"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
-func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtResult, doneChan chan bool) {
+func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 
 	// statistics
 	var PacketsSent = 0
@@ -19,10 +18,7 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 	var MinRtt time.Duration
 	var AvgRtt time.Duration
 	var MaxRtt time.Duration
-	var status string
-
-	// initial loopCount
-	loopCount := 0
+	var status bool
 
 	// random Source
 	source := rand.NewSource(time.Now().UnixNano())
@@ -31,10 +27,6 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 	errorMax := 12
 	errorMin := 2
 	errorSeed := rand.New(source).Intn(errorMax-errorMin+1) + errorMin
-
-	// response
-	success := "ICMP_OK"
-	fail := "ICMP_Failed"
 
 	// Create a channel to listen for SIGINT (Ctrl+C)
 	interruptChan := make(chan os.Signal, 1)
@@ -55,26 +47,24 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 				break
 			}
 
+			// PacketSent ++
+			PacketsSent++
+
 			// check Interrpution
 			select {
 			case <-interruptChan:
 				// if doneChan <- true if interrupted
-				fmt.Println("\n--- Interrupt received, stopping testing ---")
 				forLoopFlag = false
-				doneChan <- true
 			default:
 				// pass
 			}
 
-			loopCount++
-			PacketsSent++
-
 			// error check
 			if PacketsSent%errorSeed != 0 {
 				PacketsRecv++
-				status = success
+				status = true
 			} else {
-				status = fail
+				status = false
 			}
 
 			min := 200
@@ -82,13 +72,13 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 			ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 
 			// setup the initial MinRtt, MaxRtt & AvgRtt. Based on the 1st "PING_OK" packet, set the MinRtt, MaxRtt & AvgRtt
-			if loopCount == 1 {
+			if PacketsSent == 1 {
 				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 				MinRtt = ranRTT
 				MaxRtt = ranRTT
 				AvgRtt = ranRTT
 				// after Initialization
-			} else if status == success {
+			} else if status {
 				// generate RTT
 				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 
@@ -104,50 +94,96 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 			// generate statistic
 			PacketLoss = (1 - float64(PacketsRecv)/float64(PacketsSent))
 
-			NtResult := sharedStruct.NtResult{
-				Seq:       loopCount - 1,
-				Type:      Type,
-				HostName:  "google.com",
-				IP:        "1.2.3.4",
-				Size:      56,
-				Status:    status,
-				RTT:       ranRTT,
-				Timestamp: time.Now().Format("2006-01-02 15:04:05"),
+			switch Type {
+			case "icmp":
+				probeResult := ntPinger.PacketICMP{
+					Seq:      PacketsSent - 1,
+					Type:     Type,
+					DestHost: "google.com",
+					DestAddr: "1.2.3.4",
+					NBytes:   56,
+					Status:   status,
+					RTT:      ranRTT,
+					SendTime: time.Now(),
 
-				PacketsSent: PacketsSent,
-				PacketsRecv: PacketsRecv,
-				PacketLoss:  PacketLoss,
-				MinRtt:      MinRtt,
-				MaxRtt:      MaxRtt,
-				AvgRtt:      AvgRtt,
+					PacketsSent: PacketsSent,
+					PacketsRecv: PacketsRecv,
+					PacketLoss:  PacketLoss,
+					MinRtt:      MinRtt,
+					MaxRtt:      MaxRtt,
+					AvgRtt:      AvgRtt,
+				}
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)
+
+			case "tcp":
+				destPort := 443
+
+				probeResult := ntPinger.PacketTCP{
+					Seq:      PacketsSent - 1,
+					Type:     Type,
+					DestHost: "google.com",
+					DestAddr: "1.2.3.4",
+					NBytes:   56,
+					Status:   status,
+					RTT:      ranRTT,
+					SendTime: time.Now(),
+					DestPort: destPort,
+
+					PacketsSent: PacketsSent,
+					PacketsRecv: PacketsRecv,
+					PacketLoss:  PacketLoss,
+					MinRtt:      MinRtt,
+					MaxRtt:      MaxRtt,
+					AvgRtt:      AvgRtt,
+				}
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)
+
+			case "http":
+
+			case "dns":
+
 			}
-
-			NtResultChain <- NtResult
-			time.Sleep(1 * time.Second)
 		}
 
+		// code finish
+		close(*probeChan)
+
 	} else {
+
+		// forLoopFlag
+		forLoopFlag := true
+
 		// create the input NtResult
 		for i := 0; i < count; i++ {
+
+			// check forLoopFlag
+			if !forLoopFlag {
+				break
+			}
+
+			// PacketSent ++
+			PacketsSent++
 
 			// check Interrpution
 			select {
 			case <-interruptChan:
 				// if doneChan <- true if interrupted
-				fmt.Println("\n--- Interrupt received, stopping testing ---")
-				doneChan <- true
+				forLoopFlag = false
+
 			default:
 				// pass
 			}
 
-			PacketsSent++
-
 			// error check
 			if PacketsSent%errorSeed != 0 {
 				PacketsRecv++
-				status = success
+				status = true
 			} else {
-				status = fail
+				status = false
 			}
 
 			min := 200
@@ -177,29 +213,61 @@ func ResultGenerate(count int, Type string, NtResultChain chan sharedStruct.NtRe
 			// generate statistic
 			PacketLoss = (1 - float64(PacketsRecv)/float64(PacketsSent))
 
-			NtResult := sharedStruct.NtResult{
-				Seq:       i,
-				Type:      Type,
-				HostName:  "google.com",
-				IP:        "1.2.3.4",
-				Size:      56,
-				Status:    status,
-				RTT:       ranRTT,
-				Timestamp: time.Now().Format("2006-01-02 15:04:05"),
+			switch Type {
+			case "icmp":
+				probeResult := ntPinger.PacketICMP{
+					Seq:      PacketsSent - 1,
+					Type:     Type,
+					DestHost: "google.com",
+					DestAddr: "1.2.3.4",
+					NBytes:   56,
+					Status:   status,
+					RTT:      ranRTT,
+					SendTime: time.Now(),
 
-				PacketsSent: PacketsSent,
-				PacketsRecv: PacketsRecv,
-				PacketLoss:  PacketLoss,
-				MinRtt:      MinRtt,
-				MaxRtt:      MaxRtt,
-				AvgRtt:      AvgRtt,
+					PacketsSent: PacketsSent,
+					PacketsRecv: PacketsRecv,
+					PacketLoss:  PacketLoss,
+					MinRtt:      MinRtt,
+					MaxRtt:      MaxRtt,
+					AvgRtt:      AvgRtt,
+				}
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)
+
+			case "tcp":
+				destPort := 443
+
+				probeResult := ntPinger.PacketTCP{
+					Seq:      PacketsSent - 1,
+					Type:     Type,
+					DestHost: "google.com",
+					DestAddr: "1.2.3.4",
+					NBytes:   56,
+					Status:   status,
+					RTT:      ranRTT,
+					SendTime: time.Now(),
+					DestPort: destPort,
+
+					PacketsSent: PacketsSent,
+					PacketsRecv: PacketsRecv,
+					PacketLoss:  PacketLoss,
+					MinRtt:      MinRtt,
+					MaxRtt:      MaxRtt,
+					AvgRtt:      AvgRtt,
+				}
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)
+
+			case "http":
+
+			case "dns":
 			}
-
-			NtResultChain <- NtResult
-			time.Sleep(1 * time.Second)
 		}
 
-		// doneChan = true
-		doneChan <- true
+		// code finish
+		close(*probeChan)
 	}
 }

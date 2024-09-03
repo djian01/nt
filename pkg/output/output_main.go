@@ -1,17 +1,17 @@
 package output
 
 import (
-	"nt/pkg/sharedStruct"
+	"nt/pkg/ntPinger"
 )
 
 // Main func for Output
-func OutputFunc(outputChan <-chan sharedStruct.NtResult, len int, recording bool) {
+func OutputFunc(outputChan <-chan ntPinger.Packet, len int, recording bool) {
 
 	// initial displayRows
-	displayTable := []sharedStruct.NtResult{}
+	displayTable := []ntPinger.Packet{}
 
 	for i := 0; i < len; i++ {
-		displayTable = append(displayTable, sharedStruct.NtResult{})
+		displayTable = append(displayTable, nil)
 	}
 
 	// clear the screen
@@ -21,20 +21,21 @@ func OutputFunc(outputChan <-chan sharedStruct.NtResult, len int, recording bool
 	displayIdx := 0
 
 	// process Display Table from Channel NtResultChan
-	for NtResult := range outputChan {
+	for PacketPointer := range outputChan {
 		idx := GetAvailableSliceItem(&displayTable)
-		displayTable[idx] = NtResult
+		displayTable[idx] = PacketPointer
 		TablePrint(&displayTable, len, recording, displayIdx)
 		displayIdx++
 	}
 }
 
 // Get the Slice Idx to inject the Result Object
-func GetAvailableSliceItem(displayTable *[]sharedStruct.NtResult) int {
+func GetAvailableSliceItem(displayTable *[]ntPinger.Packet) int {
 
 	// check if the slice been filled up, if not provide the empty slice id
 	for i := 0; i < len(*displayTable); i++ {
-		if (*displayTable)[i].Timestamp == "" {
+
+		if (*displayTable)[i] == nil {
 			return i
 		}
 	}
