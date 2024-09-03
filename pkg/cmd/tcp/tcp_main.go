@@ -1,180 +1,240 @@
 package tcp
 
-// import (
-// 	"fmt"
-// 	"os"
-// 	"os/signal"
-// 	"path/filepath"
-// 	"sync"
-// 	"syscall"
-// 	"time"
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"sync"
+	"time"
 
-// 	"github.com/spf13/cobra"
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
 
-// 	"nt/pkg/output"
-// 	"nt/pkg/record"
-// 	"nt/pkg/sharedStruct"
-// )
+	"nt/pkg/ntPinger"
+	"nt/pkg/output"
+	"nt/pkg/record"
+)
 
-// // Iniital tcpCmd
-// var tcpCmd = &cobra.Command{
-// 	Use:   "tcp [flags] <host>", // Sub-command, shown in the -h, Usage field
-// 	Short: "tcp Ping Test Module",
-// 	Long:  "tcp Ping test Module for tcp testing",
-// 	Args:  cobra.ExactArgs(1), // Only 1 Arg (dest) is required
-// 	Run:   TcpCommandLink,
-// }
+// Iniital tcpCmd
+var tcpCmd = &cobra.Command{
+	Use:   "tcp [flags] <Destination Host> <Destination Port>", // Sub-command, shown in the -h, Usage field
+	Short: "tcp Ping Test Module",
+	Long:  "tcp Ping test Module for tcp testing",
+	Args:  cobra.ExactArgs(2), // 2 Args, <Destination Host> <Destination Port> are required
+	Run:   TcpCommandLink,
+}
 
-// // Initial the bucket
-// var bucket = 10
+// Initial the bucket
+var bucket = 10
 
-// // Func - TcpCommandLink: obtain Flags and call IcmpCommandMain()
-// func TcpCommandLink(cmd *cobra.Command, args []string) {
+// Func - IcmpCommandLink: obtain Flags and call IcmpCommandMain()
+func TcpCommandLink(cmd *cobra.Command, args []string) {
 
-// 	// GFlag -r
-// 	recording, _ := cmd.Flags().GetBool("recording")
+	// GFlag -r
+	recording, _ := cmd.Flags().GetBool("recording")
 
-// 	// GFlag -d
-// 	displayRow, _ := cmd.Flags().GetInt("displayrow")
+	// GFlag -d
+	displayRow, _ := cmd.Flags().GetInt("displayrow")
 
-// 	// Arg - dest
-// 	dest := args[0]
+	// Arg - destHost
+	destHost := args[0]
 
-// 	// Flag -c
-// 	count, _ := cmd.Flags().GetInt("count")
+	// Arg - destPort
+	destPort, err := strconv.Atoi(args[1])
+	if err != nil {
+		panic("Input port number is NOT int!")
+	}
 
-// 	// Flag -s
-// 	size, _ := cmd.Flags().GetInt("size")
+	// Flag -c
+	count, _ := cmd.Flags().GetInt("count")
 
-// 	// Flag -p
-// 	port, _ := cmd.Flags().GetInt("port")
+	// Flag -s
+	size, _ := cmd.Flags().GetInt("size")
 
-// 	// Flag -i
-// 	interval, _ := cmd.Flags().GetInt("interval")
+	// Flag -t
+	timeout, _ := cmd.Flags().GetInt("timeout")
 
-// 	// call func TcpCommandMain
-// 	err := TcpCommandMain(recording, displayRow, dest, port, count, size, interval)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
+	// Flag -i
+	interval, _ := cmd.Flags().GetInt("interval")
 
-// // Func - IcmpCommandMain
-// func TcpCommandMain(recording bool, displayRow int, dest string, port int, count int, size int, interval int) error {
+	// call func TcpCommandMain
+	err = TcpCommandMain(recording, displayRow, destHost, destPort, count, size, timeout, interval)
+	if err != nil {
+		panic(err)
+	}
+}
 
-// 	// Wait Group
-// 	var wg sync.WaitGroup
+// Func - TcpCommandMain
+func TcpCommandMain(recording bool, displayRow int, destHost string, destPort int, count int, size int, timeout int, interval int) error {
 
-// 	// Channel - probingChan
-// 	probingChan := make(chan sharedStruct.NtResult, 1)
-// 	defer close(probingChan)
+	// Wait Group
+	var wgRecord sync.WaitGroup
 
-// 	// Channel - outputChan
-// 	outputChan := make(chan sharedStruct.NtResult, 1)
-// 	defer close(outputChan)
+	// recording row
+	recordingRow := 0
+	if recording {
+		recordingRow = 1
+	}
 
-// 	// Channel - recordingChan, no need to defer close
-// 	recordingChan := make(chan sharedStruct.NtResult, 1)
+	// recordingFilePath
+	recordingFilePath := ""
 
-// 	// Channel - signal pinger.Run() is done
-// 	doneChan := make(chan bool, 1)
-// 	defer close(doneChan)
+	// Channel - outputChan
+	outputChan := make(chan ntPinger.Packet, 1)
+	defer close(outputChan)
 
-// 	// Create a channel to listen for SIGINT (Ctrl+C)
-// 	interruptChan := make(chan os.Signal, 1)
-// 	defer close(interruptChan)
-// 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	// Channel - recordingChan, closed in the end of the testing, no need to defer close
+	recordingChan := make(chan ntPinger.Packet, 1)
 
-// 	// Start Ping Main Command, manually input display Len
-// 	err := IcmpProbingFunc(dest, count, size, interval, probingChan, doneChan)
-// 	if err != nil {
-// 		return err
-// 	}
+	// build the InputVar
+	InputVar := ntPinger.InputVars{
+		Type:     "tcp",
+		Count:    count,
+		NBypes:   size,
+		Timeout:  timeout,
+		Interval: interval,
+		DestHost: destHost,
+		DestPort: destPort,
+	}
 
-// 	// Output
-// 	//// Go Routine: OutputFunc
-// 	go output.OutputFunc(outputChan, displayRow)
+	// Start Ping Main Command, manually input display Len
+	p, err := ntPinger.NewPinger(InputVar)
+	if err != nil {
+		panic(err)
+	}
 
-// 	// Recording
-// 	if recording {
-// 		timeStamp := time.Now().Format("20060102150405")
-// 		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "icmp", dest, timeStamp)
-// 		recordingFilePath := filepath.Join(recordingPath, recordingFileName)
+	go p.Run()
 
-// 		// Go Routine: RecordingFunc
-// 		go record.RecordingFunc("icmp", recordingFilePath, bucket, recordingChan, &wg)
-// 	}
+	// Output
+	//// Go Routine: OutputFunc
+	go output.OutputFunc(outputChan, displayRow, recording)
 
-// 	// for loop for getting the ntResult
-// 	forLoopClose := false
+	// Recording
+	if recording {
 
-// 	for {
-// 		// check forLoopFlag
-// 		if forLoopClose {
-// 			break
-// 		}
+		// recordingFile Path
+		exeFileFolder, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
 
-// 		// select chans
-// 		select {
-// 		case probingResult := <-probingChan:
+		// recordingFile Name
+		timeStamp := time.Now().Format("20060102150405")
+		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "tcp", destHost, timeStamp)
+		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
-// 			// outputChan
-// 			outputChan <- probingResult
+		// Go Routine: RecordingFunc
+		go record.RecordingFunc(recordingFilePath, bucket, recordingChan, &wgRecord)
+	}
 
-// 			// recordingChan
-// 			if recording {
-// 				recordingChan <- probingResult
-// 			}
+	// harvest the result
+	for pkt := range p.ProbeChan {
+		// outputChan
+		outputChan <- pkt
 
-// 		case <-doneChan:
-// 			// if recording is enabled, close the recordingchain and save the rest of the records to CSV
-// 			if recording {
-// 				wg.Add(1)
-// 				close(recordingChan)
-// 				// waiting the recording function to save the last records
-// 				wg.Wait()
-// 			}
+		// recordingChan
+		if recording {
+			recordingChan <- pkt
+		}
+	}
 
-// 			fmt.Printf("\033[%d;1H", (displayRow + 7))
-// 			fmt.Println("\n--- testing completed ---")
+	// wait for the last interval
+	time.Sleep(time.Duration(interval) * time.Second)
 
-// 			forLoopClose = true
+	// if recording Enabled
+	if recording {
+		wgRecord.Add(1)
+		close(recordingChan)
+		// waiting the recording function to save the last records
+		wgRecord.Wait()
+	}
 
-// 		case <-interruptChan:
-// 			// if recording is enabled, close the recordingchain and save the rest of the records to CSV
-// 			if recording {
-// 				wg.Add(1)
-// 				close(recordingChan)
-// 				// waiting the recording function to save the last records
-// 				wg.Wait()
-// 			}
+	// display testing completed
+	fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
+	fmt.Println("\n--- testing completed ---")
 
-// 			fmt.Printf("\033[%d;1H", (displayRow + 7))
-// 			fmt.Println("\n--- Interrupt received, stopping testing ---")
+	// if recording is enabled, display the recording file path
+	if recording {
+		fmt.Printf("Recording CSV file is saved at: %s\n", color.GreenString(recordingFilePath))
+	}
 
-// 			forLoopClose = true
-// 		}
-// 	}
-// 	return nil
-// }
+	// forLoopClose := false
 
-// // Func - IcmpCommand
-// func IcmpCommand() *cobra.Command {
-// 	return icmpCmd
-// }
+	// for {
+	// 	// check forLoopFlag
+	// 	if forLoopClose {
+	// 		break
+	// 	}
 
-// // Func - init()
-// func init() {
+	// 	// select chans
+	// 	select {
+	// 	case probingResult := <-probingChan:
 
-// 	// Flag - Ping count
-// 	var count int
-// 	icmpCmd.Flags().IntVarP(&count, "count", "c", 0, "Ping Test Count (default 0, Ping continuous till interruption)")
+	// 		// outputChan
+	// 		outputChan <- probingResult
 
-// 	// Flag - Ping size
-// 	var size int
-// 	icmpCmd.Flags().IntVarP(&size, "size", "s", 24, "Ping Test Packet Size (must be larger than 24 Bytes)")
+	// 		// recordingChan
+	// 		if recording {
+	// 			recordingChan <- probingResult
+	// 		}
 
-// 	// Flag - Ping interval
-// 	var interval int
-// 	icmpCmd.Flags().IntVarP(&interval, "interval", "i", 1, "Ping Test Interval")
-// }
+	// 	case <-doneChan:
+	// 		// if recording is enabled, close the recordingchain and save the rest of the records to CSV
+	// 		if recording {
+	// 			wg.Add(1)
+	// 			close(recordingChan)
+	// 			// waiting the recording function to save the last records
+	// 			wg.Wait()
+	// 		}
+
+	// 		fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
+	// 		fmt.Println("\n--- testing completed ---")
+
+	// 		forLoopClose = true
+
+	// 	case <-interruptChan:
+	// 		// if recording is enabled, close the recordingchain and save the rest of the records to CSV
+	// 		if recording {
+	// 			wg.Add(1)
+	// 			close(recordingChan)
+	// 			// waiting the recording function to save the last records
+	// 			wg.Wait()
+	// 		}
+
+	// 		fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
+	// 		fmt.Println("\n--- Interrupt received, stopping testing ---")
+
+	// 		forLoopClose = true
+	// 	}
+	// }
+	// if recording {
+	// 	fmt.Printf("Recording CSV file is saved at: %s\n", color.GreenString(recordingFilePath))
+	// }
+	return nil
+}
+
+// Func - IcmpCommand
+func TcpCommand() *cobra.Command {
+	return tcpCmd
+}
+
+// Func - init()
+func init() {
+
+	// Flag - Ping count
+	var count int
+	tcpCmd.Flags().IntVarP(&count, "count", "c", 0, "TCP Ping Test Count (default 0, Ping continuous till interruption)")
+
+	// Flag - Ping size
+	var size int
+	tcpCmd.Flags().IntVarP(&size, "size", "s", 0, "TCP Ping Test Payload Size (Default value is 0 byte, no payload)")
+
+	// Flag - Ping timeout
+	var timeout int
+	tcpCmd.Flags().IntVarP(&timeout, "timeout", "t", 4, "TCP Ping Test Count (default 4 seconds)")
+
+	// Flag - Ping interval
+	var interval int
+	tcpCmd.Flags().IntVarP(&interval, "interval", "i", 1, "TCP Ping Test Interval (default 1 second)")
+}

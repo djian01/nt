@@ -3,20 +3,19 @@ package record
 import (
 	"encoding/csv"
 	"fmt"
-	"nt/pkg/sharedStruct"
+	"nt/pkg/ntPinger"
 	"os"
-	"reflect"
 	"strconv"
 	"sync"
 )
 
 // Func - RecordingFunc, saving the accumulated results into CSV file
-func RecordingFunc(Type string, filePath string, bucket int, recordingChan <-chan sharedStruct.NtResult, wg *sync.WaitGroup) {
+func RecordingFunc(filePath string, bucket int, recordingChan <-chan ntPinger.Packet, wg *sync.WaitGroup) {
 
 	// Initial the bucket
 	count := 0
 	writeHeader := true
-	accumulatedRecords := []sharedStruct.NtResult{}
+	accumulatedRecords := []ntPinger.Packet{}
 
 	// The ticker loop for CSV file write
 	for {
@@ -59,13 +58,12 @@ func RecordingFunc(Type string, filePath string, bucket int, recordingChan <-cha
 				// reset bucket
 				accumulatedRecords = nil
 			}
-
 		}
 	}
 
 }
 
-func SaveToCSV(filePath string, accumulatedRecords []sharedStruct.NtResult, writeHeader bool) error {
+func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeader bool) error {
 
 	// Open or create the file with append mode and write-only access
 	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -80,20 +78,21 @@ func SaveToCSV(filePath string, accumulatedRecords []sharedStruct.NtResult, writ
 	// if accumulatedRecords is empty
 	if len(accumulatedRecords) == 0 {
 		return nil
+		// else Save to CSV based on Type
 	} else {
-		switch accumulatedRecords[0].Type {
+		switch accumulatedRecords[0].GetType() {
 		case "icmp":
 			// Write the header if requested
 			if writeHeader {
 				header := []string{
+					"Type",
 					"Seq",
 					"Status",
-					"HostName",
-					"IP",
+					"DestHost",
+					"DestAddr",
 					"Size",
 					"RTT",
-					"Timestamp",
-					"Type",
+					"SendTime",
 					"PacketsSent",
 					"PacketsRecv",
 					"PacketLoss",
@@ -110,21 +109,76 @@ func SaveToCSV(filePath string, accumulatedRecords []sharedStruct.NtResult, writ
 
 			// Write each struct to the file
 			for _, recordItem := range accumulatedRecords {
+				pkt := recordItem.(*ntPinger.PacketICMP)
 				row := []string{
-					strconv.Itoa(recordItem.Seq),         // Seq
-					recordItem.Status,                    // Status
-					recordItem.HostName,                  // Hostname
-					recordItem.IP,                        // IP
-					strconv.Itoa(recordItem.Size),        // Size
-					(recordItem.RTT).String(),            // RTT
-					recordItem.Timestamp,                 // TimeStamp
-					recordItem.Type,                      // Ping Type
-					strconv.Itoa(recordItem.PacketsSent), // PacketsSent
-					strconv.Itoa(recordItem.PacketsRecv), // PacketsRecv
-					fmt.Sprintf("%.2f%%", float64(recordItem.PacketLoss*100)), // PacketLoss
-					recordItem.MinRtt.String(),                                // MinRtt
-					recordItem.AvgRtt.String(),                                // AvgRtt
-					recordItem.MaxRtt.String(),                                // MaxRtt
+					pkt.Type,                      // Ping Type
+					strconv.Itoa(pkt.Seq),         // Seq
+					fmt.Sprintf("%t", pkt.Status), // Status
+					pkt.DestHost,                  // DestHost
+					pkt.DestAddr,                  // DestAddr
+					strconv.Itoa(pkt.NBytes),      // Size
+					(pkt.RTT).String(),            // RTT
+					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
+
+					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
+					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
+					fmt.Sprintf("%.2f%%", float64(pkt.PacketLoss*100)), // PacketLoss
+					pkt.MinRtt.String(),                                // MinRtt
+					pkt.AvgRtt.String(),                                // AvgRtt
+					pkt.MaxRtt.String(),                                // MaxRtt
+				}
+
+				if err := writer.Write(row); err != nil {
+					return fmt.Errorf("could not write record to file: %v", err)
+				}
+			}
+		case "tcp":
+			// Write the header if requested
+			if writeHeader {
+				header := []string{
+					"Type",
+					"Seq",
+					"Status",
+					"DestHost",
+					"DestAddr",
+					"DestPort",
+					"Size",
+					"RTT",
+					"SendTime",
+					"PacketsSent",
+					"PacketsRecv",
+					"PacketLoss",
+					"MinRtt",
+					"AvgRtt",
+					"MaxRtt"}
+
+				err := writer.Write(header)
+
+				if err != nil {
+					return fmt.Errorf("could not write header to file: %v", err)
+				}
+			}
+
+			// Write each struct to the file
+			for _, recordItem := range accumulatedRecords {
+				pkt := recordItem.(*ntPinger.PacketTCP)
+				row := []string{
+					pkt.Type,                                   // Ping Type
+					strconv.Itoa(pkt.Seq),                      // Seq
+					fmt.Sprintf("%t", pkt.Status),              // Status
+					pkt.DestHost,                               // DestHost
+					pkt.DestAddr,                               // DestAddr
+					strconv.Itoa(pkt.DestPort),                 // DestPort
+					strconv.Itoa(pkt.NBytes),                   // Size
+					(pkt.RTT).String(),                         // RTT
+					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
+
+					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
+					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
+					fmt.Sprintf("%.2f%%", float64(pkt.PacketLoss*100)), // PacketLoss
+					pkt.MinRtt.String(),                                // MinRtt
+					pkt.AvgRtt.String(),                                // AvgRtt
+					pkt.MaxRtt.String(),                                // MaxRtt
 				}
 
 				if err := writer.Write(row); err != nil {
@@ -134,24 +188,4 @@ func SaveToCSV(filePath string, accumulatedRecords []sharedStruct.NtResult, writ
 		}
 	}
 	return nil
-}
-
-// GetFieldValueByIndex returns the value of a struct field at the specified index.
-func GetFieldValueByIndex(obj interface{}, index int) (interface{}, error) {
-	v := reflect.ValueOf(obj)
-
-	// Ensure obj is a struct
-	if v.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("expected a struct, got %s", v.Kind())
-	}
-
-	// Ensure the index is within the valid range
-	if index < 0 || index >= v.NumField() {
-		return nil, fmt.Errorf("index %d out of range", index)
-	}
-
-	// Get the field value at the specified index
-	field := v.Field(index)
-
-	return field.Interface(), nil
 }

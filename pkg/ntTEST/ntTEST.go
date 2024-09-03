@@ -88,7 +88,8 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				} else if ranRTT < MinRtt {
 					MinRtt = ranRTT
 				}
-				AvgRtt = time.Duration(((int64(AvgRtt)/1000000)*(int64(PacketsRecv-1))+(int64(ranRTT)/1000000))/int64(PacketsRecv)) * time.Millisecond
+				AvgRtt = (AvgRtt*time.Duration(PacketsRecv-1) + ranRTT) / time.Duration(PacketsRecv)
+
 			}
 
 			// generate statistic

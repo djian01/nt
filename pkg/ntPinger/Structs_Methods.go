@@ -69,8 +69,12 @@ func (pkt PacketTCP) GetSendTime() time.Time {
 }
 func (pkt *PacketTCP) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
-	pkt.MaxRtt = s.MaxRtt
-	pkt.MinRtt = s.MinRtt
+	if s.MaxRtt != time.Duration(-1<<63) {
+		pkt.MaxRtt = s.MaxRtt
+	}
+	if s.MinRtt != time.Duration(1<<63-1) {
+		pkt.MinRtt = s.MinRtt
+	}
 	pkt.PacketsSent = s.PacketsSent
 	pkt.PacketsRecv = s.PacketsRecv
 	pkt.PacketLoss = s.PacketLoss
@@ -116,8 +120,12 @@ func (pkt PacketHTTP) GetSendTime() time.Time {
 }
 func (pkt *PacketHTTP) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
-	pkt.MaxRtt = s.MaxRtt
-	pkt.MinRtt = s.MinRtt
+	if s.MaxRtt != time.Duration(-1<<63) {
+		pkt.MaxRtt = s.MaxRtt
+	}
+	if s.MinRtt != time.Duration(1<<63-1) {
+		pkt.MinRtt = s.MinRtt
+	}
 	pkt.PacketsSent = s.PacketsSent
 	pkt.PacketsRecv = s.PacketsRecv
 	pkt.PacketLoss = s.PacketLoss
@@ -159,8 +167,12 @@ func (pkt PacketICMP) GetSendTime() time.Time {
 }
 func (pkt *PacketICMP) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
-	pkt.MaxRtt = s.MaxRtt
-	pkt.MinRtt = s.MinRtt
+	if s.MaxRtt != time.Duration(-1<<63) {
+		pkt.MaxRtt = s.MaxRtt
+	}
+	if s.MinRtt != time.Duration(1<<63-1) {
+		pkt.MinRtt = s.MinRtt
+	}
 	pkt.PacketsSent = s.PacketsSent
 	pkt.PacketsRecv = s.PacketsRecv
 	pkt.PacketLoss = s.PacketLoss
@@ -204,8 +216,12 @@ func (pkt PacketDNS) GetSendTime() time.Time {
 }
 func (pkt *PacketDNS) UpdateStatistics(s Statistics) {
 	pkt.AvgRtt = s.AvgRtt
-	pkt.MaxRtt = s.MaxRtt
-	pkt.MinRtt = s.MinRtt
+	if s.MaxRtt != time.Duration(-1<<63) {
+		pkt.MaxRtt = s.MaxRtt
+	}
+	if s.MinRtt != time.Duration(1<<63-1) {
+		pkt.MinRtt = s.MinRtt
+	}
 	pkt.PacketsSent = s.PacketsSent
 	pkt.PacketsRecv = s.PacketsRecv
 	pkt.PacketLoss = s.PacketLoss
@@ -275,12 +291,15 @@ func (p *Pinger) UpdateStatistics(pkt Packet) {
 	// PacketsSent
 	p.Stat.PacketsSent++
 
+	// initial PacketLoss
+	p.Stat.PacketLoss = 1
+
 	// PacketsRecv
 	if pkt.GetStatus() {
 		p.Stat.PacketsRecv++
 
 		// PacketLoss
-		p.Stat.updatePacketLoss()
+		p.Stat.UpdatePacketLoss()
 
 		// MinRtt
 		if p.Stat.MinRtt > pkt.GetRtt() {
@@ -293,7 +312,12 @@ func (p *Pinger) UpdateStatistics(pkt Packet) {
 		}
 
 		// AvgRtt
-		p.Stat.AvgRtt = time.Duration(((int64(p.Stat.AvgRtt)/1000000)*(int64(p.Stat.PacketsRecv-1))+(int64(pkt.GetRtt())/1000000))/int64(p.Stat.PacketsRecv)) * time.Millisecond
+		if p.Stat.AvgRtt == time.Duration(0) {
+			p.Stat.AvgRtt = pkt.GetRtt()
+		} else {
+			p.Stat.AvgRtt = (p.Stat.AvgRtt*time.Duration(p.Stat.PacketsRecv-1) + pkt.GetRtt()) / time.Duration(p.Stat.PacketsRecv)
+		}
+
 	}
 }
 
@@ -340,6 +364,6 @@ type Statistics struct {
 }
 
 // Method (Statistics) - Update PacketLoss
-func (s *Statistics) updatePacketLoss() {
+func (s *Statistics) UpdatePacketLoss() {
 	s.PacketLoss = (1 - float64(s.PacketsRecv)/float64(s.PacketsSent))
 }

@@ -40,7 +40,7 @@ func tcpProbingRun(p *Pinger) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestPort, 0)
+				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
 
 				if err != nil {
 					if strings.Contains(err.Error(), "timeout") {
@@ -75,7 +75,7 @@ func tcpProbingRun(p *Pinger) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestPort, 0)
+				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
 
 				if err != nil {
 					if strings.Contains(err.Error(), "timeout") {
@@ -104,12 +104,13 @@ func tcpProbingRun(p *Pinger) {
 }
 
 // func: tcpProbing
-func tcpProbing(ctx context.Context, Seq int, destAddr string, destPort int, nbytes int) (PacketTCP, error) {
+func tcpProbing(ctx context.Context, Seq int, destAddr string, desetHost string, destPort int, nbytes int) (PacketTCP, error) {
 
 	// initial packet
 	pkt := PacketTCP{
 		Type:     "tcp",
 		Seq:      Seq,
+		DestHost: desetHost,
 		DestAddr: destAddr,
 		DestPort: destPort,
 		NBytes:   nbytes,

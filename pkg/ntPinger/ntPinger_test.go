@@ -17,7 +17,7 @@ func Test_pingerTCP(t *testing.T) {
 		Count:    0,
 		Timeout:  1,
 		Interval: 1,
-		DestHost: "google.com",
+		DestHost: "sina.com",
 		DestPort: 443,
 	}
 
@@ -29,7 +29,7 @@ func Test_pingerTCP(t *testing.T) {
 	go p.Run()
 
 	for pkt := range p.ProbeChan {
-		fmt.Println(pkt.GetSendTime())
+		fmt.Println(pkt)
 
 	}
 }

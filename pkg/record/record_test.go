@@ -6,9 +6,10 @@ package record_test
 
 import (
 	"fmt"
+	"nt/pkg/ntPinger"
 	"nt/pkg/ntTEST"
 	"nt/pkg/record"
-	"nt/pkg/sharedStruct"
+	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -17,53 +18,49 @@ import (
 
 func Test_RecordingFunc(t *testing.T) {
 
-	count := 7
-	Type := "icmp"
+	count := 0
+	Type := "tcp"
 	dest := "google.com"
 
 	var wg sync.WaitGroup
 
 	// channel - NtResultChan: receiving results from probing
-	NtResultChan := make(chan sharedStruct.NtResult, 1)
-	defer close(NtResultChan)
+	probeChan := make(chan ntPinger.Packet, 1)
 
 	// channel - recordingChan, close by the following code, no defer required
-	recordingChan := make(chan sharedStruct.NtResult, 1)
-
-	// Channel - signal pinger.Run() is done
-	doneChan := make(chan bool, 1)
-	defer close(doneChan)
+	recordingChan := make(chan ntPinger.Packet, 1)
 
 	// record file name
-	parentFilePath := "/home/uadmin/go/nt/"
+
+	// recordingFile Path
+	exeFileFolder, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+
+	// recordingFile Name
 	timeStamp := time.Now().Format("20060102150405")
 	recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", Type, dest, timeStamp)
-	recordingFilePath := filepath.Join(parentFilePath, recordingFileName)
+	recordingFilePath := filepath.Join(exeFileFolder, recordingFileName)
 
 	// go routine, Recording Func
-	go record.RecordingFunc(Type, recordingFilePath, 10, recordingChan, &wg)
+	go record.RecordingFunc(recordingFilePath, 10, recordingChan, &wg)
 
 	// go routine, Result Generator
-	go ntTEST.ResultGenerate(count, "icmp", NtResultChan, doneChan)
+	go ntTEST.ResultGenerate(count, Type, &probeChan)
 
 	// start Generating Test result
-	forLoopFlag := true
 
-	for {
-		// check forLoopFlag
-		if !forLoopFlag {
-			break
-		}
-		select {
-		case <-doneChan:
-			forLoopFlag = false
-			wg.Add(1)
-			close(recordingChan)
-			// waiting the recording function to save the last records
-			wg.Wait()
-			fmt.Println("\n--- testing completed ---")
-		case r := <-NtResultChan:
-			recordingChan <- r
-		}
+	for pkg := range probeChan {
+		// record the probe result
+		fmt.Println(pkg)
+		recordingChan <- pkg
 	}
+
+	wg.Add(1)
+	close(recordingChan)
+	// waiting the recording function to save the last records
+	wg.Wait()
+	fmt.Println("\n--- testing completed ---")
 }
