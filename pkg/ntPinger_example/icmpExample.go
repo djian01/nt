@@ -107,8 +107,8 @@ func (icmpMsg *icmpMessage) Marshal() ([]byte, error) {
 	csum := Checksum(binIcmpMsg)
 
 	// Place checksum back in header
-	binIcmpMsg[2] ^= byte(^csum & 0xff)
-	binIcmpMsg[3] ^= byte(^csum >> 8)
+	binIcmpMsg[2] = byte(^csum & 0xff)
+	binIcmpMsg[3] = byte(^csum >> 8)
 
 	return binIcmpMsg, nil
 }
