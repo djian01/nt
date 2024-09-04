@@ -115,7 +115,7 @@ func (icmpMsg *icmpMessage) Marshal() ([]byte, error) {
 
 // ************* Functions ******************
 
-// func - parseICMPMessage, parses b as an ICMP message.
+// func - parseICMPMessage, parses bin as an ICMP message binary []byte
 func parseICMPMessage(bin []byte) (*icmpMessage, error) {
 
 	msglen := len(bin)
