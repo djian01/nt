@@ -40,7 +40,7 @@ func tcpProbingRun(p *Pinger) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
+				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
 
 				if err != nil {
 					if strings.Contains(err.Error(), "timeout") {
@@ -75,7 +75,7 @@ func tcpProbingRun(p *Pinger) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
+				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
 
 				if err != nil {
 					if strings.Contains(err.Error(), "timeout") {
@@ -104,7 +104,7 @@ func tcpProbingRun(p *Pinger) {
 }
 
 // func: tcpProbing
-func tcpProbing(ctx context.Context, Seq int, destAddr string, desetHost string, destPort int, nbytes int) (PacketTCP, error) {
+func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string, destPort int, nbytes int) (PacketTCP, error) {
 
 	// initial packet
 	pkt := PacketTCP{
@@ -125,19 +125,19 @@ func tcpProbing(ctx context.Context, Seq int, destAddr string, desetHost string,
 	// Ping Target
 	pingTarget := fmt.Sprintf("%s:%d", destAddr, destPort)
 
-	// Establish a connection with a context timeout
-	conn, err := d.DialContext(ctx, pkt.Type, pingTarget)
+	// Establish a connection with a context timeout - 3-way handshake
+	conn, err := d.DialContext(*ctx, pkt.Type, pingTarget)
 	if err != nil {
 		pkt.Status = false
 		return pkt, err
 	}
 	defer conn.Close()
 
-	// Create a packet of the desired size
+	// create and send payload if required
 	if nbytes != 0 {
 		packetPayload := make([]byte, nbytes)
 
-		// Send the packet
+		// Send the payload
 		_, err = conn.Write(packetPayload)
 		if err != nil {
 			return pkt, err

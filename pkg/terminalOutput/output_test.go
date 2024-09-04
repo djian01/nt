@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"nt/pkg/ntPinger"
 	"nt/pkg/ntTEST"
-	"nt/pkg/output"
+	output "nt/pkg/terminalOutput"
 	"testing"
 )
 

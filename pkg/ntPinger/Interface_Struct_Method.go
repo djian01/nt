@@ -10,18 +10,18 @@ import (
 
 // CLI Imput variables Struct
 type InputVars struct {
-	Type           string // Select one of these: tcp, icmp, http, dns
-	Count          int    // Default is 0 which means nonstop till interruption.
-	NBypes         int    // Specific the payload. ICMP default payload is 24 bytes. TCP/HTTP/ICMP have no payload by default.
-	Timeout        int    // default timeout is 4 seconds
-	Interval       int    // Interval is the wait time between each packet send. Default is 1s.
-	SourceHost     string
-	DestHost       string
-	DestPort       int
-	Http_path      string
-	Http_tls       bool
-	Icmp_dfragment bool // ipv4 only
-	Dns_request    string
+	Type        string // Select one of these: tcp, icmp, http, dns
+	Count       int    // Default is 0 which means nonstop till interruption.
+	NBypes      int    // Specific the payload. ICMP default payload is 24 bytes. TCP/HTTP/ICMP have no payload by default.
+	Timeout     int    // default timeout is 4 seconds
+	Interval    int    // Interval is the wait time between each packet send. Default is 1s.
+	SourceHost  string
+	DestHost    string
+	DestPort    int
+	Http_path   string
+	Http_tls    bool
+	Icmp_df     bool // ipv4 only
+	Dns_request string
 }
 
 // Packet Interface

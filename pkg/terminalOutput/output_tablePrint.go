@@ -37,7 +37,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Size", "RTT", "Timestamp")
+		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Payload", "RTT", "Timestamp")
 		fmt.Println(strings.Repeat("-", 106))
 
 		// Print the table & statistics data
@@ -70,7 +70,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 			// print the statistics
 			if pkt.SendTime.String() != "0001-01-01 00:00:00 +0000 UTC" {
 				moveToRow(len + tableHeadRowIdx + 3)
-				fmt.Printf("\n--- %s %s Ping statistics ---\n", pkt.DestAddr, pkt.Type)
+				fmt.Printf("\n--- %s %s statistics ---\n", pkt.DestAddr, color.CyanString(fmt.Sprintf("%v Ping", pkt.Type)))
 				fmt.Printf("%d packets transmitted, %d packets received, %.2f%% packet loss\n", pkt.PacketsSent, pkt.PacketsRecv, float64(pkt.PacketLoss*100))
 				fmt.Printf("round-trip min/avg/max = %v/%v/%v       \n", pkt.MinRtt, pkt.AvgRtt, pkt.MaxRtt)
 			}
@@ -84,7 +84,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-12s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Port", "Size", "RTT", "Timestamp")
+		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-12s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Port", "Payload", "RTT", "Timestamp")
 		fmt.Println(strings.Repeat("-", 114))
 
 		// Print the table & statistics data
@@ -107,19 +107,17 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
 					// which affects how the width specifier (like %-20s) is interpreted
 					Status := fmt.Sprintf("%-15v", pkt.Status)
-					Size := fmt.Sprintf("%d bytes", pkt.NBytes)
-					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-12s %-15v %-30s       \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, Size, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
+					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-10d %-15v %-30s       \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, pkt.NBytes, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
 				} else {
 					Status := fmt.Sprintf("%-15v", pkt.Status)
-					Size := fmt.Sprintf("%d bytes", pkt.NBytes)
-					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-12s %-15v %-30s       \n", pkt.Seq, color.RedString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, Size, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
+					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-10d %-15v %-30s       \n", pkt.Seq, color.RedString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, pkt.NBytes, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
 				}
 			}
 
 			// print the statistics
 			if pkt.SendTime.String() != "0001-01-01 00:00:00 +0000 UTC" {
 				moveToRow(len + tableHeadRowIdx + 3)
-				fmt.Printf("\n--- %s %s Ping statistics ---\n", pkt.DestAddr, pkt.Type)
+				fmt.Printf("\n--- %s %s statistics ---\n", pkt.DestAddr, color.CyanString(fmt.Sprintf("%v Ping", pkt.Type)))
 				fmt.Printf("%d packets transmitted, %d packets received, %.2f%% packet loss\n", pkt.PacketsSent, pkt.PacketsRecv, float64(pkt.PacketLoss*100))
 				fmt.Printf("round-trip min/avg/max = %v/%v/%v       \n", pkt.MinRtt, pkt.AvgRtt, pkt.MaxRtt)
 			}

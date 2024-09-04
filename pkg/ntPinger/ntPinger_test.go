@@ -1,5 +1,6 @@
 // *************************
 // sudo go test -run ^Test_pingerTCP$
+// sudo go test -run ^Test_ProbingICMP$
 // *************************
 
 package ntPinger_test
@@ -32,4 +33,21 @@ func Test_pingerTCP(t *testing.T) {
 		fmt.Println(pkt)
 
 	}
+}
+
+func Test_ProbingICMP(t *testing.T) {
+
+	// initial testing
+	DestAddr := "4.2.2.2"
+	DestHost := "google.com"
+	Timeout := 4
+	NBypes := 24
+	df := false
+
+	pkt, err := ntPinger.IcmpProbing(1, DestAddr, DestHost, NBypes, df, Timeout)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(pkt)
 }

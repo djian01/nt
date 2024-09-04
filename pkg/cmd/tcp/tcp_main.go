@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"nt/pkg/ntPinger"
-	"nt/pkg/output"
 	"nt/pkg/record"
+	output "nt/pkg/terminalOutput"
 )
 
 // Iniital tcpCmd
@@ -23,6 +23,13 @@ var tcpCmd = &cobra.Command{
 	Long:  "tcp Ping test Module for tcp testing",
 	Args:  cobra.ExactArgs(2), // 2 Args, <Destination Host> <Destination Port> are required
 	Run:   TcpCommandLink,
+	Example: `
+# Example: TCP ping to "google.com:443" with recording enabled
+nt -r tcp google.com 443
+
+# Example: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
+nt tcp -c 10 -i 2 10.2.3.10 22
+`,
 }
 
 // Initial the bucket
@@ -159,58 +166,6 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 		fmt.Printf("Recording CSV file is saved at: %s\n", color.GreenString(recordingFilePath))
 	}
 
-	// forLoopClose := false
-
-	// for {
-	// 	// check forLoopFlag
-	// 	if forLoopClose {
-	// 		break
-	// 	}
-
-	// 	// select chans
-	// 	select {
-	// 	case probingResult := <-probingChan:
-
-	// 		// outputChan
-	// 		outputChan <- probingResult
-
-	// 		// recordingChan
-	// 		if recording {
-	// 			recordingChan <- probingResult
-	// 		}
-
-	// 	case <-doneChan:
-	// 		// if recording is enabled, close the recordingchain and save the rest of the records to CSV
-	// 		if recording {
-	// 			wg.Add(1)
-	// 			close(recordingChan)
-	// 			// waiting the recording function to save the last records
-	// 			wg.Wait()
-	// 		}
-
-	// 		fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
-	// 		fmt.Println("\n--- testing completed ---")
-
-	// 		forLoopClose = true
-
-	// 	case <-interruptChan:
-	// 		// if recording is enabled, close the recordingchain and save the rest of the records to CSV
-	// 		if recording {
-	// 			wg.Add(1)
-	// 			close(recordingChan)
-	// 			// waiting the recording function to save the last records
-	// 			wg.Wait()
-	// 		}
-
-	// 		fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
-	// 		fmt.Println("\n--- Interrupt received, stopping testing ---")
-
-	// 		forLoopClose = true
-	// 	}
-	// }
-	// if recording {
-	// 	fmt.Printf("Recording CSV file is saved at: %s\n", color.GreenString(recordingFilePath))
-	// }
 	return nil
 }
 
@@ -224,17 +179,17 @@ func init() {
 
 	// Flag - Ping count
 	var count int
-	tcpCmd.Flags().IntVarP(&count, "count", "c", 0, "TCP Ping Test Count (default 0, Ping continuous till interruption)")
+	tcpCmd.Flags().IntVarP(&count, "count", "c", 0, "TCP Ping Count (default 0 - Non Stop till Ctrl+C)")
 
 	// Flag - Ping size
 	var size int
-	tcpCmd.Flags().IntVarP(&size, "size", "s", 0, "TCP Ping Test Payload Size (Default value is 0 byte, no payload)")
+	tcpCmd.Flags().IntVarP(&size, "size", "s", 0, "TCP Ping Payload Size (default: 0 byte - no payload)")
 
 	// Flag - Ping timeout
 	var timeout int
-	tcpCmd.Flags().IntVarP(&timeout, "timeout", "t", 4, "TCP Ping Test Count (default 4 seconds)")
+	tcpCmd.Flags().IntVarP(&timeout, "timeout", "t", 4, "TCP Ping Timeout (default: 4 sec)")
 
 	// Flag - Ping interval
 	var interval int
-	tcpCmd.Flags().IntVarP(&interval, "interval", "i", 1, "TCP Ping Test Interval (default 1 second)")
+	tcpCmd.Flags().IntVarP(&interval, "interval", "i", 1, "TCP Ping Interval (default: 1 sec)")
 }
