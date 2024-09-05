@@ -192,7 +192,7 @@ func init() {
 
 	// Flag - Ping Payload size
 	var size int
-	icmpCmd.Flags().IntVarP(&size, "size", "s", 24, "ICMP Ping Payload Size (default: 24 byte - Must be larger than 24)")
+	icmpCmd.Flags().IntVarP(&size, "size", "s", 32, "ICMP Ping Payload Size (default: 32 bytes - Total Packet Size = 44 bytes header + Payload Size)")
 
 	// Flag - Ping timeout
 	var timeout int

@@ -152,7 +152,7 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 		case pkt, ok := <-p.ProbeChan:
 			if !ok {
 				loopClose = true
-				break // break select
+				break // break select, bypass "outputChan <- pkt" 
 			}
 
 			// outputChan

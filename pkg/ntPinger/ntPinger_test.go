@@ -42,13 +42,16 @@ func Test_pingerTCP(t *testing.T) {
 func Test_ProbingICMP(t *testing.T) {
 
 	// initial testing
-	DestAddr := "4.2.2.2"
+	DestAddr := "8.8.8.8"
 	DestHost := "google.com"
 	Timeout := 4
 	NBypes := 24
-	df := false
+	df := true
+	Seq := 1
+	size := 32
+	payload := ntPinger.GeneratePayloadData(size)
 
-	pkt, err := ntPinger.IcmpProbing(1, DestAddr, DestHost, NBypes, df, Timeout)
+	pkt, err := ntPinger.IcmpProbing(Seq, DestAddr, DestHost, NBypes, df, Timeout,payload)
 	if err != nil {
 		fmt.Println(err)
 	}

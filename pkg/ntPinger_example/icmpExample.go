@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// ************* ICMP Type const ******************
 const (
 	icmpv4EchoRequest = 8
 	icmpv4EchoReply   = 0
@@ -27,7 +28,7 @@ const (
 // |                             Payload                           |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-// ************* Interface, Struct, Method ******************
+// ************* Struct, Method ******************
 
 // Struct - icmpMessage: Icmp Whole Message
 type icmpMessage struct {
@@ -114,7 +115,7 @@ func (b *icmpBody) SetPayloadData(payLoadSize int) {
 	}
 }
 
-// ************* Functions ******************
+// ************* ICMP Response Functions ******************
 
 // func - parseICMPMessage, parses bin as an ICMP message binary []byte
 func parseICMPMessage(bin []byte) (*icmpMessage, error) {
@@ -161,6 +162,9 @@ func ipv4Payload(b []byte) []byte {
 	return b[hdrlen:]
 }
 
+
+// ******************** Checksum Funcs ***************************
+
 // Checksum calculates the checksum for an ICMP message
 func Checksum(data []byte) uint32 {
 
@@ -186,6 +190,9 @@ func ChecksumToByte(csum uint32) []byte {
 	bin = append(bin, byte(^csum&0xff), byte(^csum>>8))
 	return bin
 }
+
+
+// ******************** Payload Funcs ***************************
 
 // Generate Payload Date []byte
 func GeneratePayloadData(payLoadSize int) []byte {
@@ -257,3 +264,7 @@ func Pinger(address string, timeout int) error {
 	fmt.Println(m.Body)
 	return nil
 }
+
+
+/////////////////
+

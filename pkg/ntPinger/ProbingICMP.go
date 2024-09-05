@@ -1,8 +1,7 @@
 package ntPinger
 
 import (
-	"bytes"
-	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -20,7 +19,7 @@ type ICMP struct {
 }
 
 // func: tcpProbing
-func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool, timeout int) (PacketICMP, error) {
+func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool, timeout int, payload []byte) (PacketICMP, error) {
 
 	// Initial PacketICMP
 	pkt := PacketICMP{
@@ -56,80 +55,68 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool
 			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DO)
 		})
 	}
-
+	
 	// Prepare ICMP message
+	icmpType := icmpv4EchoRequest
+	icmpId := os.Getpid()&0xffff
 
-	////  Add a custom payload
-	payload := make([]byte, nbytes)
-	for i := 0; i < nbytes; i++ {
-		payload[i] = byte(i) // Example payload data
-	}
-
-	//// ICMP Body
-	icmpBody := icmpBody{
-		ID:   os.Getegid() & 0xffff,
-		Seq:  Seq,
+	icmpB := icmpBody{
+		ID:  icmpId,
+		Seq: Seq,
 		Data: payload,
 	}
 
-	//// ICMP Message
-	icmpMsg := icmpMessage{
-		Type:     8, // Echo request
-		Code:     0,
-		Checksum: 0, // Will calculate later
-		Body:     &icmpBody,
-	}
+	//// build ICMP Request Binary
+	BinIcmpReq, err := (&icmpMessage{
+		Type: icmpType,
+		Code: 0,
+		Body: &icmpB,
+	}).Marshal()
 
-	//// ICMP Message Marshal
-	binIcmpMsg, err := icmpMsg.Marshal()
-	if err != nil {
+	if err !=nil {
 		return pkt, err
 	}
 
 	// TIMEOUT - Set timeout for the connection
-	conn.SetDeadline(time.Now().Add(time.Duration(timeout)))
+	conn.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 
-	// SEND - the ICMP packet
-	startTime := time.Now()
-	pkt.SendTime = startTime
+	// SEND - the ICMP Request
+	pkt.SendTime = time.Now()
 
-	fmt.Println(binIcmpMsg)
-
-	/// buffer.Bytes() -> conn.Write
-	if _, err := conn.Write(binIcmpMsg); err != nil {
-		return pkt, fmt.Errorf("failed to send packet: %v", err)
+	if _, err = conn.Write(BinIcmpReq); err != nil {
+		return pkt, fmt.Errorf("failed to send request: %w", err)
 	}
 
-	// RECEIVE -  the ICMP response
-	reply := make([]byte, 1024)
+	// RECEIVE -  the ICMP Response
+	BinIcmpRep := make([]byte, nbytes+44)
 
-	//// conn.Read -> reply
-	_, err = conn.Read(reply)
-	if err != nil {
-		return pkt, fmt.Errorf("failed to receive reply: %v", err)
+	if _, err = conn.Read(BinIcmpRep); err != nil {
+		return pkt, fmt.Errorf("failed to receive reply: %w", err)
 	}
 
 	// RTT - Calculate RTT
-	rtt := time.Since(startTime)
+	pkt.RTT = time.Since(pkt.SendTime)
 
-	// Extract the ICMP header from the response
-	receivedICMP := ICMP{}
-	buffer := *bytes.NewBuffer(reply[20:28])
-	binary.Read(&buffer, binary.BigEndian, &receivedICMP)
+	// Process the ICMP Response
+	BinIcmpRep = ipv4Payload(BinIcmpRep)
 
-	// check if the receive arrives
-	if receivedICMP.SequenceNum == uint16(Seq) {
-		pkt.Status = true
-		pkt.RTT = rtt
+	var icmpMsgRep *icmpMessage
+	if icmpMsgRep, err = parseICMPMessage(BinIcmpRep); err != nil {
+		return pkt, fmt.Errorf("failed to parsing the recived reply: %w", err)
 	}
 
-	// return
-	return pkt, nil
+	// Verify the ICMP response seq and the request seq
+	if (*icmpMsgRep).Body.Seq == Seq {
+		pkt.Status = true
+	}
 
+	return pkt, nil
+	
 }
 
-// ============================
 
+
+// ************* ICMP Type const ******************
 const (
 	icmpv4EchoRequest = 8
 	icmpv4EchoReply   = 0
@@ -137,49 +124,29 @@ const (
 	icmpv6EchoReply   = 129
 )
 
-type icmpMessageBody interface {
-	Len() int
-	Marshal() ([]byte, error)
-}
+// Visualization of the ICMP header for an Echo Request/Reply:
 
-// Struct - icmpEchoBody: Represenets an ICMP echo request or reply message body.
-type icmpBody struct {
-	ID   int    // identifier
-	Seq  int    // sequence number
-	Data []byte // data
-}
+// 0               1               2               3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     Type      |     Code      |          Checksum             |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |           Identifier          |        Sequence Number        |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Payload                           |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-func (b *icmpBody) Len() int {
-	if b == nil {
-		return 0
-	}
-	return 4 + len(b.Data) // the total Body len is len(b.Data) + 2 bytes (ID) + 2 bytes (Seq)
-}
+// ************* Struct, Method ******************
 
-// ICMP Body Marshal
-func (b *icmpBody) Marshal() ([]byte, error) {
-
-	// len is len(b.Data) + 2 bytes (ID) + 2 bytes (Seq)
-	bin := make([]byte, 4+len(b.Data))
-	// high byte -> ID, low byte -> bin[0]
-	bin[0], bin[1] = byte(b.ID>>8), byte(b.ID&0xff)
-	// high byte -> Seq, low byte -> bin[0]
-	bin[2], bin[3] = byte(b.Seq>>8), byte(b.Seq&0xff)
-	// copy the payload start from 5th byte
-	copy(bin[4:], b.Data)
-
-	return bin, nil
-}
-
-// Struct - icmpMessage: Represenets the ICMP packet
+// Struct - icmpMessage: Icmp Whole Message
 type icmpMessage struct {
-	Type     int             // type
-	Code     int             // code
-	Checksum int             // checksum
-	Body     icmpMessageBody // body
+	Type     int       // type
+	Code     int       // code
+	Checksum int       // checksum
+	Body     *icmpBody // body
 }
 
-// ICMP Message Marshal
+// icmpMessage Method - Len()
 func (icmpMsg *icmpMessage) Marshal() ([]byte, error) {
 
 	// 4 x bytes of ICMP Header, 1st Byte: Type, 2nd Byte: Code, 3rd & 4th Bytes: Checksum
@@ -201,15 +168,105 @@ func (icmpMsg *icmpMessage) Marshal() ([]byte, error) {
 		return binIcmpMsg, nil
 	}
 
-	// if the type is icmpv4EchoRequest or icmpv4EchoReply
-	csumIcmpMsg := Checksum(binIcmpMsg) // checksum coverage (all bytes except for the last byte)
+	// if the type is icmpv4EchoRequest or icmpv4EchoReply, move forward
 
-	// Place checksum back in header; using ^= avoids the
-	// assumption the checksum bytes are zero.
-	binIcmpMsg[2] ^= byte(^csumIcmpMsg & 0xff)
-	binIcmpMsg[3] ^= byte(^csumIcmpMsg >> 8)
+	// Create Chechsum for the ICMP Message Bin
+	csum := Checksum(binIcmpMsg)
+	csumByte := ChecksumToByte(csum)
+
+	// Place checksum back in header
+	binIcmpMsg[2] = csumByte[0]
+	binIcmpMsg[3] = csumByte[1]
+
 	return binIcmpMsg, nil
 }
+
+// Struct - icmpEchoBody: Icmp request body. Satisfy Interface - icmpMessageBody
+type icmpBody struct {
+	ID   int    // identifier
+	Seq  int    // sequence number
+	Data []byte // data
+}
+
+// icmpEchoBody Method - Len()
+func (icmpB *icmpBody) Len() int {
+	if icmpB == nil {
+		return 0
+	}
+
+	// the total Body len = 2 bytes (ID) + 2 bytes (Seq) + len(b.Data)
+	return 4 + len(icmpB.Data)
+}
+
+// icmpEchoBody Method - Marshal()
+func (b *icmpBody) Marshal() ([]byte, error) {
+
+	// len is len(b.Data) + 2 bytes (ID) + 2 bytes (Seq)
+	binIcmpBody := make([]byte, 4+len(b.Data))
+
+	// high byte -> ID, low byte -> bin[0]
+	binIcmpBody[0], binIcmpBody[1] = byte(b.ID>>8), byte(b.ID&0xff)
+
+	// high byte -> Seq, low byte -> bin[0]
+	binIcmpBody[2], binIcmpBody[3] = byte(b.Seq>>8), byte(b.Seq&0xff)
+
+	// copy the payload start from 5th byte
+	copy(binIcmpBody[4:], b.Data)
+	return binIcmpBody, nil
+}
+
+// ************* ICMP Response Functions ******************
+
+// func - parseICMPMessage, parses bin as an ICMP message binary []byte
+func parseICMPMessage(bin []byte) (*icmpMessage, error) {
+
+	msglen := len(bin)
+	if msglen < 4 {
+		return nil, errors.New("message too short")
+	}
+
+	icmpMsg := &icmpMessage{Type: int(bin[0]), Code: int(bin[1]), Checksum: int(bin[2])<<8 | int(bin[3])}
+
+	if msglen > 4 {
+		var err error
+		switch icmpMsg.Type {
+		case icmpv4EchoRequest, icmpv4EchoReply, icmpv6EchoRequest, icmpv6EchoReply:
+			icmpMsg.Body, err = parseICMPEcho(bin[4:])
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return icmpMsg, nil
+}
+
+// parseICMPEcho parses b as an ICMP echo request or reply message body.
+func parseICMPEcho(bin []byte) (*icmpBody, error) {
+
+	bodylen := len(bin)
+
+	icmpB := &icmpBody{ID: int(bin[0])<<8 | int(bin[1]), Seq: int(bin[2])<<8 | int(bin[3])}
+
+	if bodylen > 4 {
+		icmpB.Data = make([]byte, bodylen-4)
+		copy(icmpB.Data, bin[4:])
+	}
+	return icmpB, nil
+}
+
+
+func ipv4Payload(bin []byte) []byte {
+
+	// if the packet is less than 20 bytes (the minimum size of an IPv4 header), simply return bin as is.
+	if len(bin) < 20 {
+		return bin
+	}
+	headerLen := int(bin[0]&0x0f) << 2 // headerLen shifting left by 2 bits gives the total length of the IPv4 header in bytes
+	return bin[headerLen:]
+}
+
+
+// ******************** Checksum Funcs ***************************
 
 // Checksum calculates the checksum for an ICMP message
 func Checksum(data []byte) uint32 {
@@ -228,4 +285,22 @@ func Checksum(data []byte) uint32 {
 	csum = csum + csum>>16
 
 	return csum
+}
+
+// convert Checksum to []byte
+func ChecksumToByte(csum uint32) []byte {
+	bin := []byte{}
+	bin = append(bin, byte(^csum&0xff), byte(^csum>>8))
+	return bin
+}
+
+// Generate Payload Date []byte
+func GeneratePayloadData(payLoadSize int) []byte {
+
+	bin := make([]byte, payLoadSize)
+	for i := 0; i < payLoadSize; i++ {
+		bin[i] = byte(i) // Example payload data
+	}
+
+	return bin
 }

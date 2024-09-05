@@ -13,11 +13,11 @@ import (
 func Test_TcpCommandMain(t *testing.T) {
 
 	// initial test vars
-	recording := false
+	recording := true
 	displayRow := 10
 	destHost := "google.com"
 	destPort := 443
-	count := 0
+	count := 5
 	size := 50
 	timeout := 1
 	interval := 1
