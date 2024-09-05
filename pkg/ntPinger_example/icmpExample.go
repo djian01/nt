@@ -1,11 +1,5 @@
 package ntPingerExample
 
-// Copyright 2009 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-// taken from http://golang.org/src/pkg/net/ipraw_test.go
-
 import (
 	"errors"
 	"fmt"
@@ -21,20 +15,61 @@ const (
 	icmpv6EchoReply   = 129
 )
 
+// Visualization of the ICMP header for an Echo Request/Reply:
+
+// 0               1               2               3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |     Type      |     Code      |          Checksum             |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |           Identifier          |        Sequence Number        |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             Payload                           |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 // ************* Interface, Struct, Method ******************
+
 // Struct - icmpMessage: Icmp Whole Message
 type icmpMessage struct {
-	Type     int             // type
-	Code     int             // code
-	Checksum int             // checksum
-	Body     icmpMessageBody // body
+	Type     int       // type
+	Code     int       // code
+	Checksum int       // checksum
+	Body     *icmpBody // body
 }
 
-// Interface - icmpMessageBody
-type icmpMessageBody interface {
-	Len() int
-	Marshal() ([]byte, error)
-	SetPayloadData(payLoadSize int)
+// icmpMessage Method - Len()
+func (icmpMsg *icmpMessage) Marshal() ([]byte, error) {
+
+	// 4 x bytes of ICMP Header, 1st Byte: Type, 2nd Byte: Code, 3rd & 4th Bytes: Checksum
+	binIcmpMsg := []byte{byte(icmpMsg.Type), byte(icmpMsg.Code), 0, 0}
+
+	// if icmpMsg Body is not nil and Len is not 0, append ICMP Header & Body
+	if icmpMsg.Body != nil && icmpMsg.Body.Len() != 0 {
+		binIcmpBody, err := icmpMsg.Body.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		binIcmpMsg = append(binIcmpMsg, binIcmpBody...)
+	}
+
+	// if the type is icmpv6EchoRequest or icmpv6EchoReply, return binIcmpMsg
+	// IPv6 ICMP checksum is handled differently
+	switch icmpMsg.Type {
+	case icmpv6EchoRequest, icmpv6EchoReply:
+		return binIcmpMsg, nil
+	}
+
+	// if the type is icmpv4EchoRequest or icmpv4EchoReply, move forward
+
+	// Create Chechsum for the ICMP Message Bin
+	csum := Checksum(binIcmpMsg)
+	csumByte := ChecksumToByte(csum)
+
+	// Place checksum back in header
+	binIcmpMsg[2] = csumByte[0]
+	binIcmpMsg[3] = csumByte[1]
+
+	return binIcmpMsg, nil
 }
 
 // Struct - icmpEchoBody: Icmp request body. Satisfy Interface - icmpMessageBody
@@ -77,40 +112,6 @@ func (b *icmpBody) SetPayloadData(payLoadSize int) {
 	for i := 0; i < payLoadSize; i++ {
 		b.Data[i] = byte(i) // Example payload data
 	}
-}
-
-// icmpMessage Method - Len()
-func (icmpMsg *icmpMessage) Marshal() ([]byte, error) {
-
-	// 4 x bytes of ICMP Header, 1st Byte: Type, 2nd Byte: Code, 3rd & 4th Bytes: Checksum
-	binIcmpMsg := []byte{byte(icmpMsg.Type), byte(icmpMsg.Code), 0, 0}
-
-	// if icmpMsg Body is not nil and Len is not 0, append ICMP Header & Body
-	if icmpMsg.Body != nil && icmpMsg.Body.Len() != 0 {
-		binIcmpBody, err := icmpMsg.Body.Marshal()
-		if err != nil {
-			return nil, err
-		}
-		binIcmpMsg = append(binIcmpMsg, binIcmpBody...)
-	}
-
-	// if the type is icmpv6EchoRequest or icmpv6EchoReply, return binIcmpMsg
-	// IPv6 ICMP checksum is handled differently
-	switch icmpMsg.Type {
-	case icmpv6EchoRequest, icmpv6EchoReply:
-		return binIcmpMsg, nil
-	}
-
-	// if the type is icmpv4EchoRequest or icmpv4EchoReply, move forward
-
-	// Create Chechsum for the ICMP Message Bin
-	csum := Checksum(binIcmpMsg)
-
-	// Place checksum back in header
-	binIcmpMsg[2] = byte(^csum & 0xff)
-	binIcmpMsg[3] = byte(^csum >> 8)
-
-	return binIcmpMsg, nil
 }
 
 // ************* Functions ******************
@@ -177,6 +178,24 @@ func Checksum(data []byte) uint32 {
 	csum = csum + csum>>16
 
 	return csum
+}
+
+// convert Checksum to []byte
+func ChecksumToByte(csum uint32) []byte {
+	bin := []byte{}
+	bin = append(bin, byte(^csum&0xff), byte(^csum>>8))
+	return bin
+}
+
+// Generate Payload Date []byte
+func GeneratePayloadData(payLoadSize int) []byte {
+
+	bin := make([]byte, payLoadSize)
+	for i := 0; i < payLoadSize; i++ {
+		bin[i] = byte(i) // Example payload data
+	}
+
+	return bin
 }
 
 // ******************** Pinger ***************************

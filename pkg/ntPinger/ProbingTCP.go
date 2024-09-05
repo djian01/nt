@@ -12,7 +12,7 @@ import (
 )
 
 // func: tcpProbingRun
-func tcpProbingRun(p *Pinger) {
+func tcpProbingRun(p *Pinger, errChan chan<- error) {
 
 	// Create a channel to listen for SIGINT (Ctrl+C)
 	interruptChan := make(chan os.Signal, 1)
@@ -43,10 +43,13 @@ func tcpProbingRun(p *Pinger) {
 				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
 
 				if err != nil {
-					if strings.Contains(err.Error(), "timeout") {
-						// Probe Timeout
+
+					// TCP "timeout" or "connection refused"
+					if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "refused") {
+						// Probe "timeout" or "connection refused"
 					} else {
-						panic(err)
+						// inject the errChan Except for: "timeout" & "TCP refused"
+						errChan <- err
 					}
 				} else {
 					// Probe Success
@@ -78,8 +81,10 @@ func tcpProbingRun(p *Pinger) {
 				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
 
 				if err != nil {
-					if strings.Contains(err.Error(), "timeout") {
-						// Probe Timeout
+
+					// TCP "timeout" or "connection refused"
+					if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "refused") {
+						// Probe "timeout" or "connection refused"
 					} else {
 						panic(err)
 					}
@@ -129,7 +134,7 @@ func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 	conn, err := d.DialContext(*ctx, pkt.Type, pingTarget)
 	if err != nil {
 		pkt.Status = false
-		return pkt, err
+		return pkt, fmt.Errorf("conn error: %w", err)
 	}
 	defer conn.Close()
 
@@ -140,7 +145,7 @@ func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 		// Send the payload
 		_, err = conn.Write(packetPayload)
 		if err != nil {
-			return pkt, err
+			return pkt, fmt.Errorf("conn write error: %w", err)
 		}
 	}
 

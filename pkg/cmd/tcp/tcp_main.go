@@ -68,7 +68,7 @@ func TcpCommandLink(cmd *cobra.Command, args []string) {
 	// call func TcpCommandMain
 	err = TcpCommandMain(recording, displayRow, destHost, destPort, count, size, timeout, interval)
 	if err != nil {
-		panic(err)
+		panic(err) // panic all error from under
 	}
 }
 
@@ -87,9 +87,13 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 	// recordingFilePath
 	recordingFilePath := ""
 
-	// Channel - outputChan
+	// Channel - outputChan (if there are N go routine, the channel deep is N)
 	outputChan := make(chan ntPinger.Packet, 1)
 	defer close(outputChan)
+
+	// Channel - error (for Go Routines)
+	errChan := make(chan error, 1)
+	defer close(errChan)
 
 	// Channel - recordingChan, closed in the end of the testing, no need to defer close
 	recordingChan := make(chan ntPinger.Packet, 1)
@@ -108,10 +112,10 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 	// Start Ping Main Command, manually input display Len
 	p, err := ntPinger.NewPinger(InputVar)
 	if err != nil {
-		panic(err)
+		return err // return err from NewPinger including resolve error
 	}
 
-	go p.Run()
+	go p.Run(errChan)
 
 	// Output
 	//// Go Routine: OutputFunc
@@ -136,13 +140,30 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 	}
 
 	// harvest the result
-	for pkt := range p.ProbeChan {
-		// outputChan
-		outputChan <- pkt
+	loopClose := false
+	for {
+		// check loopClose Flag
+		if loopClose {
+			break
+		}
 
-		// recordingChan
-		if recording {
-			recordingChan <- pkt
+		// select option
+		select {
+		case pkt, ok := <-p.ProbeChan:
+			if !ok {
+				loopClose = true
+				break // break select
+			}
+
+			// outputChan
+			outputChan <- pkt
+
+			// recordingChan
+			if recording {
+				recordingChan <- pkt
+			}
+		case err := <-errChan:
+			return err
 		}
 	}
 

@@ -22,12 +22,16 @@ func Test_pingerTCP(t *testing.T) {
 		DestPort: 443,
 	}
 
+	// Channel - error
+	errChan := make(chan error, 1)
+	defer close(errChan)
+
 	p, err := ntPinger.NewPinger(InputVar)
 	if err != nil {
 		panic(err)
 	}
 
-	go p.Run()
+	go p.Run(errChan)
 
 	for pkt := range p.ProbeChan {
 		fmt.Println(pkt)

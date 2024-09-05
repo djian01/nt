@@ -322,14 +322,14 @@ func (p *Pinger) UpdateStatistics(pkt Packet) {
 }
 
 // Method (Pinger) - Update pinger statistics
-func (p *Pinger) Run() {
+func (p *Pinger) Run(errChan chan<- error) {
 
 	switch p.InputVars.Type {
 
 	// Type: tcp
 	case "tcp":
 		// Go Routine - tcpProbingRun
-		go tcpProbingRun(p)
+		go tcpProbingRun(p, errChan)
 
 	case "icmp":
 
