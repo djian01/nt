@@ -15,13 +15,15 @@ func Test_IcmpCommandMain(t *testing.T) {
 	// initial test vars
 	recording := true
 	displayRow := 13
-	dest := "google.com"
-	count := 3
-	size := 24
+	destHost := "192.168.128.128"
+	count := 0
+	size := 88
+	timeout := 1
 	interval := 1
+	//df := true
 
 	// call the func IcmpProbingFunc
-	err := icmp.IcmpCommandMain(recording, displayRow, dest, count, size, interval)
+	err := icmp.IcmpCommandMain(recording, displayRow, destHost, count, size, timeout, interval)
 	if err != nil {
 		panic(err)
 	}

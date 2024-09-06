@@ -5,22 +5,100 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
+// func: icmpProbingRun
+func icmpProbingRun(p *Pinger, errChan chan<- error) {
+
+	// Create a channel to listen for SIGINT (Ctrl+C)
+	interruptChan := make(chan os.Signal, 1)
+	defer close(interruptChan)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// Sequence
+	Seq := 0
+
+	// forLoopEnds Flag
+	forLoopEnds := false
+
+	// generate payload
+	payLoad := GeneratePayloadData(p.InputVars.PayLoadSize)
+
+	// count
+	if p.InputVars.Count == 0 {
+		for {
+			if forLoopEnds {
+				break
+			}
+
+			select {
+			case <-interruptChan: // case interruptChan, close the channel & break the loop
+				close(p.ProbeChan)
+				forLoopEnds = true
+			default:
+				pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
+				if err != nil {
+					errChan <- err
+				}
+
+				p.UpdateStatistics(&pkt)
+				pkt.UpdateStatistics(p.Stat)
+				p.ProbeChan <- &pkt
+				Seq++
+
+				// sleep for interval
+				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+			}
+
+		}
+
+	} else {
+		for i := 0; i < p.InputVars.Count; i++ {
+			if forLoopEnds {
+				break
+			}
+			select {
+			case <-interruptChan:
+				close(p.ProbeChan) // case interruptChan, close the channel & break the loop
+				forLoopEnds = true
+			default:
+				pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
+				if err != nil {
+					errChan <- err
+				}
+
+				p.UpdateStatistics(&pkt)
+				pkt.UpdateStatistics(p.Stat)
+				p.ProbeChan <- &pkt
+				Seq++
+
+				// check the last loop of the probing, close probeChan
+				if i == (p.InputVars.Count - 1) {
+					close(p.ProbeChan)
+				}
+
+				// sleep for interval
+				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+			}
+		}
+	}
+}
+
 // func: tcpProbing
-func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, df bool, timeout int, payload []byte) (PacketICMP, error) {
+func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, timeout int, payload []byte) (PacketICMP, error) {
 
 	// Initial PacketICMP
 	pkt := PacketICMP{
-		Type:           "icmp",
-		Status:         false,
-		Seq:            Seq,
-		DestAddr:       destAddr,
-		DestHost:       desetHost,
-		PayLoadSize:    PayLoadSize,
-		Icmp_dfragment: df,
+		Type:        "icmp",
+		Status:      false,
+		Seq:         Seq,
+		DestAddr:    destAddr,
+		DestHost:    desetHost,
+		PayLoadSize: PayLoadSize,
 	}
 
 	// Convert the string to *net.IPAddr
@@ -37,15 +115,10 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, df
 	defer conn.Close()
 
 	// Set the "Don't Fragment" (DF) flag
-	if df {
-		rawConn, err := conn.SyscallConn()
-		if err != nil {
-			return pkt, fmt.Errorf("failed to get raw connection: %v", err)
-		}
-		rawConn.Control(func(fd uintptr) {
-			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DO)
-		})
-	}
+	// err = SetDFBit(conn, df)
+	// if err != nil {
+	// 	return pkt, err
+	// }
 
 	// Prepare ICMP message
 	icmpType := icmpv4EchoRequest
@@ -79,10 +152,18 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, df
 	}
 
 	// RECEIVE -  the ICMP Response
-	BinIcmpRep := make([]byte, PayLoadSize+44)
+	BinIcmpRep := make([]byte, PayLoadSize+42)
 
 	if _, err = conn.Read(BinIcmpRep); err != nil {
-		return pkt, fmt.Errorf("failed to receive reply: %w", err)
+		if strings.Contains(err.Error(), "timeout") {
+			// timeout
+			pkt.AdditionalInfo = "Timeout"
+			pkt.Status = false
+			return pkt, nil
+		} else {
+			return pkt, fmt.Errorf("failed to read response: %w", err)
+		}
+
 	}
 
 	// RTT - Calculate RTT
@@ -99,6 +180,13 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, df
 	// Verify the ICMP response seq and the request seq
 	if (*icmpMsgRep).Body.Seq == Seq {
 		pkt.Status = true
+	} else {
+		pkt.AdditionalInfo = "Seq_Mismatch"
+	}
+
+	// Check Latency
+	if CheckLatency(pkt.AvgRtt, pkt.RTT) {
+		pkt.AdditionalInfo = "High_Latency"
 	}
 
 	return pkt, nil
@@ -278,16 +366,5 @@ func Checksum(data []byte) uint32 {
 func ChecksumToByte(csum uint32) []byte {
 	bin := []byte{}
 	bin = append(bin, byte(^csum&0xff), byte(^csum>>8))
-	return bin
-}
-
-// Generate Payload Date []byte
-func GeneratePayloadData(payLoadSize int) []byte {
-
-	bin := make([]byte, payLoadSize)
-	for i := 0; i < payLoadSize; i++ {
-		bin[i] = byte(i) // Example payload data
-	}
-
 	return bin
 }

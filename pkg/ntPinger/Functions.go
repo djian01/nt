@@ -68,3 +68,33 @@ func CheckLatency(avgRtt, currentRtt time.Duration) bool {
 
 	return HighLatencyFlag
 }
+
+// Func - Generate Payload Date []byte
+func GeneratePayloadData(payLoadSize int) []byte {
+
+	bin := make([]byte, payLoadSize)
+	for i := 0; i < payLoadSize; i++ {
+		bin[i] = byte(i) // Example payload data
+	}
+
+	return bin
+}
+
+// Func - Set DF bit
+// func SetDFBit(conn *net.IPConn, df bool) error {
+// 	rawConn, err := conn.SyscallConn()
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if df {
+// 		rawConn.Control(func(fd uintptr) {
+// 			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DO)
+// 		})
+// 	} else {
+// 		rawConn.Control(func(fd uintptr) {
+// 			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DONT)
+// 		})
+// 	}
+// 	return nil
+// }

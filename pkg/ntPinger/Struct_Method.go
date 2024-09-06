@@ -20,7 +20,7 @@ type InputVars struct {
 	DestPort    int
 	Http_path   string
 	Http_tls    bool
-	Icmp_df     bool // ipv4 only
+	//Icmp_df     bool // ipv4 only
 	Dns_request string
 }
 
@@ -133,15 +133,14 @@ func (pkt *PacketHTTP) UpdateStatistics(s Statistics) {
 
 // PacketICMP Struct
 type PacketICMP struct {
-	Type           string
-	Status         bool
-	Seq            int
-	DestAddr       string
-	DestHost       string
-	PayLoadSize    int
-	SendTime       time.Time
-	RTT            time.Duration
-	Icmp_dfragment bool // ipv4 only
+	Type        string
+	Status      bool
+	Seq         int
+	DestAddr    string
+	DestHost    string
+	PayLoadSize int
+	SendTime    time.Time
+	RTT         time.Duration
 	// statistics
 	PacketsRecv int
 	PacketsSent int
@@ -317,7 +316,9 @@ func (p *Pinger) UpdateStatistics(pkt Packet) {
 		} else {
 			p.Stat.AvgRtt = (p.Stat.AvgRtt*time.Duration(p.Stat.PacketsRecv-1) + pkt.GetRtt()) / time.Duration(p.Stat.PacketsRecv)
 		}
-
+	} else {
+		// PacketLoss
+		p.Stat.UpdatePacketLoss()
 	}
 }
 
@@ -332,6 +333,8 @@ func (p *Pinger) Run(errChan chan<- error) {
 		go tcpProbingRun(p, errChan)
 
 	case "icmp":
+		// Go Routine - icmpProbingRun
+		go icmpProbingRun(p, errChan)
 
 	case "http":
 

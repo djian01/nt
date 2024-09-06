@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"nt/pkg/cmd/icmp"
+	"nt/pkg/cmd/tcp"
 
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,13 @@ var rootCmd = &cobra.Command{
 	Short: "Net-Test CLI",
 	Long:  "Net-Test is a set of tools for network testing",
 	Run:   RootCommandFunc,
+	Example: `
+# Example: ICMP ping to "google.com" with recording enabled
+nt -r icmp google.com
+
+# Example: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
+nt tcp -c 10 -i 2 10.2.3.10 22
+`,
 }
 
 // Func - RootCommandFunc()
@@ -45,11 +53,12 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&_recording, "recording", "r", false, "Enable result recording to a CSV file")
 
 	//// GFlag - display Row Length
-	rootCmd.PersistentFlags().IntVarP(&_displayRow, "displayrow", "d", 10, "Set the number of the dispaly row(s)")
+	rootCmd.PersistentFlags().IntVarP(&_displayRow, "displayrow", "p", 10, "Set the number of the dispaly row(s)")
 
 	//// Flag - version
 	rootCmd.Flags().BoolVarP(&_version, "version", "v", false, "Show version")
 
 	// Add Sub-Commands
+	rootCmd.AddCommand(tcp.TcpCommand())
 	rootCmd.AddCommand(icmp.IcmpCommand())
 }
