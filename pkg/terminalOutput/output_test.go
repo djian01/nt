@@ -2,7 +2,7 @@
 // sudo go test -run ^Test_OutputMain$
 // *************************
 
-package output_test
+package terminalOutput_test
 
 import (
 	"fmt"

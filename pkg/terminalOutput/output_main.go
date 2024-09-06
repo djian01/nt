@@ -1,4 +1,4 @@
-package output
+package terminalOutput
 
 import (
 	"nt/pkg/ntPinger"
