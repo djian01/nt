@@ -90,7 +90,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"Status",
 					"DestHost",
 					"DestAddr",
-					"Size",
+					"PayLoadSize",
 					"RTT",
 					"SendTime",
 					"PacketsSent",
@@ -98,7 +98,9 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"PacketLoss",
 					"MinRtt",
 					"AvgRtt",
-					"MaxRtt"}
+					"MaxRtt",
+					"AdditionalInfo",
+				}
 
 				err := writer.Write(header)
 
@@ -116,7 +118,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					fmt.Sprintf("%t", pkt.Status), // Status
 					pkt.DestHost,                  // DestHost
 					pkt.DestAddr,                  // DestAddr
-					strconv.Itoa(pkt.NBytes),      // Size
+					strconv.Itoa(pkt.PayLoadSize), // PayLoadSize
 					(pkt.RTT).String(),            // RTT
 					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
 
@@ -126,6 +128,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.MinRtt.String(),                                // MinRtt
 					pkt.AvgRtt.String(),                                // AvgRtt
 					pkt.MaxRtt.String(),                                // MaxRtt
+					pkt.AdditionalInfo,                                 // AdditionalInfo
 				}
 
 				if err := writer.Write(row); err != nil {
@@ -142,7 +145,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"DestHost",
 					"DestAddr",
 					"DestPort",
-					"Size",
+					"PayLoadSize",
 					"RTT",
 					"SendTime",
 					"PacketsSent",
@@ -150,7 +153,9 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"PacketLoss",
 					"MinRtt",
 					"AvgRtt",
-					"MaxRtt"}
+					"MaxRtt",
+					"AdditionalInfo",
+				}
 
 				err := writer.Write(header)
 
@@ -169,7 +174,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.DestHost,                               // DestHost
 					pkt.DestAddr,                               // DestAddr
 					strconv.Itoa(pkt.DestPort),                 // DestPort
-					strconv.Itoa(pkt.NBytes),                   // Size
+					strconv.Itoa(pkt.PayLoadSize),              // PayLoadSize
 					(pkt.RTT).String(),                         // RTT
 					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
 
@@ -179,6 +184,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.MinRtt.String(),                                // MinRtt
 					pkt.AvgRtt.String(),                                // AvgRtt
 					pkt.MaxRtt.String(),                                // MaxRtt
+					pkt.AdditionalInfo,                                 // AdditionalInfo
 				}
 
 				if err := writer.Write(row); err != nil {

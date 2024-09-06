@@ -100,13 +100,13 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 
 	// build the InputVar
 	InputVar := ntPinger.InputVars{
-		Type:     "tcp",
-		Count:    count,
-		NBypes:   size,
-		Timeout:  timeout,
-		Interval: interval,
-		DestHost: destHost,
-		DestPort: destPort,
+		Type:        "tcp",
+		Count:       count,
+		PayLoadSize: size,
+		Timeout:     timeout,
+		Interval:    interval,
+		DestHost:    destHost,
+		DestPort:    destPort,
 	}
 
 	// Start Ping Main Command, manually input display Len
@@ -152,7 +152,7 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 		case pkt, ok := <-p.ProbeChan:
 			if !ok {
 				loopClose = true
-				break // break select, bypass "outputChan <- pkt" 
+				break // break select, bypass "outputChan <- pkt"
 			}
 
 			// outputChan

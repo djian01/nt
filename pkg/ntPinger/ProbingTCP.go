@@ -40,27 +40,18 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
-
+				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
 				if err != nil {
-
-					// TCP "timeout" or "connection refused"
-					if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "refused") {
-						// Probe "timeout" or "connection refused"
-					} else {
-						// inject the errChan Except for: "timeout" & "TCP refused"
-						errChan <- err
-					}
-				} else {
-					// Probe Success
+					errChan <- err
 				}
+
 				p.UpdateStatistics(&pkt)
 				pkt.UpdateStatistics(p.Stat)
 				p.ProbeChan <- &pkt
 				Seq++
 
 				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval))
+				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
 			}
 
 		}
@@ -78,19 +69,11 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 				defer cancel()
 
-				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.NBypes)
-
+				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
 				if err != nil {
-
-					// TCP "timeout" or "connection refused"
-					if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "refused") {
-						// Probe "timeout" or "connection refused"
-					} else {
-						panic(err)
-					}
-				} else {
-					// Probe Success
+					errChan <- err
 				}
+
 				p.UpdateStatistics(&pkt)
 				pkt.UpdateStatistics(p.Stat)
 				p.ProbeChan <- &pkt
@@ -102,23 +85,23 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 				}
 
 				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval))
+				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
 			}
 		}
 	}
 }
 
 // func: tcpProbing
-func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string, destPort int, nbytes int) (PacketTCP, error) {
+func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string, destPort int, PayLoadSize int) (PacketTCP, error) {
 
 	// initial packet
 	pkt := PacketTCP{
-		Type:     "tcp",
-		Seq:      Seq,
-		DestHost: desetHost,
-		DestAddr: destAddr,
-		DestPort: destPort,
-		NBytes:   nbytes,
+		Type:        "tcp",
+		Seq:         Seq,
+		DestHost:    desetHost,
+		DestAddr:    destAddr,
+		DestPort:    destPort,
+		PayLoadSize: PayLoadSize,
 	}
 
 	// setup Dialer
@@ -134,13 +117,36 @@ func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 	conn, err := d.DialContext(*ctx, pkt.Type, pingTarget)
 	if err != nil {
 		pkt.Status = false
-		return pkt, fmt.Errorf("conn error: %w", err)
+		// Error: "connection refused"
+		if strings.Contains(err.Error(), "refused") {
+			// Calculate the RTT
+			pkt.RTT = time.Since(pkt.SendTime)
+			// Add Info
+			pkt.AdditionalInfo = "Conn_Refused"
+			return pkt, nil
+
+			// Error: "no route to host"
+		} else if strings.Contains(err.Error(), "no route") {
+			// Add Info
+			pkt.AdditionalInfo = "No_Route"
+			return pkt, nil
+
+			// Error: "timeout"
+		} else if strings.Contains(err.Error(), "timeout") {
+			// Add Info
+			pkt.AdditionalInfo = "Conn_Timeout"
+			return pkt, nil
+
+			// Error: Else
+		} else {
+			return pkt, fmt.Errorf("conn error: %w", err)
+		}
 	}
 	defer conn.Close()
 
 	// create and send payload if required
-	if nbytes != 0 {
-		packetPayload := make([]byte, nbytes)
+	if PayLoadSize != 0 {
+		packetPayload := make([]byte, PayLoadSize)
 
 		// Send the payload
 		_, err = conn.Write(packetPayload)
@@ -154,6 +160,11 @@ func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 
 	// Calculate the RTT
 	pkt.RTT = time.Since(pkt.SendTime)
+
+	// Check Latency
+	if CheckLatency(pkt.AvgRtt, pkt.RTT) {
+		pkt.AdditionalInfo = "High_Latency"
+	}
 
 	return pkt, nil
 }

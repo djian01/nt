@@ -1,6 +1,7 @@
 package ntTEST
 
 import (
+	"math"
 	"math/rand"
 	"nt/pkg/ntPinger"
 	"os"
@@ -19,6 +20,12 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 	var AvgRtt time.Duration
 	var MaxRtt time.Duration
 	var status bool
+	var AdditionalInfo string
+
+	// initial RTT
+	min := 5
+	max := 1700
+	var ranRTT time.Duration
 
 	// random Source
 	source := rand.NewSource(time.Now().UnixNano())
@@ -42,6 +49,12 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 		// create the input NtResult
 		for {
 
+			// initial ranRTT
+			ranRTT = time.Duration(0)
+
+			// initial AdditionalInfo
+			AdditionalInfo = ""
+
 			// check forLoopFlag
 			if !forLoopFlag {
 				break
@@ -65,22 +78,19 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				status = true
 			} else {
 				status = false
+				AdditionalInfo = "Timeout"
 			}
-
-			min := 200
-			max := 700
-			ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
 
 			// setup the initial MinRtt, MaxRtt & AvgRtt. Based on the 1st "PING_OK" packet, set the MinRtt, MaxRtt & AvgRtt
 			if PacketsSent == 1 {
-				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
+				ranRTT = time.Duration(biasedRandom(min, max, rand.New(source))) * time.Millisecond
 				MinRtt = ranRTT
 				MaxRtt = ranRTT
 				AvgRtt = ranRTT
 				// after Initialization
 			} else if status {
 				// generate RTT
-				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
+				ranRTT = time.Duration(biasedRandom(min, max, rand.New(source))) * time.Millisecond
 
 				// RTT Statistics
 				if ranRTT > MaxRtt {
@@ -95,24 +105,30 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 			// generate statistic
 			PacketLoss = (1 - float64(PacketsRecv)/float64(PacketsSent))
 
+			// Check Latency
+			if ntPinger.CheckLatency(AvgRtt, ranRTT) {
+				AdditionalInfo = "High_Latency"
+			}
+
 			switch Type {
 			case "icmp":
 				probeResult := ntPinger.PacketICMP{
-					Seq:      PacketsSent - 1,
-					Type:     Type,
-					DestHost: "google.com",
-					DestAddr: "1.2.3.4",
-					NBytes:   56,
-					Status:   status,
-					RTT:      ranRTT,
-					SendTime: time.Now(),
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "google.com",
+					DestAddr:    "1.2.3.4",
+					PayLoadSize: 56,
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
 
-					PacketsSent: PacketsSent,
-					PacketsRecv: PacketsRecv,
-					PacketLoss:  PacketLoss,
-					MinRtt:      MinRtt,
-					MaxRtt:      MaxRtt,
-					AvgRtt:      AvgRtt,
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
 				}
 
 				*probeChan <- &probeResult
@@ -122,22 +138,23 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				destPort := 443
 
 				probeResult := ntPinger.PacketTCP{
-					Seq:      PacketsSent - 1,
-					Type:     Type,
-					DestHost: "google.com",
-					DestAddr: "1.2.3.4",
-					NBytes:   56,
-					Status:   status,
-					RTT:      ranRTT,
-					SendTime: time.Now(),
-					DestPort: destPort,
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "google.com",
+					DestAddr:    "1.2.3.4",
+					PayLoadSize: 56,
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
+					DestPort:    destPort,
 
-					PacketsSent: PacketsSent,
-					PacketsRecv: PacketsRecv,
-					PacketLoss:  PacketLoss,
-					MinRtt:      MinRtt,
-					MaxRtt:      MaxRtt,
-					AvgRtt:      AvgRtt,
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
 				}
 
 				*probeChan <- &probeResult
@@ -161,6 +178,12 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 		// create the input NtResult
 		for i := 0; i < count; i++ {
 
+			// initial ranRTT
+			ranRTT = time.Duration(0)
+
+			// initial AdditionalInfo
+			AdditionalInfo = ""
+
 			// check forLoopFlag
 			if !forLoopFlag {
 				break
@@ -185,53 +208,56 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				status = true
 			} else {
 				status = false
+				AdditionalInfo = "Timeout"
 			}
 
-			min := 200
-			max := 700
-			ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
-
 			// setup the initial MinRtt, MaxRtt & AvgRtt. Based on the 1st "PING_OK" packet, set the MinRtt, MaxRtt & AvgRtt
-			if i == 0 {
-				ranRTT := time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
+			if PacketsSent == 1 {
+				ranRTT = time.Duration(biasedRandom(min, max, rand.New(source))) * time.Millisecond
 				MinRtt = ranRTT
 				MaxRtt = ranRTT
 				AvgRtt = ranRTT
-				// after Initialization
-			} else {
 
+				// if packet status true
+			} else if status {
 				// generate RTT
-				ranRTT = time.Duration(rand.New(source).Intn(max-min+1)+min) * time.Millisecond
+				ranRTT = time.Duration(biasedRandom(min, max, rand.New(source))) * time.Millisecond
 
 				if ranRTT > MaxRtt {
 					MaxRtt = ranRTT
 				} else if ranRTT < MinRtt {
 					MinRtt = ranRTT
 				}
-				AvgRtt = time.Duration(((int64(AvgRtt)/1000000)*(int64(PacketsRecv-1))+(int64(ranRTT)/1000000))/int64(PacketsRecv)) * time.Millisecond
+				AvgRtt = (AvgRtt*time.Duration(PacketsRecv-1) + ranRTT) / time.Duration(PacketsRecv)
 			}
 
 			// generate statistic
 			PacketLoss = (1 - float64(PacketsRecv)/float64(PacketsSent))
 
+			// Check Latency
+			if ntPinger.CheckLatency(AvgRtt, ranRTT) {
+				AdditionalInfo = "High_Latency"
+			}
+
 			switch Type {
 			case "icmp":
 				probeResult := ntPinger.PacketICMP{
-					Seq:      PacketsSent - 1,
-					Type:     Type,
-					DestHost: "google.com",
-					DestAddr: "1.2.3.4",
-					NBytes:   56,
-					Status:   status,
-					RTT:      ranRTT,
-					SendTime: time.Now(),
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "google.com",
+					DestAddr:    "1.2.3.4",
+					PayLoadSize: 56,
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
 
-					PacketsSent: PacketsSent,
-					PacketsRecv: PacketsRecv,
-					PacketLoss:  PacketLoss,
-					MinRtt:      MinRtt,
-					MaxRtt:      MaxRtt,
-					AvgRtt:      AvgRtt,
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
 				}
 
 				*probeChan <- &probeResult
@@ -241,22 +267,23 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				destPort := 443
 
 				probeResult := ntPinger.PacketTCP{
-					Seq:      PacketsSent - 1,
-					Type:     Type,
-					DestHost: "google.com",
-					DestAddr: "1.2.3.4",
-					NBytes:   56,
-					Status:   status,
-					RTT:      ranRTT,
-					SendTime: time.Now(),
-					DestPort: destPort,
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "google.com",
+					DestAddr:    "1.2.3.4",
+					PayLoadSize: 56,
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
+					DestPort:    destPort,
 
-					PacketsSent: PacketsSent,
-					PacketsRecv: PacketsRecv,
-					PacketLoss:  PacketLoss,
-					MinRtt:      MinRtt,
-					MaxRtt:      MaxRtt,
-					AvgRtt:      AvgRtt,
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
 				}
 
 				*probeChan <- &probeResult
@@ -271,4 +298,14 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 		// code finish
 		close(*probeChan)
 	}
+}
+
+// Biased random number generator using custom source. Bias towards smaller numbers
+func biasedRandom(min, max int, r *rand.Rand) int {
+	// Generate a random float in the range [0, 1]
+	randomFloat := r.Float64()
+	// ^3 or apply another bias to the random value to bias towards smaller numbers
+	biased := math.Pow(randomFloat, 3) // You can adjust the power for more bias
+	// Scale to the desired range and convert to int
+	return min + int(biased*float64(max-min))
 }

@@ -9,17 +9,8 @@ import (
 	"time"
 )
 
-// ICMP represents an ICMP message
-type ICMP struct {
-	Type        uint8
-	Code        uint8
-	Checksum    uint16
-	Identifier  uint16
-	SequenceNum uint16
-}
-
 // func: tcpProbing
-func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool, timeout int, payload []byte) (PacketICMP, error) {
+func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, df bool, timeout int, payload []byte) (PacketICMP, error) {
 
 	// Initial PacketICMP
 	pkt := PacketICMP{
@@ -28,7 +19,7 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool
 		Seq:            Seq,
 		DestAddr:       destAddr,
 		DestHost:       desetHost,
-		NBytes:         nbytes,
+		PayLoadSize:    PayLoadSize,
 		Icmp_dfragment: df,
 	}
 
@@ -55,14 +46,14 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool
 			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DO)
 		})
 	}
-	
+
 	// Prepare ICMP message
 	icmpType := icmpv4EchoRequest
-	icmpId := os.Getpid()&0xffff
+	icmpId := os.Getpid() & 0xffff
 
 	icmpB := icmpBody{
-		ID:  icmpId,
-		Seq: Seq,
+		ID:   icmpId,
+		Seq:  Seq,
 		Data: payload,
 	}
 
@@ -73,7 +64,7 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool
 		Body: &icmpB,
 	}).Marshal()
 
-	if err !=nil {
+	if err != nil {
 		return pkt, err
 	}
 
@@ -88,7 +79,7 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool
 	}
 
 	// RECEIVE -  the ICMP Response
-	BinIcmpRep := make([]byte, nbytes+44)
+	BinIcmpRep := make([]byte, PayLoadSize+44)
 
 	if _, err = conn.Read(BinIcmpRep); err != nil {
 		return pkt, fmt.Errorf("failed to receive reply: %w", err)
@@ -111,10 +102,8 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, nbytes int, df bool
 	}
 
 	return pkt, nil
-	
+
 }
-
-
 
 // ************* ICMP Type const ******************
 const (
@@ -254,7 +243,6 @@ func parseICMPEcho(bin []byte) (*icmpBody, error) {
 	return icmpB, nil
 }
 
-
 func ipv4Payload(bin []byte) []byte {
 
 	// if the packet is less than 20 bytes (the minimum size of an IPv4 header), simply return bin as is.
@@ -264,7 +252,6 @@ func ipv4Payload(bin []byte) []byte {
 	headerLen := int(bin[0]&0x0f) << 2 // headerLen shifting left by 2 bits gives the total length of the IPv4 header in bytes
 	return bin[headerLen:]
 }
-
 
 // ******************** Checksum Funcs ***************************
 

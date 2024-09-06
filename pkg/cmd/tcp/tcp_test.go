@@ -15,9 +15,9 @@ func Test_TcpCommandMain(t *testing.T) {
 	// initial test vars
 	recording := true
 	displayRow := 10
-	destHost := "google.com"
-	destPort := 443
-	count := 5
+	destHost := "192.168.128.128"
+	destPort := 22
+	count := 0
 	size := 50
 	timeout := 1
 	interval := 1

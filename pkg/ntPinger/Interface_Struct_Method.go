@@ -12,7 +12,7 @@ import (
 type InputVars struct {
 	Type        string // Select one of these: tcp, icmp, http, dns
 	Count       int    // Default is 0 which means nonstop till interruption.
-	NBypes      int    // Specific the payload. ICMP default payload is 24 bytes. TCP/HTTP/ICMP have no payload by default.
+	PayLoadSize int    // Specific the payload. ICMP default payload is 24 bytes. TCP/HTTP/ICMP have no payload by default.
 	Timeout     int    // default timeout is 4 seconds
 	Interval    int    // Interval is the wait time between each packet send. Default is 1s.
 	SourceHost  string
@@ -35,15 +35,15 @@ type Packet interface {
 
 // PacketTCP Struct
 type PacketTCP struct {
-	Type     string
-	Status   bool
-	Seq      int
-	DestAddr string
-	DestHost string
-	DestPort int
-	NBytes   int
-	SendTime time.Time
-	RTT      time.Duration
+	Type        string
+	Status      bool
+	Seq         int
+	DestAddr    string
+	DestHost    string
+	DestPort    int
+	PayLoadSize int
+	SendTime    time.Time
+	RTT         time.Duration
 	// statistics
 	PacketsRecv int
 	PacketsSent int
@@ -52,7 +52,7 @@ type PacketTCP struct {
 	MaxRtt      time.Duration
 	AvgRtt      time.Duration
 	// Status update
-	StatusDetails string
+	AdditionalInfo string
 }
 
 func (pkt PacketTCP) GetType() string {
@@ -88,7 +88,7 @@ type PacketHTTP struct {
 	DestAddr           string
 	DestHost           string
 	DestPort           int
-	NBytes             int
+	PayLoadSize        int
 	SendTime           time.Time
 	RTT                time.Duration
 	Http_path          string
@@ -103,7 +103,7 @@ type PacketHTTP struct {
 	MaxRtt      time.Duration
 	AvgRtt      time.Duration
 	// Status update
-	StatusDetails string
+	AdditionalInfo string
 }
 
 func (pkt PacketHTTP) GetType() string {
@@ -138,7 +138,7 @@ type PacketICMP struct {
 	Seq            int
 	DestAddr       string
 	DestHost       string
-	NBytes         int
+	PayLoadSize    int
 	SendTime       time.Time
 	RTT            time.Duration
 	Icmp_dfragment bool // ipv4 only
@@ -150,7 +150,7 @@ type PacketICMP struct {
 	MaxRtt      time.Duration
 	AvgRtt      time.Duration
 	// Status update
-	StatusDetails string
+	AdditionalInfo string
 }
 
 func (pkt PacketICMP) GetType() string {
@@ -186,7 +186,7 @@ type PacketDNS struct {
 	DestAddr     string
 	DestHost     string
 	DestPort     int
-	NBytes       int
+	PayLoadSize  int
 	SendTime     time.Time
 	RTT          time.Duration
 	Dns_request  string
@@ -199,7 +199,7 @@ type PacketDNS struct {
 	MaxRtt      time.Duration
 	AvgRtt      time.Duration
 	// Status update
-	StatusDetails string
+	AdditionalInfo string
 }
 
 func (pkt PacketDNS) GetType() string {

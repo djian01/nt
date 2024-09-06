@@ -37,8 +37,8 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Payload", "RTT", "Timestamp")
-		fmt.Println(strings.Repeat("-", 106))
+		fmt.Printf("%-5s %-10s %-20s %-20s %-10s %-15s %-25s %-20s \n", "Seq", "Status", "HostName", "IP", "Payload", "RTT", "Timestamp", "AddInfo")
+		fmt.Println(strings.Repeat("-", 125))
 
 		// Print the table & statistics data
 		for idx, t := range *displayTable {
@@ -53,17 +53,21 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 			moveToRow(idx + tableHeadRowIdx + 3)
 
 			if pkt.SendTime.String() == "0001-01-01 00:00:00 +0000 UTC" {
-				fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-15s %-30s\n", "", "", "", "", "", "", "")
+				fmt.Printf("%-5s %-10s %-20s %-20s %-10s %-15s %-25s %-20s\n", "", "", "", "", "", "", "", "")
 			} else {
+				// AddInfo
+				AddInfo := fmt.Sprintf("%-20s", pkt.AdditionalInfo)
+
+				// check Status
 				if pkt.Status {
 					// When using the /fatih/color package, the colored string produced by color.GreenString(t.Status) is already
 					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
 					// which affects how the width specifier (like %-20s) is interpreted
-					Status := fmt.Sprintf("%-15v", pkt.Status)
-					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-15v %-30s       \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, pkt.DestAddr, pkt.NBytes, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-20s %-20s %-10d %-15v %-25s %-s       \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, pkt.DestAddr, pkt.PayLoadSize, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				} else {
-					Status := fmt.Sprintf("%-15v", pkt.Status)
-					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-15v %-30s       \n", pkt.Seq, color.RedString(Status), pkt.DestHost, pkt.DestAddr, pkt.NBytes, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-20s %-20s %-10d %-15v %-25s %-s      \n", pkt.Seq, color.RedString(Status), pkt.DestHost, pkt.DestAddr, pkt.PayLoadSize, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				}
 			}
 
@@ -84,8 +88,8 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-12s %-15s %-30s \n", "Seq", "Status", "HostName", "IP", "Port", "Payload", "RTT", "Timestamp")
-		fmt.Println(strings.Repeat("-", 114))
+		fmt.Printf("%-5s %-10s %-20s %-20s %-10s %-10s %-15s %-25s %-20s  \n", "Seq", "Status", "HostName", "IP", "Port", "Payload", "RTT", "Timestamp", "AddInfo")
+		fmt.Println(strings.Repeat("-", 135))
 
 		// Print the table & statistics data
 		for idx, t := range *displayTable {
@@ -100,17 +104,22 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 			moveToRow(idx + tableHeadRowIdx + 3)
 
 			if pkt.SendTime.String() == "0001-01-01 00:00:00 +0000 UTC" {
-				fmt.Printf("%-5s %-15s %-15s %-15s %-10s %-12s %-15s %-30s\n", "", "", "", "", "", "", "", "")
+				fmt.Printf("%-5s %-10s %-20s %-20s %-10s %-10s %-15s %-25s %-20s \n", "", "", "", "", "", "", "", "", "")
 			} else {
+
+				// AddInfo
+				AddInfo := fmt.Sprintf("%-20s", pkt.AdditionalInfo)
+
+				// check Status
 				if pkt.Status {
 					// When using the /fatih/color package, the colored string produced by color.GreenString(t.Status) is already
 					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
 					// which affects how the width specifier (like %-20s) is interpreted
-					Status := fmt.Sprintf("%-15v", pkt.Status)
-					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-10d %-15v %-30s       \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, pkt.NBytes, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-20s %-20s %-10d %-10d %-15v %-25s %-s      \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, pkt.PayLoadSize, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				} else {
-					Status := fmt.Sprintf("%-15v", pkt.Status)
-					fmt.Printf("%-5d %-s %-15s %-15s %-10d %-10d %-15v %-30s       \n", pkt.Seq, color.RedString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, pkt.NBytes, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"))
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-20s %-20s %-10d %-10d %-15v %-25s %-s       \n", pkt.Seq, color.RedString(Status), pkt.DestHost, pkt.DestAddr, pkt.DestPort, pkt.PayLoadSize, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				}
 			}
 

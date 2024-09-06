@@ -15,7 +15,7 @@ import (
 // test - func Output
 func Test_OutputMain(t *testing.T) {
 
-	count := 5
+	count := 20
 	Type := "tcp"
 	recording := true
 	displayRow := 10
