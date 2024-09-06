@@ -21,7 +21,8 @@ type InputVars struct {
 	Http_path   string
 	Http_tls    bool
 	//Icmp_df     bool // ipv4 only
-	Dns_request string
+	Dns_request   string
+	Dns_queryType string
 }
 
 // Packet Interface
@@ -179,17 +180,16 @@ func (pkt *PacketICMP) UpdateStatistics(s Statistics) {
 
 // PacketDNS Struct
 type PacketDNS struct {
-	Type         string
-	Status       bool
-	Seq          int
-	DestAddr     string
-	DestHost     string
-	DestPort     int
-	PayLoadSize  int
-	SendTime     time.Time
-	RTT          time.Duration
-	Dns_request  string
-	Dns_response string
+	Type          string
+	Status        bool
+	Seq           int
+	DestAddr      string
+	DestHost      string
+	SendTime      time.Time
+	RTT           time.Duration
+	Dns_query     string
+	Dns_queryType string
+	Dns_response  string
 	// statistics
 	PacketsRecv int
 	PacketsSent int
