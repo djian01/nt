@@ -19,7 +19,8 @@ type InputVars struct {
 	DestHost    string
 	DestPort    int
 	Http_path   string
-	Http_tls    bool
+	Http_scheme    string
+	Http_method string
 	//Icmp_df     bool // ipv4 only
 	Dns_request   string
 	Dns_queryType string
@@ -93,9 +94,9 @@ type PacketHTTP struct {
 	SendTime           time.Time
 	RTT                time.Duration
 	Http_path          string
-	Http_tls           bool
+	Http_scheme           string
 	Http_response_code int
-	Http_response      string
+	Http_method string
 	// statistics
 	PacketsRecv int
 	PacketsSent int

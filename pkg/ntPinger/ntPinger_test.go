@@ -2,6 +2,7 @@
 // sudo go test -run ^Test_pingerTCP$
 // sudo go test -run ^Test_pingerICMP$
 // sudo go test -run ^Test_ProbingICMP$
+// sudo go test -run ^Test_ProbingHTTP$
 // *************************
 
 package ntPinger_test
@@ -79,6 +80,33 @@ func Test_ProbingICMP(t *testing.T) {
 	payload := ntPinger.GeneratePayloadData(size)
 
 	pkt, err := ntPinger.IcmpProbing(Seq, DestAddr, DestHost, NBypes, Timeout, payload)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(pkt)
+}
+
+
+
+func Test_ProbingHTTP(t *testing.T) {
+
+	// initial testing
+	InputVar := ntPinger.InputVars{
+		Type:     "http",
+		Count:    0,
+		Timeout:  4,
+		Interval: 1,
+		DestHost: "www.microsoft.com",
+		DestPort: 443,
+		Http_scheme: "https",
+		Http_method: "GET",
+		Http_path: "en-gb",
+	}
+
+	Seq := 0
+
+	pkt, err := ntPinger.HttpProbing(Seq, InputVar.DestHost, InputVar.DestPort, InputVar.Http_path, InputVar.Http_scheme, InputVar.Http_method, InputVar.Timeout,)
 	if err != nil {
 		fmt.Println(err)
 	}

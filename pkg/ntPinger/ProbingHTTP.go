@@ -1,6 +1,7 @@
 package ntPinger
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -37,7 +38,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 				forLoopEnds = true
 			default:
 				// Perform HTTP probing
-				pkt, err := HttpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Timeout, p.InputVars.Http_tls)
+				pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Timeout,)
 				if err != nil {
 					errChan <- err
 				}
@@ -64,7 +65,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 				forLoopEnds = true
 			default:
 				// Perform HTTP probing
-				pkt, err := HttpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Timeout, p.InputVars.Http_tls)
+				pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme,p.InputVars.Http_method, p.InputVars.Timeout)
 				if err != nil {
 					errChan <- err
 				}
@@ -87,51 +88,79 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 	}
 }
 
-// func: HttpProbing
-func HttpProbing(Seq int, destAddr string, destHost string, destPort int, timeout int, Http_tls bool) (PacketHTTP, error) {
+// HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
+func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, timeout int,) (PacketHTTP, error) {
 
 	// Initial PacketHTTP
 	pkt := PacketHTTP{
-		Type:     "http",
-		Status:   false,
-		Seq:      Seq,
-		DestAddr: destAddr,
-		DestHost: destHost,
-		DestPort: destPort,
-		Http_tls: Http_tls,
-	}
-
-	// check http scheme
-	scheme := ""
-	if Http_tls {
-		scheme = "https"
-	} else {
-		scheme = "http"
+		Type:        "http",
+		Status:      false,
+		Seq:         Seq,
+		DestHost:    destHost,
+		DestPort:    destPort,
+		Http_scheme: Http_scheme,
+		Http_method: Http_method,
 	}
 
 	// Construct the URL for HTTP or HTTPS
-	url := fmt.Sprintf("%s://%s:%d", scheme, destAddr, destPort)
+	var url string
+	if Http_path == ""{
+		url = fmt.Sprintf("%s://%s:%d", Http_scheme, destHost, destPort)
+	} else {
+		url = fmt.Sprintf("%s://%s:%d/%s", Http_scheme, destHost, destPort, Http_path)
+	}
+	
 
-	// Create a new HTTP client with a timeout
+	// Create a custom Transport to ignore certificate errors
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	// Create a new HTTP client with the custom Transport and timeout
 	client := &http.Client{
-		Timeout: time.Duration(timeout) * time.Second,
+		Timeout:   time.Duration(timeout) * time.Second,
+		Transport: tr,
 	}
 
 	// Record the start time
 	pkt.SendTime = time.Now()
 
-	// Perform the GET request
-	resp, err := client.Get(url)
+	// Create a new request based on the specified HTTP method
+	req, err := http.NewRequest(Http_method, url, nil)
 	if err != nil {
-		pkt.RTT = time.Since(pkt.SendTime)
-		if strings.Contains(err.Error(), "timeout") {
+		return pkt, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Perform the HTTP request
+	resp, err := client.Do(req)
+	if err != nil {		
+		if strings.Contains(err.Error(), "context deadline exceeded") {
 			// Timeout error
-			pkt.AdditionalInfo = "Timeout"
+			pkt.AdditionalInfo = "Conn_Timeout"
 			return pkt, nil
+
+		} else if strings.Contains(err.Error(), "handshake timeout") {
+			// Connection handshake timeout
+			pkt.AdditionalInfo = "Handshake_Timeout"
+			return pkt, nil
+			
+		} else if strings.Contains(err.Error(), "network is unreachable") {
+			// Connection network is unreachable
+			pkt.AdditionalInfo = "Network_Unreachable"
+			return pkt, nil			
+
 		} else if strings.Contains(err.Error(), "connection refused") {
 			// Connection refused error
+			pkt.RTT = time.Since(pkt.SendTime)
 			pkt.AdditionalInfo = "Conn_Refused"
 			return pkt, nil
+
+		} else if strings.Contains(err.Error(), "connection reset by peer") {
+			// Connection connection reset by peer
+			pkt.RTT = time.Since(pkt.SendTime)
+			pkt.AdditionalInfo = "Conn_Reset_by_Peer"
+			return pkt, nil			
+
 		} else {
 			return pkt, fmt.Errorf("failed to send request: %w", err)
 		}
@@ -141,10 +170,17 @@ func HttpProbing(Seq int, destAddr string, destHost string, destPort int, timeou
 	// Calculate RTT
 	pkt.RTT = time.Since(pkt.SendTime)
 
-	// Mark packet as successful
-	pkt.Status = true
+	// Fill in the HTTP response code
+	pkt.Http_response_code = resp.StatusCode
 
-	// Check for latency
+	// Set pkt.Status to true for 2xx or 3xx status codes, else false
+	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
+		pkt.Status = true
+	} else {
+		pkt.Status = false
+	}
+
+	// Check for latency (assuming CheckLatency is a separate function)
 	if CheckLatency(pkt.AvgRtt, pkt.RTT) {
 		pkt.AdditionalInfo = "High_Latency"
 	}
