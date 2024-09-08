@@ -255,3 +255,4 @@ func ParseURL(inputURL string) (HttpVar, error) {
 
 	return HttpVarNew, nil
 }
+

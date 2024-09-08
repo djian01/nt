@@ -25,18 +25,18 @@ func Test_HttpCommandMain(t *testing.T) {
 
 	// initial InputVar
 	HttpVarInput := Http.HttpVar {
-		Scheme: "https",
-		Hostname: "192.168.1.242",
-		Port: 443,
+		Scheme: "http",
+		Hostname: "google.com",
+		Port: 80,
 		Path: "",
 	}
 
 	// Initial Other Vars
-	recording := false
+	recording := true
 	displayRow := 10
 	HttpMethod := "GET"
 	count := 7
-	timeout := 4
+	timeout := 1
 	interval := 1
 
 	// call the func IcmpProbingFunc
