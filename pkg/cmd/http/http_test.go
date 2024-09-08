@@ -37,7 +37,7 @@ func Test_HttpCommandMain(t *testing.T) {
 	HttpMethod := "GET"
 	count := 7
 	timeout := 1
-	interval := 1
+	interval := 5
 
 	// call the func IcmpProbingFunc
 	err := Http.HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, count, timeout, interval)
