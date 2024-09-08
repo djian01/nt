@@ -1,5 +1,5 @@
 // *************************
-// sudo go test -run ^Test_OutputMain$
+// go test -run ^Test_OutputMain$
 // *************************
 
 package terminalOutput_test
@@ -16,7 +16,7 @@ import (
 func Test_OutputMain(t *testing.T) {
 
 	count := 20
-	Type := "tcp"
+	Type := "http"
 	recording := true
 	displayRow := 10
 

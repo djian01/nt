@@ -10,11 +10,11 @@ import (
 )
 
 // version
-var version = "Net-Test version 0.1.1"
+var version = "0.1.1"
 
 // Initial rootCmd
 var rootCmd = &cobra.Command{
-	Use:   "nt [flags] <sub-command>", // root command, the root command name can or cannot be "greeter" as the executiable file name can change
+	Use:   "nt [flags] <sub-command: icmp/tcp/http/dns>", // root command, the root command name can or cannot be "greeter" as the executiable file name can change
 	Short: "Net-Test CLI",
 	Long:  "Net-Test is a set of tools for network testing",
 	Run:   RootCommandFunc,
@@ -33,7 +33,11 @@ func RootCommandFunc(cmd *cobra.Command, args []string) {
 	vFlag, _ := cmd.Flags().GetBool("version")
 
 	if vFlag {
-		fmt.Printf("%v\n", version) // write output to Stdout for test verification
+		fmt.Println("")
+		fmt.Printf("Net-Test Version:   %v\n", version) // write output to Stdout for test verification
+		fmt.Printf("%v\n", "Developed By:       Dennis Jian")
+		fmt.Printf("%v\n", "Project Home:       https://github.com/djian01/nt") 
+		fmt.Println("")
 	}
 }
 

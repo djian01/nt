@@ -1,8 +1,9 @@
 // *************************
-// sudo go test -run ^Test_pingerTCP$
-// sudo go test -run ^Test_pingerICMP$
-// sudo go test -run ^Test_ProbingICMP$
-// sudo go test -run ^Test_ProbingHTTP$
+// go test -run ^Test_pingerTCP$
+// go test -run ^Test_pingerICMP$
+// go test -run ^Test_ProbingICMP$
+// go test -run ^Test_ProbingHTTP$
+// go test -run ^Test_pingerHTTP$
 // *************************
 
 package ntPinger_test
@@ -96,12 +97,12 @@ func Test_ProbingHTTP(t *testing.T) {
 		Type:     "http",
 		Count:    0,
 		Timeout:  4,
-		Interval: 1,
-		DestHost: "www.microsoft.com",
-		DestPort: 443,
-		Http_scheme: "https",
+		Interval: 5,
+		DestHost: "google.com",
+		DestPort: 80,
+		Http_scheme: "http",
 		Http_method: "GET",
-		Http_path: "en-gb",
+		Http_path: "",
 	}
 
 	Seq := 0
@@ -112,4 +113,39 @@ func Test_ProbingHTTP(t *testing.T) {
 	}
 
 	fmt.Println(pkt)
+}
+
+
+
+func Test_pingerHTTP(t *testing.T) {
+
+	// initial testing
+	InputVar := ntPinger.InputVars{
+		Type:     "http",
+		Count:    0,
+		Timeout:  4,
+		Interval: 5,
+		DestHost: "google.com",
+		DestPort: 443,
+		Http_scheme: "https",
+		Http_method: "GET",
+		Http_path: "",
+		//Http_path: "en-gb/use",
+	}
+
+	// Channel - error
+	errChan := make(chan error, 1)
+	defer close(errChan)
+
+	p, err := ntPinger.NewPinger(InputVar)
+	if err != nil {
+		panic(err)
+	}
+
+	go p.Run(errChan)
+
+	for pkt := range p.ProbeChan {
+		fmt.Println(pkt)
+
+	}
 }

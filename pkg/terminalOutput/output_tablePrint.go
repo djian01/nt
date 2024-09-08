@@ -136,7 +136,61 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// move the cursor to row
 		moveToRow(len + tableHeadRowIdx + 8)
 	case "http":
+		// Print the table header
+		moveToRow(tableHeadRowIdx + 1)
 
+		fmt.Printf("%-5s %-10s %-38s %-15s %-15s %-25s %-20s  \n", "Seq", "Status", "URL", "Response_Code", "Response_Time", "Timestamp", "AddInfo")
+		fmt.Println(strings.Repeat("-", 130))
+
+		// Print the table & statistics data
+		for idx, t := range *displayTable {
+
+			pkt := &ntPinger.PacketHTTP{}
+
+			if t != nil {
+				pkt = t.(*ntPinger.PacketHTTP)
+			}
+
+			// ANSI escape code to move the cursor to a specific row (1-based index)
+			moveToRow(idx + tableHeadRowIdx + 3)
+
+			if pkt.SendTime.String() == "0001-01-01 00:00:00 +0000 UTC" {
+				fmt.Printf("%-5s %-10s %-38s %-15s %-15s %-25s %-20s \n", "", "", "", "", "", "", "")
+			} else {
+
+				// AddInfo
+				AddInfo := fmt.Sprintf("%-20s", pkt.AdditionalInfo)
+
+				// url
+				url := ntPinger.ConstructURL(pkt.Http_scheme, pkt.DestHost, pkt.Http_path, pkt.DestPort)
+				url = TruncateString(url, 35)
+ 
+
+				// check Status
+				if pkt.Status {
+					// When using the /fatih/color package, the colored string produced by color.GreenString(t.Status) is already
+					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
+					// which affects how the width specifier (like %-20s) is interpreted
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-38s %-15d %-15v %-25s %-s      \n", pkt.Seq, color.GreenString(Status), url, pkt.Http_response_code, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+				} else {
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-38s %-15d %-15v %-25s %-s      \n", pkt.Seq, color.RedString(Status), url, pkt.Http_response_code, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+				}
+			}
+
+			// print the statistics
+			if pkt.SendTime.String() != "0001-01-01 00:00:00 +0000 UTC" {
+				moveToRow(len + tableHeadRowIdx + 3)
+				fmt.Printf("\n--- %s %s statistics ---\n", pkt.DestAddr, color.CyanString(fmt.Sprintf("%v Ping", pkt.Type)))
+				fmt.Printf("%d packets transmitted, %d packets received, %.2f%% packet loss\n", pkt.PacketsSent, pkt.PacketsRecv, float64(pkt.PacketLoss*100))
+				fmt.Printf("round-trip min/avg/max = %v/%v/%v       \n", pkt.MinRtt, pkt.AvgRtt, pkt.MaxRtt)
+			}
+
+		}
+
+		// move the cursor to row
+		moveToRow(len + tableHeadRowIdx + 8)
 	case "dns":
 
 	}
@@ -147,4 +201,13 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 func moveToRow(row int) {
 	// ANSI escape code to move the cursor to a specific row (1-based index)
 	fmt.Printf("\033[%d;1H", row)
+}
+
+
+// TruncateString truncates a string to a maximum length and appends "..." if it exceeds the max length
+func TruncateString(s string, maxLength int) string {
+	if len(s) > maxLength {
+		return s[:maxLength-3] + "..." // Subtract 3 to account for "..."
+	}
+	return s
 }

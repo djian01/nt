@@ -117,30 +117,56 @@ func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 	conn, err := d.DialContext(*ctx, pkt.Type, pingTarget)
 	if err != nil {
 		pkt.Status = false
-		// Error: "connection refused"
-		if strings.Contains(err.Error(), "refused") {
+
+		switch {
+			// Error: "connection refused"
+		case strings.Contains(err.Error(), "refused"):
 			// Calculate the RTT
 			pkt.RTT = time.Since(pkt.SendTime)
 			// Add Info
 			pkt.AdditionalInfo = "Conn_Refused"
 			return pkt, nil
-
+	
 			// Error: "no route to host"
-		} else if strings.Contains(err.Error(), "no route") {
+		case strings.Contains(err.Error(), "no route"):
 			// Add Info
 			pkt.AdditionalInfo = "No_Route"
 			return pkt, nil
-
+	
 			// Error: "timeout"
-		} else if strings.Contains(err.Error(), "timeout") {
+		case strings.Contains(err.Error(), "timeout"):
 			// Add Info
 			pkt.AdditionalInfo = "Conn_Timeout"
 			return pkt, nil
-
+	
 			// Error: Else
-		} else {
+		default:
 			return pkt, fmt.Errorf("conn error: %w", err)
-		}
+		}			
+		// // Error: "connection refused"
+		// if strings.Contains(err.Error(), "refused") {
+		// 	// Calculate the RTT
+		// 	pkt.RTT = time.Since(pkt.SendTime)
+		// 	// Add Info
+		// 	pkt.AdditionalInfo = "Conn_Refused"
+		// 	return pkt, nil
+
+		// 	// Error: "no route to host"
+		// } else if strings.Contains(err.Error(), "no route") {
+		// 	// Add Info
+		// 	pkt.AdditionalInfo = "No_Route"
+		// 	return pkt, nil
+
+		// 	// Error: "timeout"
+		// } else if strings.Contains(err.Error(), "timeout") {
+		// 	// Add Info
+		// 	pkt.AdditionalInfo = "Conn_Timeout"
+		// 	return pkt, nil
+
+		// 	// Error: Else
+		// } else {
+		// 	return pkt, fmt.Errorf("conn error: %w", err)
+		// }
 	}
 	defer conn.Close()
 

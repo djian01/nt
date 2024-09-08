@@ -96,6 +96,7 @@ type PacketHTTP struct {
 	Http_path          string
 	Http_scheme           string
 	Http_response_code int
+	Http_response string
 	Http_method string
 	// statistics
 	PacketsRecv int
@@ -338,6 +339,8 @@ func (p *Pinger) Run(errChan chan<- error) {
 		go icmpProbingRun(p, errChan)
 
 	case "http":
+		// Go Routine - icmpProbingRun
+		go httpProbingRun(p, errChan)
 
 	case "dns":
 

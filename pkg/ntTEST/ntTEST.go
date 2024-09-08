@@ -161,7 +161,36 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				time.Sleep(1 * time.Second)
 
 			case "http":
+				destPort := 443
 
+				probeResult := ntPinger.PacketHTTP{
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "google.com",
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
+					DestPort:    destPort,
+					Http_path: "",
+					Http_scheme: "https",
+
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
+				}
+				if status {
+					probeResult.Http_response_code = 200
+					probeResult.Http_response = "OK"
+				}else {
+					probeResult.Http_response_code = 0
+				}				
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)
 			case "dns":
 
 			}
@@ -290,7 +319,38 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				time.Sleep(1 * time.Second)
 
 			case "http":
+				destPort := 443
 
+				probeResult := ntPinger.PacketHTTP{
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "google.com",
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
+					DestPort:    destPort,
+					Http_path: "c/66dc2804-7f48-8011-88d8-c6bf57428b6a/c/66dc2804-7f48-8011-88d8-c6bf57428b6a",
+					//Http_path: "web/login",
+					Http_scheme: "https",
+
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
+				}
+
+				if status {
+					probeResult.Http_response_code = 200
+					probeResult.Http_response = "OK"
+				}else {
+					probeResult.Http_response_code = 0
+				}
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)
 			case "dns":
 			}
 		}

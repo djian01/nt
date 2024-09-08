@@ -18,8 +18,8 @@ import (
 
 func Test_RecordingFunc(t *testing.T) {
 
-	count := 0
-	Type := "tcp"
+	count := 20
+	Type := "http"
 	dest := "google.com"
 
 	var wg sync.WaitGroup

@@ -14,7 +14,7 @@ func NewPinger(InputVars InputVars) (*Pinger, error) {
 
 	// Fill in
 	switch InputVars.Type {
-	case "tcp", "http", "icmp", "dns":
+	case "tcp", "icmp", "dns", "http":
 
 		// resolve the destHost
 		err := p.Resolve()
@@ -50,7 +50,7 @@ func GetSleepTime(PacketStatus bool, Interval int, RTT time.Duration) time.Durat
 		// if Packet Status is "true"
 	} else if PacketStatus {
 		return time.Duration(Interval) * time.Second
-		// else return 0 sleep time
+		// else return 0 sleep time ( in the case of timeout)
 	} else {
 		return time.Duration(0) * time.Second
 	}
@@ -98,3 +98,30 @@ func GeneratePayloadData(payLoadSize int) []byte {
 // 	}
 // 	return nil
 // }
+
+
+// Construct URL
+func ConstructURL (Http_scheme, DestHost, Http_path string, DestPort int) string {
+	
+	url := ""
+
+	if Http_path == ""{
+		if Http_scheme == "http" && DestPort == 80 {
+			url = fmt.Sprintf("%s://%s", Http_scheme, DestHost)
+		} else if Http_scheme == "https" && DestPort == 443 {
+			url = fmt.Sprintf("%s://%s", Http_scheme, DestHost)
+		} else {
+			url = fmt.Sprintf("%s://%s:%d", Http_scheme, DestHost, DestPort)
+		}
+		
+	} else {
+		if Http_scheme == "http" && DestPort == 80 {
+			url = fmt.Sprintf("%s://%s/%s", Http_scheme, DestHost, Http_path)
+		} else if Http_scheme == "https" && DestPort == 443 {
+			url = fmt.Sprintf("%s://%s/%s", Http_scheme, DestHost, Http_path)
+		} else {
+			url = fmt.Sprintf("%s://%s:%d/%s", Http_scheme, DestHost, DestPort, Http_path)
+		}
+	}	
+	return url
+}
