@@ -38,7 +38,7 @@ func dnsProbingRun(p *Pinger, errChan chan<- error) {
 				forLoopEnds = true
 			default:
 				// Perform DNS probing
-				pkt, err := dnsProbing(Seq, p.InputVars.DestHost, p.InputVars.Dns_queryType, p.InputVars.Timeout, p.InputVars.DestHost)
+				pkt, err := dnsProbing(Seq, p.InputVars.DestHost, p.InputVars.Dns_queryType, p.InputVars.Dns_query, p.InputVars.Timeout)
 				if err != nil {
 					errChan <- err
 				}
@@ -65,7 +65,7 @@ func dnsProbingRun(p *Pinger, errChan chan<- error) {
 				forLoopEnds = true
 			default:
 				// Perform DNS probing
-				pkt, err := dnsProbing(Seq, p.InputVars.DestHost, p.InputVars.Dns_queryType, p.InputVars.Timeout, p.InputVars.DestHost)
+				pkt, err := dnsProbing(Seq, p.InputVars.DestHost, p.InputVars.Dns_queryType, p.InputVars.Dns_query, p.InputVars.Timeout)
 				if err != nil {
 					errChan <- err
 				}
@@ -89,7 +89,7 @@ func dnsProbingRun(p *Pinger, errChan chan<- error) {
 }
 
 // func: dnsProbing
-func dnsProbing(Seq int, destHost string, Dns_queryType string, timeout int, dnsResolver string) (PacketDNS, error) {
+func dnsProbing(Seq int, destHost string, Dns_queryType string, Dns_query string, timeout int) (PacketDNS, error) {
 
 	// Initial PacketDNS
 	pkt := PacketDNS{
@@ -98,16 +98,17 @@ func dnsProbing(Seq int, destHost string, Dns_queryType string, timeout int, dns
 		Seq:           Seq,
 		DestHost:      destHost,
 		Dns_queryType: Dns_queryType,
+		Dns_query: Dns_query,
 	}
 
 	// Set up the DNS resolver
 	resolver := &net.Resolver{}
-	if dnsResolver != "" {
+	if destHost != "" {
 		// Custom DNS resolver
 		resolver = &net.Resolver{
 			PreferGo: true,
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				return net.Dial(network, fmt.Sprintf("%s:53", dnsResolver))
+				return net.Dial(network, fmt.Sprintf("%s:53", destHost))
 			},
 		}
 	}

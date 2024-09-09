@@ -22,7 +22,7 @@ type InputVars struct {
 	Http_scheme string
 	Http_method string
 	//Icmp_df     bool // ipv4 only
-	Dns_request   string
+	Dns_query   string
 	Dns_queryType string
 }
 
