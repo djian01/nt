@@ -3,6 +3,7 @@ package root
 import (
 	"fmt"
 
+	Http "nt/pkg/cmd/http"
 	"nt/pkg/cmd/icmp"
 	"nt/pkg/cmd/tcp"
 
@@ -36,7 +37,7 @@ func RootCommandFunc(cmd *cobra.Command, args []string) {
 		fmt.Println("")
 		fmt.Printf("Net-Test Version:   %v\n", version) // write output to Stdout for test verification
 		fmt.Printf("%v\n", "Developed By:       Dennis Jian")
-		fmt.Printf("%v\n", "Project Home:       https://github.com/djian01/nt") 
+		fmt.Printf("%v\n", "Project Home:       https://github.com/djian01/nt")
 		fmt.Println("")
 	}
 }
@@ -65,4 +66,5 @@ func init() {
 	// Add Sub-Commands
 	rootCmd.AddCommand(tcp.TcpCommand())
 	rootCmd.AddCommand(icmp.IcmpCommand())
+	rootCmd.AddCommand(Http.HttpCommand())
 }

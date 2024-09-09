@@ -17,10 +17,10 @@ func Test_TcpCommandMain(t *testing.T) {
 	displayRow := 10
 	destHost := "google.com"
 	destPort := 80
-	count := 0
+	count := 4
 	size := 50
 	timeout := 1
-	interval := 5
+	interval := 1
 
 	// call the func IcmpProbingFunc
 	err := tcp.TcpCommandMain(recording, displayRow, destHost, destPort, count, size, timeout, interval)

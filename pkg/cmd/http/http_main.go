@@ -24,11 +24,11 @@ var httpCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1), // 1 Args, <url> are required
 	Run:   HttpCommandLink,
 	Example: `
-# Example: HTTP ping to "https://google.com:443" with recording enabled
+# Example: HTTP ping to "https://google.com" with recording enabled. Default Values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s
 nt -r http https://google.com
 
-# Example: HTTP ping to "http://10.2.3.10:8080/web/login" with count: 10 and interval: 2 sec
-nt http -c 10 -i 2 http://10.2.3.10:8080/web/login
+# Example: HTTP ping to POST "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
+nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 `,
 }
 
@@ -46,7 +46,7 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 
 	// Arg - HttpVarInput
 	HttpVarInput, err := ParseURL(args[0])
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
@@ -60,7 +60,7 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 	interval, _ := cmd.Flags().GetInt("interval")
 
 	// Flag -m
-	HttpMethod, _ := cmd.Flags().GetString("method")	
+	HttpMethod, _ := cmd.Flags().GetString("method")
 
 	// call func HttpCommandMain
 	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, count, timeout, interval)
@@ -95,7 +95,7 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 	// Channel - recordingChan, closed in the end of the testing, no need to defer close
 	recordingChan := make(chan ntPinger.Packet, 1)
 
-	// build the InputVar	
+	// build the InputVar
 	InputVar := ntPinger.InputVars{
 		Type:        "http",
 		Count:       count,
@@ -105,7 +105,7 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 		DestPort:    HttpVarInput.Port,
 		Http_scheme: HttpVarInput.Scheme,
 		Http_method: HttpMethod,
-		Http_path: HttpVarInput.Path,
+		Http_path:   HttpVarInput.Path,
 	}
 
 	// Start Ping Main Command, manually input display Len
@@ -202,7 +202,7 @@ func init() {
 	httpCmd.Flags().IntVarP(&count, "count", "c", 0, "HTTP Ping Count (default 0 - Non Stop till Ctrl+C)")
 
 	// Flag - HTTP Method
-	var method  string
+	var method string
 	httpCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP Ping Metohd (default: GET)")
 
 	// Flag - Ping timeout
@@ -214,19 +214,17 @@ func init() {
 	httpCmd.Flags().IntVarP(&interval, "interval", "i", 5, "HTTP Ping Interval (default: 5 sec)")
 }
 
-
 type HttpVar struct {
-	Scheme string
+	Scheme   string
 	Hostname string
-	Port int
-	Path string
+	Port     int
+	Path     string
 }
-
 
 // ParseURL extracts scheme, hostname, port, and path from a URL
 func ParseURL(inputURL string) (HttpVar, error) {
-	
-	HttpVarNew := HttpVar {}
+
+	HttpVarNew := HttpVar{}
 
 	parsedURL, err := url.Parse(inputURL)
 
@@ -249,10 +247,9 @@ func ParseURL(inputURL string) (HttpVar, error) {
 		HttpVarNew.Port = 443
 	}
 
-	if parsedURL.Path != ""{
+	if parsedURL.Path != "" {
 		HttpVarNew.Path = parsedURL.Path
 	}
 
 	return HttpVarNew, nil
 }
-

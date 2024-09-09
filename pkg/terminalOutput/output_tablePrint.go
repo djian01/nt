@@ -139,7 +139,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-10s %-38s %-15s %-15s %-25s %-20s  \n", "Seq", "Status", "URL", "Response_Code", "Response_Time", "Timestamp", "AddInfo")
+		fmt.Printf("%-5s %-10s %-10s %-33s %-15s %-15s %-25s %-20s  \n", "Seq", "Status", "Method", "URL", "Response_Code", "Response_Time", "Timestamp", "AddInfo")
 		fmt.Println(strings.Repeat("-", 130))
 
 		// Print the table & statistics data
@@ -155,7 +155,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 			moveToRow(idx + tableHeadRowIdx + 3)
 
 			if pkt.SendTime.String() == "0001-01-01 00:00:00 +0000 UTC" {
-				fmt.Printf("%-5s %-10s %-38s %-15s %-15s %-25s %-20s \n", "", "", "", "", "", "", "")
+				fmt.Printf("%-5s %-10s %-10s %-33s %-15s %-15s %-25s %-20s \n", "", "", "", "", "", "", "", "")
 			} else {
 
 				// AddInfo
@@ -163,8 +163,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 
 				// url
 				url := ntPinger.ConstructURL(pkt.Http_scheme, pkt.DestHost, pkt.Http_path, pkt.DestPort)
-				url = TruncateString(url, 35)
- 
+				url = TruncateString(url, 30)
 
 				// check Status
 				if pkt.Status {
@@ -172,10 +171,10 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
 					// which affects how the width specifier (like %-20s) is interpreted
 					Status := fmt.Sprintf("%-10v", pkt.Status)
-					fmt.Printf("%-5d %-s %-38s %-15d %-15v %-25s %-s      \n", pkt.Seq, color.GreenString(Status), url, pkt.Http_response_code, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+					fmt.Printf("%-5d %-s %-10s %-33s %-15d %-15v %-25s %-s      \n", pkt.Seq, color.GreenString(Status), pkt.Http_method, url, pkt.Http_response_code, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				} else {
 					Status := fmt.Sprintf("%-10v", pkt.Status)
-					fmt.Printf("%-5d %-s %-38s %-15d %-15v %-25s %-s      \n", pkt.Seq, color.RedString(Status), url, pkt.Http_response_code, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+					fmt.Printf("%-5d %-s %-10s %-33s %-15d %-15v %-25s %-s      \n", pkt.Seq, color.RedString(Status), pkt.Http_method, url, pkt.Http_response_code, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				}
 			}
 
@@ -202,7 +201,6 @@ func moveToRow(row int) {
 	// ANSI escape code to move the cursor to a specific row (1-based index)
 	fmt.Printf("\033[%d;1H", row)
 }
-
 
 // TruncateString truncates a string to a maximum length and appends "..." if it exceeds the max length
 func TruncateString(s string, maxLength int) string {

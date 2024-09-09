@@ -56,6 +56,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 
 	} else {
 		for i := 0; i < p.InputVars.Count; i++ {
+
 			if forLoopEnds {
 				break
 			}
@@ -71,6 +72,11 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			pkt.UpdateStatistics(p.Stat)
 			p.ProbeChan <- &pkt
 			Seq++
+
+			// check the last loop of the probing, close probeChan
+			if i == (p.InputVars.Count - 1) {
+				close(p.ProbeChan)
+			}
 
 			// sleep for interval
 			select {

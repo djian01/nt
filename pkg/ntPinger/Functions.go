@@ -99,13 +99,12 @@ func GeneratePayloadData(payLoadSize int) []byte {
 // 	return nil
 // }
 
-
 // Construct URL
-func ConstructURL (Http_scheme, DestHost, Http_path string, DestPort int) string {
-	
+func ConstructURL(Http_scheme, DestHost, Http_path string, DestPort int) string {
+
 	url := ""
 
-	if Http_path == ""{
+	if Http_path == "" {
 		if Http_scheme == "http" && DestPort == 80 {
 			url = fmt.Sprintf("%s://%s", Http_scheme, DestHost)
 		} else if Http_scheme == "https" && DestPort == 443 {
@@ -113,7 +112,7 @@ func ConstructURL (Http_scheme, DestHost, Http_path string, DestPort int) string
 		} else {
 			url = fmt.Sprintf("%s://%s:%d", Http_scheme, DestHost, DestPort)
 		}
-		
+
 	} else {
 		if Http_scheme == "http" && DestPort == 80 {
 			url = fmt.Sprintf("%s://%s/%s", Http_scheme, DestHost, Http_path)
@@ -122,6 +121,6 @@ func ConstructURL (Http_scheme, DestHost, Http_path string, DestPort int) string
 		} else {
 			url = fmt.Sprintf("%s://%s:%d/%s", Http_scheme, DestHost, DestPort, Http_path)
 		}
-	}	
+	}
 	return url
 }

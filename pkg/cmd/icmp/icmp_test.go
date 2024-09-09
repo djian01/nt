@@ -16,10 +16,10 @@ func Test_IcmpCommandMain(t *testing.T) {
 	recording := true
 	displayRow := 13
 	destHost := "192.168.1.1"
-	count := 10
+	count := 4
 	size := 88
 	timeout := 1
-	interval := 5
+	interval := 1
 	//df := true
 
 	// call the func IcmpProbingFunc
