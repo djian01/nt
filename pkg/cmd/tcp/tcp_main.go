@@ -19,8 +19,8 @@ import (
 // Iniital tcpCmd
 var tcpCmd = &cobra.Command{
 	Use:   "tcp [flags] <Destination Host> <Destination Port>", // Sub-command, shown in the -h, Usage field
-	Short: "tcp Ping Test Module",
-	Long:  "tcp Ping test Module for tcp testing",
+	Short: "TCP Ping Test Module",
+	Long:  "TCP Ping test Module for tcp testing",
 	Args:  cobra.ExactArgs(2), // 2 Args, <Destination Host> <Destination Port> are required
 	Run:   TcpCommandLink,
 	Example: `

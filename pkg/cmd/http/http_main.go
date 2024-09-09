@@ -19,8 +19,8 @@ import (
 // Iniital tcpCmd
 var httpCmd = &cobra.Command{
 	Use:   "http [flags] <URL>", // Sub-command, shown in the -h, Usage field
-	Short: "http Ping Test Module",
-	Long:  "http Ping test Module for http testing",
+	Short: "HTTP/HTTPs Ping Test Module",
+	Long:  "HTTP/HTTPs Ping test Module for web services latency testing",
 	Args:  cobra.ExactArgs(1), // 1 Args, <url> are required
 	Run:   HttpCommandLink,
 	Example: `
