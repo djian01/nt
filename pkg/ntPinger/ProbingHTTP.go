@@ -32,65 +32,60 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 				break
 			}
 
+			// Perform HTTP probing
+			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Timeout)
+			if err != nil {
+				errChan <- err
+			}
+
+			// Update statistics and send packet
+			p.UpdateStatistics(&pkt)
+			pkt.UpdateStatistics(p.Stat)
+			p.ProbeChan <- &pkt
+			Seq++
+
+			// sleep for interval
 			select {
+			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
+				// wait for SleepTime
 			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				close(p.ProbeChan)
 				forLoopEnds = true
-			default:
-				// Perform HTTP probing
-				pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Timeout,)
-				if err != nil {
-					errChan <- err
-				}
-
-				// Update statistics and send packet
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+				close(p.ProbeChan)
 			}
 		}
+
 	} else {
 		for i := 0; i < p.InputVars.Count; i++ {
 			if forLoopEnds {
 				break
 			}
 
+			// Perform HTTP probing
+			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Timeout)
+			if err != nil {
+				errChan <- err
+			}
+
+			// Update statistics and send packet
+			p.UpdateStatistics(&pkt)
+			pkt.UpdateStatistics(p.Stat)
+			p.ProbeChan <- &pkt
+			Seq++
+
+			// sleep for interval
 			select {
-			case <-interruptChan:
-				close(p.ProbeChan)
+			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
+				// wait for SleepTime
+			case <-interruptChan: // case interruptChan, close the channel & break the loop
 				forLoopEnds = true
-			default:
-				// Perform HTTP probing
-				pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme,p.InputVars.Http_method, p.InputVars.Timeout)
-				if err != nil {
-					errChan <- err
-				}
-
-				// Update statistics and send packet
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// check the last loop of the probing, close probeChan
-				if i == (p.InputVars.Count - 1) {
-					close(p.ProbeChan)
-				}
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
-
+				close(p.ProbeChan)
 			}
 		}
 	}
 }
 
 // HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
-func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, timeout int,) (PacketHTTP, error) {
+func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, timeout int) (PacketHTTP, error) {
 
 	// Initial PacketHTTP
 	pkt := PacketHTTP{
@@ -101,18 +96,11 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 		DestPort:    destPort,
 		Http_scheme: Http_scheme,
 		Http_method: Http_method,
-		Http_path: Http_path,
+		Http_path:   Http_path,
 	}
 
 	// Construct the URL for HTTP or HTTPS
 	url := ConstructURL(Http_scheme, destHost, Http_path, destPort)
-	// var url string
-	// if Http_path == ""{
-	// 	url = fmt.Sprintf("%s://%s:%d", Http_scheme, destHost, destPort)
-	// } else {
-	// 	url = fmt.Sprintf("%s://%s:%d/%s", Http_scheme, destHost, destPort, Http_path)
-	// }
-	
 
 	// Create a custom Transport to ignore certificate errors
 	tr := &http.Transport{
@@ -136,7 +124,7 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 
 	// Perform the HTTP request
 	resp, err := client.Do(req)
-	if err != nil {	
+	if err != nil {
 		switch {
 		case strings.Contains(err.Error(), "context deadline exceeded"):
 			// Timeout error
@@ -152,18 +140,18 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 			// Connection handshake timeout
 			pkt.AdditionalInfo = "Handshake_Timeout"
 			return pkt, nil
-	
+
 		case strings.Contains(err.Error(), "network is unreachable"):
 			// Connection network is unreachable
 			pkt.AdditionalInfo = "Network_Unreachable"
 			return pkt, nil
-	
+
 		case strings.Contains(err.Error(), "connection refused"):
 			// Connection refused error
 			pkt.RTT = time.Since(pkt.SendTime)
 			pkt.AdditionalInfo = "Conn_Refused"
 			return pkt, nil
-	
+
 		case strings.Contains(err.Error(), "connection reset by peer"):
 			// Connection reset by peer
 			pkt.RTT = time.Since(pkt.SendTime)
@@ -178,37 +166,7 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 
 		default:
 			return pkt, fmt.Errorf("failed to send request: %w", err)
-		}			
-		// if strings.Contains(err.Error(), "context deadline exceeded") {
-		// 	// Timeout error
-		// 	pkt.AdditionalInfo = "Conn_Timeout"
-		// 	return pkt, nil
-
-		// } else if strings.Contains(err.Error(), "handshake timeout") {
-		// 	// Connection handshake timeout
-		// 	pkt.AdditionalInfo = "Handshake_Timeout"
-		// 	return pkt, nil
-			
-		// } else if strings.Contains(err.Error(), "network is unreachable") {
-		// 	// Connection network is unreachable
-		// 	pkt.AdditionalInfo = "Network_Unreachable"
-		// 	return pkt, nil			
-
-		// } else if strings.Contains(err.Error(), "connection refused") {
-		// 	// Connection refused error
-		// 	pkt.RTT = time.Since(pkt.SendTime)
-		// 	pkt.AdditionalInfo = "Conn_Refused"
-		// 	return pkt, nil
-
-		// } else if strings.Contains(err.Error(), "connection reset by peer") {
-		// 	// Connection connection reset by peer
-		// 	pkt.RTT = time.Since(pkt.SendTime)
-		// 	pkt.AdditionalInfo = "Conn_Reset_by_Peer"
-		// 	return pkt, nil			
-
-		// } else {
-		// 	return pkt, fmt.Errorf("failed to send request: %w", err)
-		// }
+		}
 	}
 	defer resp.Body.Close()
 

@@ -30,30 +30,31 @@ func icmpProbingRun(p *Pinger, errChan chan<- error) {
 
 	// count
 	if p.InputVars.Count == 0 {
+
 		for {
 			if forLoopEnds {
 				break
 			}
 
-			select {
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				close(p.ProbeChan)
-				forLoopEnds = true
-			default:
-				pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
-				if err != nil {
-					errChan <- err
-				}
-
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+			pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
+			if err != nil {
+				errChan <- err
 			}
 
+			p.UpdateStatistics(&pkt)
+			pkt.UpdateStatistics(p.Stat)
+			p.ProbeChan <- &pkt
+			Seq++
+
+			// sleep for interval
+			select {
+			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
+				// wait for SleepTime
+			case <-interruptChan: // case interruptChan, close the channel & break the loop
+				forLoopEnds = true
+				close(p.ProbeChan)
+
+			}
 		}
 
 	} else {
@@ -61,28 +62,29 @@ func icmpProbingRun(p *Pinger, errChan chan<- error) {
 			if forLoopEnds {
 				break
 			}
+
+			pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
+			if err != nil {
+				errChan <- err
+			}
+
+			p.UpdateStatistics(&pkt)
+			pkt.UpdateStatistics(p.Stat)
+			p.ProbeChan <- &pkt
+			Seq++
+
+			// check the last loop of the probing, close probeChan
+			if i == (p.InputVars.Count - 1) {
+				close(p.ProbeChan)
+			}
+
+			// sleep for interval
 			select {
-			case <-interruptChan:
-				close(p.ProbeChan) // case interruptChan, close the channel & break the loop
+			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
+				// wait for SleepTime
+			case <-interruptChan: // case interruptChan, close the channel & break the loop
 				forLoopEnds = true
-			default:
-				pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
-				if err != nil {
-					errChan <- err
-				}
-
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// check the last loop of the probing, close probeChan
-				if i == (p.InputVars.Count - 1) {
-					close(p.ProbeChan)
-				}
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+				close(p.ProbeChan)
 			}
 		}
 	}

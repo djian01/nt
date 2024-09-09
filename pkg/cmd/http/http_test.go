@@ -10,9 +10,7 @@ import (
 	"testing"
 )
 
-
-
-func Test_http (t *testing.T){
+func Test_http(t *testing.T) {
 
 	a := "http://mywebsite.com:8080"
 
@@ -24,18 +22,18 @@ func Test_http (t *testing.T){
 func Test_HttpCommandMain(t *testing.T) {
 
 	// initial InputVar
-	HttpVarInput := Http.HttpVar {
-		Scheme: "http",
+	HttpVarInput := Http.HttpVar{
+		Scheme:   "http",
 		Hostname: "google.com",
-		Port: 80,
-		Path: "",
+		Port:     80,
+		Path:     "",
 	}
 
 	// Initial Other Vars
 	recording := true
 	displayRow := 10
 	HttpMethod := "GET"
-	count := 7
+	count := 0
 	timeout := 1
 	interval := 5
 

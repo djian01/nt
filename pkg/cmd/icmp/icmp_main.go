@@ -159,8 +159,8 @@ func IcmpCommandMain(recording bool, displayRow int, destHost string, count int,
 		}
 	}
 
-	// wait for the last interval
-	time.Sleep(time.Duration(interval) * time.Second)
+	// wait for the last interval (1 sec)
+	time.Sleep(time.Duration(1) * time.Second)
 
 	// if recording Enabled
 	if recording {

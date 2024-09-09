@@ -15,11 +15,11 @@ func Test_IcmpCommandMain(t *testing.T) {
 	// initial test vars
 	recording := true
 	displayRow := 13
-	destHost := "192.168.128.128"
-	count := 0
+	destHost := "192.168.1.1"
+	count := 10
 	size := 88
 	timeout := 1
-	interval := 1
+	interval := 5
 	//df := true
 
 	// call the func IcmpProbingFunc

@@ -19,7 +19,7 @@ type InputVars struct {
 	DestHost    string
 	DestPort    int
 	Http_path   string
-	Http_scheme    string
+	Http_scheme string
 	Http_method string
 	//Icmp_df     bool // ipv4 only
 	Dns_request   string
@@ -94,10 +94,10 @@ type PacketHTTP struct {
 	SendTime           time.Time
 	RTT                time.Duration
 	Http_path          string
-	Http_scheme           string
+	Http_scheme        string
 	Http_response_code int
-	Http_response string
-	Http_method string
+	Http_response      string
+	Http_method        string
 	// statistics
 	PacketsRecv int
 	PacketsSent int
@@ -249,10 +249,10 @@ type Pinger struct {
 	DestAddr   string
 	DestIpAddr net.IP
 
-	// OnSend is called when Pinger sends a packet
+	// OnSend is called when Pinger sends a packet (for future use only)
 	OnSend func(Packet)
 
-	// OnRecv is called when Pinger receives and processes a packet
+	// OnRecv is called when Pinger receives and processes a packet (for future use only)
 	OnRecv func(Packet)
 
 	// probeChan

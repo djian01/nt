@@ -32,28 +32,27 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 				break
 			}
 
-			select {
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				close(p.ProbeChan)
-				forLoopEnds = true
-			default:
-				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
-				defer cancel()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
+			defer cancel()
 
-				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
-				if err != nil {
-					errChan <- err
-				}
-
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+			pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
+			if err != nil {
+				errChan <- err
 			}
 
+			p.UpdateStatistics(&pkt)
+			pkt.UpdateStatistics(p.Stat)
+			p.ProbeChan <- &pkt
+			Seq++
+
+			// sleep for interval
+			select {
+			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
+				// wait for SleepTime
+			case <-interruptChan: // case interruptChan, close the channel & break the loop
+				forLoopEnds = true
+				close(p.ProbeChan)
+			}
 		}
 
 	} else {
@@ -61,31 +60,32 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 			if forLoopEnds {
 				break
 			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
+			defer cancel()
+
+			pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
+			if err != nil {
+				errChan <- err
+			}
+
+			p.UpdateStatistics(&pkt)
+			pkt.UpdateStatistics(p.Stat)
+			p.ProbeChan <- &pkt
+			Seq++
+
+			// check the last loop of the probing, close probeChan
+			if i == (p.InputVars.Count - 1) {
+				close(p.ProbeChan)
+			}
+
+			// sleep for interval
 			select {
-			case <-interruptChan:
-				close(p.ProbeChan) // case interruptChan, close the channel & break the loop
+			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
+				// wait for SleepTime
+			case <-interruptChan: // case interruptChan, close the channel & break the loop
 				forLoopEnds = true
-			default:
-				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
-				defer cancel()
-
-				pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
-				if err != nil {
-					errChan <- err
-				}
-
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// check the last loop of the probing, close probeChan
-				if i == (p.InputVars.Count - 1) {
-					close(p.ProbeChan)
-				}
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
+				close(p.ProbeChan)
 			}
 		}
 	}
@@ -119,54 +119,30 @@ func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 		pkt.Status = false
 
 		switch {
-			// Error: "connection refused"
+		// Error: "connection refused"
 		case strings.Contains(err.Error(), "refused"):
 			// Calculate the RTT
 			pkt.RTT = time.Since(pkt.SendTime)
 			// Add Info
 			pkt.AdditionalInfo = "Conn_Refused"
 			return pkt, nil
-	
+
 			// Error: "no route to host"
 		case strings.Contains(err.Error(), "no route"):
 			// Add Info
 			pkt.AdditionalInfo = "No_Route"
 			return pkt, nil
-	
+
 			// Error: "timeout"
 		case strings.Contains(err.Error(), "timeout"):
 			// Add Info
 			pkt.AdditionalInfo = "Conn_Timeout"
 			return pkt, nil
-	
+
 			// Error: Else
 		default:
 			return pkt, fmt.Errorf("conn error: %w", err)
-		}			
-		// // Error: "connection refused"
-		// if strings.Contains(err.Error(), "refused") {
-		// 	// Calculate the RTT
-		// 	pkt.RTT = time.Since(pkt.SendTime)
-		// 	// Add Info
-		// 	pkt.AdditionalInfo = "Conn_Refused"
-		// 	return pkt, nil
-
-		// 	// Error: "no route to host"
-		// } else if strings.Contains(err.Error(), "no route") {
-		// 	// Add Info
-		// 	pkt.AdditionalInfo = "No_Route"
-		// 	return pkt, nil
-
-		// 	// Error: "timeout"
-		// } else if strings.Contains(err.Error(), "timeout") {
-		// 	// Add Info
-		// 	pkt.AdditionalInfo = "Conn_Timeout"
-		// 	return pkt, nil
-
-		// 	// Error: Else
-		// } else {
-		// 	return pkt, fmt.Errorf("conn error: %w", err)
-		// }
+		}
 	}
 	defer conn.Close()
 

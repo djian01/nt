@@ -1,5 +1,5 @@
 // *************************
-// sudo go test -run ^Test_TcpCommandMain$
+// go test -run ^Test_TcpCommandMain$
 // *************************
 
 package tcp_test
@@ -15,12 +15,12 @@ func Test_TcpCommandMain(t *testing.T) {
 	// initial test vars
 	recording := true
 	displayRow := 10
-	destHost := "192.168.128.128"
-	destPort := 22
+	destHost := "google.com"
+	destPort := 80
 	count := 0
 	size := 50
 	timeout := 1
-	interval := 1
+	interval := 5
 
 	// call the func IcmpProbingFunc
 	err := tcp.TcpCommandMain(recording, displayRow, destHost, destPort, count, size, timeout, interval)
