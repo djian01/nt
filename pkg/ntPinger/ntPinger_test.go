@@ -4,6 +4,7 @@
 // go test -run ^Test_ProbingICMP$
 // go test -run ^Test_ProbingHTTP$
 // go test -run ^Test_pingerHTTP$
+// go test -run ^Test_ProbingDNS$
 // *************************
 
 package ntPinger_test
@@ -88,26 +89,24 @@ func Test_ProbingICMP(t *testing.T) {
 	fmt.Println(pkt)
 }
 
-
-
 func Test_ProbingHTTP(t *testing.T) {
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
-		Type:     "http",
-		Count:    0,
-		Timeout:  4,
-		Interval: 5,
-		DestHost: "google.com",
-		DestPort: 80,
+		Type:        "http",
+		Count:       0,
+		Timeout:     4,
+		Interval:    5,
+		DestHost:    "google.com",
+		DestPort:    80,
 		Http_scheme: "http",
 		Http_method: "GET",
-		Http_path: "",
+		Http_path:   "",
 	}
 
 	Seq := 0
 
-	pkt, err := ntPinger.HttpProbing(Seq, InputVar.DestHost, InputVar.DestPort, InputVar.Http_path, InputVar.Http_scheme, InputVar.Http_method, InputVar.Timeout,)
+	pkt, err := ntPinger.HttpProbing(Seq, InputVar.DestHost, InputVar.DestPort, InputVar.Http_path, InputVar.Http_scheme, InputVar.Http_method, InputVar.Timeout)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -115,21 +114,19 @@ func Test_ProbingHTTP(t *testing.T) {
 	fmt.Println(pkt)
 }
 
-
-
 func Test_pingerHTTP(t *testing.T) {
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
-		Type:     "http",
-		Count:    0,
-		Timeout:  4,
-		Interval: 5,
-		DestHost: "google.com",
-		DestPort: 443,
+		Type:        "http",
+		Count:       0,
+		Timeout:     4,
+		Interval:    5,
+		DestHost:    "google.com",
+		DestPort:    443,
 		Http_scheme: "https",
 		Http_method: "GET",
-		Http_path: "",
+		Http_path:   "",
 		//Http_path: "en-gb/use",
 	}
 
@@ -148,4 +145,27 @@ func Test_pingerHTTP(t *testing.T) {
 		fmt.Println(pkt)
 
 	}
+}
+
+func Test_ProbingDNS(t *testing.T) {
+
+	// initial testing
+	InputVar := ntPinger.InputVars{
+		Type:         "dns",
+		Count:        0,
+		Timeout:      4,
+		Interval:     5,
+		DestHost:     "8.8.8.8",
+		Dns_query:    "www.microsoft.com",
+		Dns_Protocol: "udp", // "udp" or "tcp"
+	}
+
+	Seq := 0
+
+	pkt, err := ntPinger.DnsProbing(Seq, InputVar.DestHost, InputVar.Dns_query, InputVar.Dns_Protocol, InputVar.Timeout)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(pkt)
 }

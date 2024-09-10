@@ -22,8 +22,9 @@ type InputVars struct {
 	Http_scheme string
 	Http_method string
 	//Icmp_df     bool // ipv4 only
-	Dns_query   string
+	Dns_query     string
 	Dns_queryType string
+	Dns_Protocol  string
 }
 
 // Packet Interface
@@ -191,6 +192,7 @@ type PacketDNS struct {
 	RTT           time.Duration
 	Dns_query     string
 	Dns_queryType string
+	Dns_protocol  string
 	Dns_response  string
 	// statistics
 	PacketsRecv int
