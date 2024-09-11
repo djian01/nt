@@ -191,7 +191,63 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// move the cursor to row
 		moveToRow(len + tableHeadRowIdx + 8)
 	case "dns":
+		// Print the table header
+		moveToRow(tableHeadRowIdx + 1)
 
+		fmt.Printf("%-5s %-10s %-15s %-25s %-20s %-15s %-10s %-15s %-20s %-20s  \n", "Seq", "Status", "Resolver", "Query", "Response", "Query_Type", "Portocol", "Response_Time","Send_Time","AddInfo")
+		fmt.Println(strings.Repeat("-", 158))
+
+		// Print the table & statistics data
+		for idx, t := range *displayTable {
+
+			pkt := &ntPinger.PacketDNS{}
+
+			if t != nil {
+				pkt = t.(*ntPinger.PacketDNS)
+			}
+
+			// ANSI escape code to move the cursor to a specific row (1-based index)
+			moveToRow(idx + tableHeadRowIdx + 3)
+
+			if pkt.SendTime.String() == "0001-01-01 00:00:00 +0000 UTC" {
+				fmt.Printf("%-5s %-10s %-15s %-25s %-20s %-15s %-10s %-15s %-20s %20s \n", "", "", "", "", "", "", "", "", "", "")
+			} else {
+
+				// AddInfo
+				AddInfo := fmt.Sprintf("%-20s", pkt.AdditionalInfo)
+
+				// Query
+				Query := TruncateString(pkt.Dns_query, 22)
+
+				// Response
+				Response := TruncateString(pkt.Dns_response, 17)
+
+
+				// check Status
+				if pkt.Status {
+					// When using the /fatih/color package, the colored string produced by color.GreenString(t.Status) is already
+					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
+					// which affects how the width specifier (like %-20s) is interpreted
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-15s %-25s %-20s %-15v %-10s %-15s %-20s %-s      \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, Query, Response, pkt.Dns_queryType, pkt.Dns_protocol, pkt.RTT,  pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+				} else {
+					Status := fmt.Sprintf("%-10v", pkt.Status)
+					fmt.Printf("%-5d %-s %-15s %-25s %-20s %-15v %-10s %-15s %-20s %-s      \n", pkt.Seq, color.RedString(Status), pkt.DestHost, Query, Response, pkt.Dns_queryType, pkt.Dns_protocol, pkt.RTT,  pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+				}
+			}
+
+			// print the statistics
+			if pkt.SendTime.String() != "0001-01-01 00:00:00 +0000 UTC" {
+				moveToRow(len + tableHeadRowIdx + 3)
+				fmt.Printf("\n--- %s %s statistics ---\n", pkt.DestAddr, color.CyanString(fmt.Sprintf("%v Ping", pkt.Type)))
+				fmt.Printf("%d packets transmitted, %d packets received, %.2f%% packet loss\n", pkt.PacketsSent, pkt.PacketsRecv, float64(pkt.PacketLoss*100))
+				fmt.Printf("round-trip min/avg/max = %v/%v/%v       \n", pkt.MinRtt, pkt.AvgRtt, pkt.MaxRtt)
+			}
+
+		}
+
+		// move the cursor to row
+		moveToRow(len + tableHeadRowIdx + 8)
 	}
 
 }

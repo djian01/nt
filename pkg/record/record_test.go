@@ -19,8 +19,8 @@ import (
 func Test_RecordingFunc(t *testing.T) {
 
 	count := 20
-	Type := "http"
-	dest := "google.com"
+	Type := "dns"
+	dest := "8.8.8.8"
 
 	var wg sync.WaitGroup
 

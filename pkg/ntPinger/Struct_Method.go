@@ -345,6 +345,8 @@ func (p *Pinger) Run(errChan chan<- error) {
 		go httpProbingRun(p, errChan)
 
 	case "dns":
+		// Go Routine - dnsProbingRun
+		go dnsProbingRun(p, errChan)
 
 	}
 

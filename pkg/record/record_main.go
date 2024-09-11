@@ -257,6 +257,65 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					return fmt.Errorf("could not write record to file: %v", err)
 				}
 			}
+		case "dns":
+			// Write the header if requested
+			if writeHeader {
+				header := []string{
+					"Type",
+					"Seq",
+					"Status",
+					"DNS_Resolver",
+					"DNS_Query",
+					"DNS_Response",
+					"DNS_Query_Type",
+					"DNS_Protocol",
+					"Response_Time",
+					"SendTime",
+					"PacketsSent",
+					"PacketsRecv",
+					"PacketLoss",
+					"MinRtt",
+					"AvgRtt",
+					"MaxRtt",
+					"AdditionalInfo",
+				}
+
+				err := writer.Write(header)
+
+				if err != nil {
+					return fmt.Errorf("could not write header to file: %v", err)
+				}
+			}
+
+			// Write each struct to the file
+			for _, recordItem := range accumulatedRecords {
+				// interface assertion
+				pkt := recordItem.(*ntPinger.PacketDNS)
+
+				row := []string{
+					pkt.Type,                                   // Ping Type
+					strconv.Itoa(pkt.Seq),                      // Seq
+					fmt.Sprintf("%t", pkt.Status),              // Status
+					pkt.DestHost,                               // DNS_Resolver
+					pkt.Dns_query,                               // DNS_Query
+					pkt.Dns_response,                        // DNS_Response
+					pkt.Dns_queryType,             // DNS_Query_Type
+					pkt.Dns_protocol,                         // DNS_Protocol
+					(pkt.RTT).String(),                         // Response_Time
+					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime										
+					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
+					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
+					fmt.Sprintf("%.2f%%", float64(pkt.PacketLoss*100)), // PacketLoss
+					pkt.MinRtt.String(),                                // MinRtt
+					pkt.AvgRtt.String(),                                // AvgRtt
+					pkt.MaxRtt.String(),                                // MaxRtt
+					pkt.AdditionalInfo,                                 // AdditionalInfo
+				}
+
+				if err := writer.Write(row); err != nil {
+					return fmt.Errorf("could not write record to file: %v", err)
+				}
+			}
 		}
 	}
 	return nil

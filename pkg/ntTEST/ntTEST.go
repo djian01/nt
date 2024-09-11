@@ -192,7 +192,28 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				*probeChan <- &probeResult
 				time.Sleep(1 * time.Second)
 			case "dns":
+				probeResult := ntPinger.PacketDNS{
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "8.8.8.8",
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
+					Dns_query:   "www.microsoft.com",
+					Dns_queryType: "A",
+					Dns_protocol: "udp",
+					Dns_response: "1.2.3.4,2.3.4.5,7.8.9.19",
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
+				}
 
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)	
 			}
 		}
 
@@ -352,6 +373,28 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				*probeChan <- &probeResult
 				time.Sleep(1 * time.Second)
 			case "dns":
+				probeResult := ntPinger.PacketDNS{
+					Seq:         PacketsSent - 1,
+					Type:        Type,
+					DestHost:    "8.8.8.8",
+					Status:      status,
+					RTT:         ranRTT,
+					SendTime:    time.Now(),
+					Dns_query:   "www.microsoft.com",
+					Dns_queryType: "A",
+					Dns_protocol: "udp",
+					Dns_response: "1.2.3.4,2.3.4.5,7.8.9.19",
+					PacketsSent:    PacketsSent,
+					PacketsRecv:    PacketsRecv,
+					PacketLoss:     PacketLoss,
+					MinRtt:         MinRtt,
+					MaxRtt:         MaxRtt,
+					AvgRtt:         AvgRtt,
+					AdditionalInfo: AdditionalInfo,
+				}
+
+				*probeChan <- &probeResult
+				time.Sleep(1 * time.Second)				
 			}
 		}
 

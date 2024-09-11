@@ -16,7 +16,7 @@ import (
 func Test_OutputMain(t *testing.T) {
 
 	count := 20
-	Type := "http"
+	Type := "dns"
 	recording := true
 	displayRow := 10
 

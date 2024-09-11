@@ -5,6 +5,7 @@
 // go test -run ^Test_ProbingHTTP$
 // go test -run ^Test_pingerHTTP$
 // go test -run ^Test_ProbingDNS$
+// go test -run ^Test_pingerDNS$
 // *************************
 
 package ntPinger_test
@@ -168,4 +169,35 @@ func Test_ProbingDNS(t *testing.T) {
 	}
 
 	fmt.Println(pkt)
+}
+
+func Test_pingerDNS(t *testing.T) {
+
+	// initial testing
+	InputVar := ntPinger.InputVars{
+		Type:         "dns",
+		Count:        0,
+		Timeout:      4,
+		Interval:     1,
+		DestHost:     "8.8.8.8",
+		Dns_query:    "www.microsoft.com",
+		Dns_Protocol: "udp", // "udp" or "tcp"
+	}
+
+
+	// Channel - error
+	errChan := make(chan error, 1)
+	defer close(errChan)
+
+	p, err := ntPinger.NewPinger(InputVar)
+	if err != nil {
+		panic(err)
+	}
+
+	go p.Run(errChan)
+
+	for pkt := range p.ProbeChan {
+		fmt.Println(pkt)
+
+	}
 }
