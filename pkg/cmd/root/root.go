@@ -3,6 +3,7 @@ package root
 import (
 	"fmt"
 
+	"nt/pkg/cmd/dns"
 	Http "nt/pkg/cmd/http"
 	"nt/pkg/cmd/icmp"
 	"nt/pkg/cmd/tcp"
@@ -67,4 +68,5 @@ func init() {
 	rootCmd.AddCommand(tcp.TcpCommand())
 	rootCmd.AddCommand(icmp.IcmpCommand())
 	rootCmd.AddCommand(Http.HttpCommand())
+	rootCmd.AddCommand(dns.DnsCommand())
 }

@@ -132,7 +132,7 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 
 		// recordingFile Name
 		timeStamp := time.Now().Format("20060102150405")
-		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "tcp", destHost, timeStamp)
+		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", InputVar.Type, destHost, timeStamp)
 		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
@@ -190,7 +190,7 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 	return nil
 }
 
-// Func - IcmpCommand
+// Func - TcpCommand
 func TcpCommand() *cobra.Command {
 	return tcpCmd
 }

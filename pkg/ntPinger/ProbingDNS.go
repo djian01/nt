@@ -97,6 +97,7 @@ func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string,
 		Seq:       Seq,
 		DestHost:  destHost,
 		Dns_query: Dns_query,
+		Dns_protocol: Dns_Protocol,
 	}
 
 	// Set up the DNS resolver with custom protocol (TCP or UDP)

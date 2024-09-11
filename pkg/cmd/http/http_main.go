@@ -131,7 +131,7 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 
 		// recordingFile Name
 		timeStamp := time.Now().Format("20060102150405")
-		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "tcp", HttpVarInput.Hostname, timeStamp)
+		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", InputVar.Type, HttpVarInput.Hostname, timeStamp)
 		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
@@ -189,7 +189,7 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 	return nil
 }
 
-// Func - IcmpCommand
+// Func - HttpCommand
 func HttpCommand() *cobra.Command {
 	return httpCmd
 }
