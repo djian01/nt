@@ -88,15 +88,16 @@ func dnsProbingRun(p *Pinger, errChan chan<- error) {
 	}
 }
 
+// func DnsProbing
 func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string, timeout int) (PacketDNS, error) {
 
 	// Initial PacketDNS
 	pkt := PacketDNS{
-		Type:      "dns",
-		Status:    false,
-		Seq:       Seq,
-		DestHost:  destHost,
-		Dns_query: Dns_query,
+		Type:         "dns",
+		Status:       false,
+		Seq:          Seq,
+		DestHost:     destHost,
+		Dns_query:    Dns_query,
 		Dns_protocol: Dns_Protocol,
 	}
 

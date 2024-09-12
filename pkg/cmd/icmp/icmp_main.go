@@ -58,15 +58,18 @@ func IcmpCommandLink(cmd *cobra.Command, args []string) {
 	// Flag -t
 	timeout, _ := cmd.Flags().GetInt("timeout")
 
+	// Flag -d
+	df, _ := cmd.Flags().GetBool("df")
+
 	// call func IcmpCommandMain
-	err := IcmpCommandMain(recording, displayRow, destHost, count, size, timeout, interval)
+	err := IcmpCommandMain(recording, displayRow, destHost, count, size, df, timeout, interval)
 	if err != nil {
 		panic(err)
 	}
 }
 
 // Func - IcmpCommandMain
-func IcmpCommandMain(recording bool, displayRow int, destHost string, count int, size int, timeout int, interval int) error {
+func IcmpCommandMain(recording bool, displayRow int, destHost string, count int, size int, df bool, timeout int, interval int) error {
 
 	// Wait Group
 	var wgRecord sync.WaitGroup
@@ -99,6 +102,7 @@ func IcmpCommandMain(recording bool, displayRow int, destHost string, count int,
 		Timeout:     timeout,
 		Interval:    interval,
 		DestHost:    destHost,
+		Icmp_DF:     df,
 	}
 
 	// Start Ping Main Command, manually input display Len
@@ -208,6 +212,6 @@ func init() {
 	icmpCmd.Flags().IntVarP(&interval, "interval", "i", 1, "ICMP Ping Interval (default: 1 sec)")
 
 	// Flag - de-fregmentation bit
-	// var df bool
-	// icmpCmd.Flags().BoolVarP(&df, "df", "d", false, "ICMP Ping de-fregmentation (default: false)")
+	var df bool
+	icmpCmd.Flags().BoolVarP(&df, "df", "d", false, "ICMP Ping de-fregmentation (default: false)")
 }

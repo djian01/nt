@@ -20,10 +20,10 @@ func Test_IcmpCommandMain(t *testing.T) {
 	size := 88
 	timeout := 1
 	interval := 1
-	//df := true
+	df := true
 
 	// call the func IcmpProbingFunc
-	err := icmp.IcmpCommandMain(recording, displayRow, destHost, count, size, timeout, interval)
+	err := icmp.IcmpCommandMain(recording, displayRow, destHost, count, size, df, timeout, interval)
 	if err != nil {
 		panic(err)
 	}

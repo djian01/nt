@@ -1,3 +1,6 @@
+//go:build linux
+// +build linux
+
 package ntPinger
 
 import (
@@ -5,93 +8,13 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 )
 
-// func: icmpProbingRun
-func icmpProbingRun(p *Pinger, errChan chan<- error) {
-
-	// Create a channel to listen for SIGINT (Ctrl+C)
-	interruptChan := make(chan os.Signal, 1)
-	defer close(interruptChan)
-	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// Sequence
-	Seq := 0
-
-	// forLoopEnds Flag
-	forLoopEnds := false
-
-	// generate payload
-	payLoad := GeneratePayloadData(p.InputVars.PayLoadSize)
-
-	// count
-	if p.InputVars.Count == 0 {
-
-		for {
-			if forLoopEnds {
-				break
-			}
-
-			pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
-			if err != nil {
-				errChan <- err
-			}
-
-			p.UpdateStatistics(&pkt)
-			pkt.UpdateStatistics(p.Stat)
-			p.ProbeChan <- &pkt
-			Seq++
-
-			// sleep for interval
-			select {
-			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
-				// wait for SleepTime
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				forLoopEnds = true
-				close(p.ProbeChan)
-
-			}
-		}
-
-	} else {
-		for i := 0; i < p.InputVars.Count; i++ {
-			if forLoopEnds {
-				break
-			}
-
-			pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Timeout, payLoad)
-			if err != nil {
-				errChan <- err
-			}
-
-			p.UpdateStatistics(&pkt)
-			pkt.UpdateStatistics(p.Stat)
-			p.ProbeChan <- &pkt
-			Seq++
-
-			// check the last loop of the probing, close probeChan
-			if i == (p.InputVars.Count - 1) {
-				close(p.ProbeChan)
-			}
-
-			// sleep for interval
-			select {
-			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
-				// wait for SleepTime
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				forLoopEnds = true
-				close(p.ProbeChan)
-			}
-		}
-	}
-}
-
-// func: tcpProbing
-func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, timeout int, payload []byte) (PacketICMP, error) {
+// func: IcmpProbing
+func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, Icmp_DF bool, timeout int, payload []byte) (PacketICMP, error) {
 
 	// Initial PacketICMP
 	pkt := PacketICMP{
@@ -101,6 +24,7 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, ti
 		DestAddr:    destAddr,
 		DestHost:    desetHost,
 		PayLoadSize: PayLoadSize,
+		Icmp_DF:     Icmp_DF,
 	}
 
 	// Convert the string to *net.IPAddr
@@ -117,10 +41,10 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, ti
 	defer conn.Close()
 
 	// Set the "Don't Fragment" (DF) flag
-	// err = SetDFBit(conn, df)
-	// if err != nil {
-	// 	return pkt, err
-	// }
+	err = SetDFBit(conn, Icmp_DF)
+	if err != nil {
+		return pkt, err
+	}
 
 	// Prepare ICMP message
 	icmpType := icmpv4EchoRequest
@@ -150,7 +74,15 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, ti
 	pkt.SendTime = time.Now()
 
 	if _, err = conn.Write(BinIcmpReq); err != nil {
-		return pkt, fmt.Errorf("failed to send request: %w", err)
+		if strings.Contains(err.Error(), "message too long") {
+			// timeout
+			pkt.AdditionalInfo = "MTU Exceed, DF set"
+			pkt.Status = false
+			return pkt, nil
+		} else {
+			return pkt, fmt.Errorf("failed to send request: %w", err)
+		}
+
 	}
 
 	// RECEIVE -  the ICMP Response
@@ -369,4 +301,23 @@ func ChecksumToByte(csum uint32) []byte {
 	bin := []byte{}
 	bin = append(bin, byte(^csum&0xff), byte(^csum>>8))
 	return bin
+}
+
+// Func - Set DF bit
+func SetDFBit(conn *net.IPConn, df bool) error {
+	rawConn, err := conn.SyscallConn()
+	if err != nil {
+		return err
+	}
+
+	if df {
+		rawConn.Control(func(fd uintptr) {
+			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DO)
+		})
+	} else {
+		rawConn.Control(func(fd uintptr) {
+			syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_MTU_DISCOVER, syscall.IP_PMTUDISC_DONT)
+		})
+	}
+	return nil
 }

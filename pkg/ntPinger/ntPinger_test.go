@@ -80,9 +80,10 @@ func Test_ProbingICMP(t *testing.T) {
 	NBypes := 50
 	Seq := 1
 	size := 50
+	df := false
 	payload := ntPinger.GeneratePayloadData(size)
 
-	pkt, err := ntPinger.IcmpProbing(Seq, DestAddr, DestHost, NBypes, Timeout, payload)
+	pkt, err := ntPinger.IcmpProbing(Seq, DestAddr, DestHost, NBypes, df, Timeout, payload)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -183,7 +184,6 @@ func Test_pingerDNS(t *testing.T) {
 		Dns_query:    "www.microsoft.com",
 		Dns_Protocol: "udp", // "udp" or "tcp"
 	}
-
 
 	// Channel - error
 	errChan := make(chan error, 1)
