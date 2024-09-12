@@ -47,11 +47,13 @@ func Test_pingerTCP(t *testing.T) {
 func Test_pingerICMP(t *testing.T) {
 
 	InputVar := ntPinger.InputVars{
-		Type:     "icmp",
-		Count:    5,
-		Timeout:  1,
-		Interval: 1,
-		DestHost: "google.com",
+		Type:        "icmp",
+		Count:       0,
+		Timeout:     1,
+		Interval:    1,
+		DestHost:    "4.2.2.2",
+		Icmp_DF:     false,
+		PayLoadSize: 1480,
 	}
 
 	// Channel - error
@@ -80,7 +82,7 @@ func Test_ProbingICMP(t *testing.T) {
 	NBypes := 50
 	Seq := 1
 	size := 50
-	df := false
+	df := true
 	payload := ntPinger.GeneratePayloadData(size)
 
 	pkt, err := ntPinger.IcmpProbing(Seq, DestAddr, DestHost, NBypes, df, Timeout, payload)
