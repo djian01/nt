@@ -1,1 +1,1 @@
-package ntscan
+package ntScan

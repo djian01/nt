@@ -1,90 +1,91 @@
-package ntscan
+package ntScan
 
 import (
 	"fmt"
-	"net"
-	"os"
-	"os/exec"
-	"runtime"
+	"nt/pkg/ntPinger"
 	"strconv"
-	"strings"
+
+	"github.com/fatih/color"
 )
 
-func ScanMTUMain() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <destination>")
-		os.Exit(1)
-	}
-
-	dest := os.Args[1]
-	ipAddr, err := net.ResolveIPAddr("ip", dest)
-	if err != nil {
-		fmt.Printf("Error resolving IP address: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("Checking max MTU to %s\n", ipAddr.String())
-
-	var maxMTU int
-	if runtime.GOOS == "windows" {
-		maxMTU = findMaxMTUWindows(dest)
-	} else {
-		maxMTU = findMaxMTULinux(ipAddr)
-	}
-
-	fmt.Printf("Maximum MTU to %s: %d\n", ipAddr.String(), maxMTU)
-}
-
-func findMaxMTULinux(dest *net.IPAddr) int {
-	low := 576   // Minimum safe MTU
-	high := 1500 // Common Ethernet MTU
-	var lastWorkingMTU int
-
-	for low <= high {
-		mid := (low + high) / 2
-		if sendPingLinux(dest, mid) {
-			lastWorkingMTU = mid
-			low = mid + 1
-		} else {
-			high = mid - 1
-		}
-	}
-
-	return lastWorkingMTU
-}
-
-func sendPingLinux(dest *net.IPAddr, packetSize int) bool {
-	// Use the Linux method for sending ICMP with raw sockets
-	// (Similar to the previous code, for Linux)
-	return true // Placeholder
-}
-
-func findMaxMTUWindows(dest string) int {
+func ScanMTUMain(highInput int, DestAddr string) (largestMTU int, err error) {
+	// initial vars
 	low := 576
-	high := 1500
-	var lastWorkingMTU int
+	high := highInput
+	testMTU := 0
+	var pkt ntPinger.PacketICMP
 
-	for low <= high {
-		mid := (low + high) / 2
-		if sendPingWindows(dest, mid) {
-			lastWorkingMTU = mid
-			low = mid + 1
+	// Larget MTU scan
+	for {
+		// ************ divide mode ************
+		if (high - low) > 10 {
+
+			// Get test MTU
+			testMTU = getMidMtu(high,low)
+
+			// generate payload
+			payLoad := ntPinger.GeneratePayloadData(testMTU)			
+
+			// IcmpProbing
+			pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, testMTU, true, 1, payLoad)
+			if err != nil {
+				return 
+			}
+
+			// display test result
+			testTerminalOutput(DestAddr, pkt.Status, testMTU)
+
+			// if the testMTU success
+			if pkt.Status {
+				low = testMTU
+				// if the test MTU fail
+			} else {
+				high = testMTU
+			}
+
+
+		// ************** increase mode ****************
 		} else {
-			high = mid - 1
+			// update test MTU
+			testMTU = low
+
+			// generate payload
+			payLoad := ntPinger.GeneratePayloadData(testMTU)			
+
+			// IcmpProbing
+			pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, testMTU, true, 1, payLoad)
+			if err != nil {
+				return 
+			}
+
+			// display test result
+			testTerminalOutput(DestAddr, pkt.Status, testMTU)
+
+			// if the testMTU success
+			if pkt.Status {
+				low = testMTU + 1
+				// if the test MTU fail
+			} else {
+				largestMTU = testMTU -1
+				return
+			}
+		
 		}
 	}
-
-	return lastWorkingMTU
 }
 
-func sendPingWindows(dest string, packetSize int) bool {
-	cmd := exec.Command("ping", dest, "-f", "-l", strconv.Itoa(packetSize), "-n", "1")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Printf("Error running ping: %v\n", err)
-		return false
-	}
 
-	// Check for the "Packet needs to be fragmented but DF set" string in the output
-	return !strings.Contains(string(output), "Packet needs to be fragmented")
+
+// func - get the mid MTU
+func getMidMtu(high, low int) int {
+	return ((high - low)/2 + low)
+}
+
+// test Terminal output
+func testTerminalOutput (DestAddr string, testStatus bool, testMTU int){
+	if testStatus {
+		fmt.Printf("MTU Test - Destination: %s, TestMTU Size: %s, TestResult: %s\n", color.GreenString(DestAddr), color.GreenString(strconv.Itoa(testMTU)), color.GreenString(strconv.FormatBool(testStatus)))
+	} else {
+		fmt.Printf("MTU Test - Destination: %s, TestMTU Size: %s, TestResult: %s\n", color.GreenString(DestAddr), color.GreenString(strconv.Itoa(testMTU)), color.RedString(strconv.FormatBool(testStatus)))
+	}	
 }
