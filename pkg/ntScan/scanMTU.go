@@ -10,7 +10,7 @@ import (
 )
 
 // func - ScanMTURun
-func ScanMTURun(ceilingSize int, DestAddr string) (err error) {
+func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 	// initial vars
 	low := 576
 	high := ceilingSize
@@ -22,7 +22,7 @@ func ScanMTURun(ceilingSize int, DestAddr string) (err error) {
 	print("\033[H\033[2J")
 
 	// print test title
-	fmt.Println("MAX MTU Size Check:")
+	fmt.Printf("MAX MTU Size Check for %s:\n", color.GreenString(DestHost))
 	fmt.Println(strings.Repeat("-", 80))
 
 	// Larget MTU scan

@@ -58,7 +58,7 @@ func MtuCommandMain(ceilingSize int, destHost string) error {
 	}
 
 	// call the ScanMTURun
-	err = ntScan.ScanMTURun(ceilingSize, fmt.Sprint(DestAddrs[0]))
+	err = ntScan.ScanMTURun(ceilingSize, fmt.Sprint(DestAddrs[0]), destHost)
 	if err != nil {
 		return err
 	}
