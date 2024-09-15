@@ -6,7 +6,7 @@ OUTPUT_DIR = ./output
 # Output directories for different platforms
 OUTPUT_DIR_LINUX = $(OUTPUT_DIR)/linux
 OUTPUT_DIR_WINDOWS = $(OUTPUT_DIR)/windows
-OUTPUT_DIR_MACOS = $(OUTPUT_DIR)/macos
+# OUTPUT_DIR_MACOS = $(OUTPUT_DIR)/macos
 
 # Check if Docker is installed
 .PHONY: check-docker
@@ -34,19 +34,19 @@ build-windows: check-docker
 	@echo "Windows binary built: $(OUTPUT_DIR_WINDOWS)/$(BINARY_NAME).exe"
 
 # Build for macOS
-.PHONY: build-macos
-build-macos: check-docker
-	@echo "Building for macOS inside Docker..."
-	mkdir -p $(OUTPUT_DIR_MACOS)
-	docker build --rm -t $(DOCKER_IMAGE) .
-	docker run --rm -v $(PWD)/$(OUTPUT_DIR_MACOS):/output $(DOCKER_IMAGE) \
-		/bin/sh -c "GOOS=darwin GOARCH=amd64 go build -o /output/$(BINARY_NAME)"
-	@echo "macOS binary built: $(OUTPUT_DIR_MACOS)/$(BINARY_NAME)"
+# .PHONY: build-macos
+# build-macos: check-docker
+# 	@echo "Building for macOS inside Docker..."
+# 	mkdir -p $(OUTPUT_DIR_MACOS)
+# 	docker build --rm -t $(DOCKER_IMAGE) .
+# 	docker run --rm -v $(PWD)/$(OUTPUT_DIR_MACOS):/output $(DOCKER_IMAGE) \
+# 		/bin/sh -c "GOOS=darwin GOARCH=amd64 go build -o /output/$(BINARY_NAME)"
+# 	@echo "macOS binary built: $(OUTPUT_DIR_MACOS)/$(BINARY_NAME)"
 
 # Build all platforms
 .PHONY: build-all
 build-all: build-linux build-windows build-macos
-	@echo "Built binaries for Linux, Windows, and macOS."
+	@echo "Built binaries for Linux and Windows."
 
 # Clean up the build artifacts and Docker images
 .PHONY: clean
