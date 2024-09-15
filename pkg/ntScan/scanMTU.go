@@ -17,6 +17,7 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 	payLoadSize := 0
 	var pkt ntPinger.PacketICMP
 	largestMTU := 0
+	devideModeResult := false
 
 	// clear screen
 	print("\033[H\033[2J")
@@ -48,43 +49,76 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 			// if the testMTU success
 			if pkt.Status {
 				low = payLoadSize
+				devideModeResult = true
 				// if the test MTU fail
 			} else {
 				high = payLoadSize
+				devideModeResult = false
 			}
 
 
-		// ************** increase mode ****************
+		// ************** increase / decrease mode ****************
 		} else {
-			// update test MTU
-			payLoadSize = low
 
-			// generate payload
-			payLoad := ntPinger.GeneratePayloadData(payLoadSize)			
+			// devideModeResult is true -> increase
+			if devideModeResult {
+				// update test MTU
+				payLoadSize = low
 
-			// IcmpProbing
-			pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
-			if err != nil {
-				return 
+				// generate payload
+				payLoad := ntPinger.GeneratePayloadData(payLoadSize)			
+
+				// IcmpProbing
+				pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
+				if err != nil {
+					return 
+				}
+
+				// display test result
+				testTerminalOutput(DestAddr, pkt.Status, payLoadSize)
+
+				// if the testMTU success
+				if pkt.Status {
+					low = payLoadSize + 1
+					// if the test MTU fail
+				} else {
+					payLoadSize = payLoadSize -1
+					largestMTU = payLoadSize + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
+					break				
+				}
+				// devideModeResult is false -> decrease	
+			} else {
+				// update test MTU
+				payLoadSize = high
+
+				// generate payload
+				payLoad := ntPinger.GeneratePayloadData(payLoadSize)			
+
+				// IcmpProbing
+				pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
+				if err != nil {
+					return 
+				}
+
+				// display test result
+				testTerminalOutput(DestAddr, pkt.Status, payLoadSize)
+
+				// if the testMTU fails
+				if !pkt.Status {
+					high = payLoadSize - 1
+					// if the test MTU success
+				} else {
+					largestMTU = payLoadSize + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
+					break				
+				}
 			}
 
-			// display test result
-			testTerminalOutput(DestAddr, pkt.Status, payLoadSize)
-
-			// if the testMTU success
-			if pkt.Status {
-				low = payLoadSize + 1
-				// if the test MTU fail
-			} else {
-				largestMTU = payLoadSize -1 + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
-				break				
-			}	
 		}
 	}
 	// print result
 	fmt.Printf("\nThe MAX MTU Size to destination %s is %s bytes\n", color.CyanString(DestAddr), color.CyanString(strconv.Itoa(largestMTU)))
 	fmt.Println("In this test:")
-	fmt.Printf("Max MTU (%s) = IP Header (%s bytes) + ICMP Header (%s bytes) + ICMP Payload (%s bytes)\n\n", color.CyanString(strconv.Itoa(largestMTU)), color.CyanString("20"), color.CyanString("8"), color.CyanString(strconv.Itoa(payLoadSize-1)))
+	fmt.Printf("Max MTU (%s) = IP Header (%s bytes) + ICMP Header (%s bytes) + ICMP Payload (%s bytes)\n\n", color.CyanString(strconv.Itoa(largestMTU)), color.CyanString("20"), color.CyanString("8"), color.CyanString(strconv.Itoa(payLoadSize)))
 	return nil
 }
 
