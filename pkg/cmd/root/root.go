@@ -6,6 +6,7 @@ import (
 	"nt/pkg/cmd/dns"
 	Http "nt/pkg/cmd/http"
 	"nt/pkg/cmd/icmp"
+	"nt/pkg/cmd/mtu"
 	"nt/pkg/cmd/tcp"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,7 @@ var version = "0.1.1"
 
 // Initial rootCmd
 var rootCmd = &cobra.Command{
-	Use:   "nt [flags] <sub-command: icmp/tcp/http/dns>", // root command, the root command name can or cannot be "greeter" as the executiable file name can change
+	Use:   "nt [flags] <sub-command: icmp/tcp/http/dns/mtu>", // root command, the root command name can or cannot be "greeter" as the executiable file name can change
 	Short: "Net-Test CLI",
 	Long:  "Net-Test is a set of tools for network testing",
 	Run:   RootCommandFunc,
@@ -69,4 +70,5 @@ func init() {
 	rootCmd.AddCommand(icmp.IcmpCommand())
 	rootCmd.AddCommand(Http.HttpCommand())
 	rootCmd.AddCommand(dns.DnsCommand())
+	rootCmd.AddCommand(mtu.MtuCommand())
 }

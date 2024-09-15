@@ -2,6 +2,7 @@ package ntPinger
 
 import (
 	"fmt"
+	"net"
 	"time"
 )
 
@@ -104,4 +105,11 @@ func ConstructURL(Http_scheme, DestHost, Http_path string, DestPort int) string 
 		}
 	}
 	return url
+}
+
+// Func - resolveDestHost
+func ResolveDestHost (DestHost string) (DestAddr []net.IP, err error){
+		// Check Name Resolution
+		DestAddr, err = net.LookupIP(DestHost)
+		return
 }

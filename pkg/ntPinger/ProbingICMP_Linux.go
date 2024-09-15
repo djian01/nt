@@ -75,7 +75,7 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, Ic
 
 	if _, err = conn.Write(BinIcmpReq); err != nil {
 		if strings.Contains(err.Error(), "message too long") {
-			// timeout
+			// MTU Exceed
 			pkt.AdditionalInfo = "MTU Exceed, DF set"
 			pkt.Status = false
 			return pkt, nil
@@ -92,6 +92,11 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, Ic
 		if strings.Contains(err.Error(), "timeout") {
 			// timeout
 			pkt.AdditionalInfo = "Timeout"
+			pkt.Status = false
+			return pkt, nil
+		} else if strings.Contains(err.Error(), "message too long")  {
+			// MTU Exceed
+			pkt.AdditionalInfo = "MTU Exceed, DF set"
 			pkt.Status = false
 			return pkt, nil
 		} else {

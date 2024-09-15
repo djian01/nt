@@ -24,7 +24,7 @@ func Test_HttpCommandMain(t *testing.T) {
 	// initial InputVar
 	HttpVarInput := Http.HttpVar{
 		Scheme:   "http",
-		Hostname: "google.com",
+		Hostname: "google1231323.com",
 		Port:     80,
 		Path:     "",
 	}

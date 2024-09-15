@@ -268,7 +268,7 @@ func (p *Pinger) Resolve() error {
 		return errors.New("destination Host cannot be empty")
 	}
 	// Check Name Resolution
-	resolvedIPs, err := net.LookupIP(p.InputVars.DestHost)
+	resolvedIPs, err := ResolveDestHost(p.InputVars.DestHost)
 	if err != nil {
 		return fmt.Errorf(fmt.Sprintf("failed to resolve domain: %v", p.InputVars.DestHost))
 	}

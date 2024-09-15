@@ -21,7 +21,7 @@ var httpCmd = &cobra.Command{
 	Use:   "http [flags] <URL>", // Sub-command, shown in the -h, Usage field
 	Short: "HTTP/HTTPs Ping Test Module",
 	Long:  "HTTP/HTTPs Ping test Module for web services latency testing",
-	Args:  cobra.ExactArgs(1), // 1 Args, <url> are required
+	Args:  cobra.ExactArgs(1), // 1 Arg, <url> is required
 	Run:   HttpCommandLink,
 	Example: `
 # Example: HTTP ping to "https://google.com" with recording enabled. Default Values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s
@@ -65,6 +65,9 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 	// call func HttpCommandMain
 	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, count, timeout, interval)
 	if err != nil {
+		// fmt.Println(err.Error())
+		// os.Exit(1)
+
 		panic(err) // panic all error from under
 	}
 }

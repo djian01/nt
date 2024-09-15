@@ -1,5 +1,5 @@
 // *************************
-// sudo go test -run ^Test_ScanMTUMain$
+// sudo go test -run ^Test_ScanMTURun$
 
 // *************************
 
@@ -12,17 +12,14 @@ import (
 )
 
 
-func Test_ScanMTUMain(t *testing.T) {
+func Test_ScanMTURun(t *testing.T) {
 
 	highInput := 1500
 
 	DestAddr := "192.168.1.1"
 
-	largestMTU, err := ntScan.ScanMTUMain(highInput,DestAddr)
+	err := ntScan.ScanMTURun(highInput,DestAddr)
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println(largestMTU)
 	}
-
 }
