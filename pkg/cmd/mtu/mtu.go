@@ -16,7 +16,7 @@ var mtuCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1), // 1 Arg, <Host/IP> is required
 	Run:   MtuCommandLink,
 	Example: `
-# ** Noted: The global recording functions (-r & -p) are NOT available for the MTU test **
+** Noted: The global recording functions (-r & -p) are NOT available for the MTU test **
 
 # Example: MTU check for destination google.com"
 nt mtu google.com
