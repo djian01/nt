@@ -83,7 +83,7 @@ func ScanMTURun(ceilingSize int, DestAddr string) (err error) {
 	}
 	// print result
 	fmt.Printf("\nThe MAX MTU Size to destination %s is %s bytes\n", color.CyanString(DestAddr), color.CyanString(strconv.Itoa(largestMTU)))
-	fmt.Println("For this test:")
+	fmt.Println("In this test:")
 	fmt.Printf("Max MTU (%s) = IP Header (%s bytes) + ICMP Header (%s bytes) + ICMP Payload (%s bytes)\n\n", color.CyanString(strconv.Itoa(largestMTU)), color.CyanString("20"), color.CyanString("8"), color.CyanString(strconv.Itoa(payLoadSize-1)))
 	return nil
 }
