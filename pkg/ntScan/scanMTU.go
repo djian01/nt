@@ -23,7 +23,7 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 	print("\033[H\033[2J")
 
 	// print test title
-	fmt.Printf("MAX MTU Size Check for %s:\n", color.GreenString(DestHost))
+	fmt.Printf("Max MTU Size Check for %s:\n", color.GreenString(DestHost))
 	fmt.Println(strings.Repeat("-", 80))
 
 	// Larget MTU scan
@@ -32,15 +32,15 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 		if (high - low) > 10 {
 
 			// Get test MTU
-			payLoadSize = getMidMtu(high,low)
+			payLoadSize = getMidMtu(high, low)
 
 			// generate payload
-			payLoad := ntPinger.GeneratePayloadData(payLoadSize)			
+			payLoad := ntPinger.GeneratePayloadData(payLoadSize)
 
 			// IcmpProbing
 			pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
 			if err != nil {
-				return 
+				return
 			}
 
 			// display test result
@@ -56,8 +56,7 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 				devideModeResult = false
 			}
 
-
-		// ************** increase / decrease mode ****************
+			// ************** increase / decrease mode ****************
 		} else {
 
 			// devideModeResult is true -> increase
@@ -66,12 +65,12 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 				payLoadSize = low
 
 				// generate payload
-				payLoad := ntPinger.GeneratePayloadData(payLoadSize)			
+				payLoad := ntPinger.GeneratePayloadData(payLoadSize)
 
 				// IcmpProbing
 				pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
 				if err != nil {
-					return 
+					return
 				}
 
 				// display test result
@@ -82,22 +81,22 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 					low = payLoadSize + 1
 					// if the test MTU fail
 				} else {
-					payLoadSize = payLoadSize -1
+					payLoadSize = payLoadSize - 1
 					largestMTU = payLoadSize + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
-					break				
+					break
 				}
-				// devideModeResult is false -> decrease	
+				// devideModeResult is false -> decrease
 			} else {
 				// update test MTU
 				payLoadSize = high
 
 				// generate payload
-				payLoad := ntPinger.GeneratePayloadData(payLoadSize)			
+				payLoad := ntPinger.GeneratePayloadData(payLoadSize)
 
 				// IcmpProbing
 				pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
 				if err != nil {
-					return 
+					return
 				}
 
 				// display test result
@@ -109,31 +108,29 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 					// if the test MTU success
 				} else {
 					largestMTU = payLoadSize + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
-					break				
+					break
 				}
 			}
 
 		}
 	}
 	// print result
-	fmt.Printf("\nThe MAX MTU Size to destination %s is %s bytes\n", color.CyanString(DestAddr), color.CyanString(strconv.Itoa(largestMTU)))
+	fmt.Printf("\nThe Max MTU Size to destination %s is %s bytes\n", color.CyanString(DestAddr), color.CyanString(strconv.Itoa(largestMTU)))
 	fmt.Println("In this test:")
 	fmt.Printf("Max MTU (%s) = IP Header (%s bytes) + ICMP Header (%s bytes) + ICMP Payload (%s bytes)\n\n", color.CyanString(strconv.Itoa(largestMTU)), color.CyanString("20"), color.CyanString("8"), color.CyanString(strconv.Itoa(payLoadSize)))
 	return nil
 }
 
-
-
 // func - get the mid MTU
 func getMidMtu(high, low int) int {
-	return ((high - low)/2 + low)
+	return ((high-low)/2 + low)
 }
 
 // test Terminal output
-func testTerminalOutput (DestAddr string, testStatus bool, testMTU int){
+func testTerminalOutput(DestAddr string, testStatus bool, testMTU int) {
 	if testStatus {
-		fmt.Printf("MTU Test - Destination: %s, TestMTU Size: %s, TestResult: %s\n", color.GreenString(DestAddr), color.GreenString(strconv.Itoa(testMTU + 28)), color.GreenString(strconv.FormatBool(testStatus)))
+		fmt.Printf("MTU Test - Destination: %s, TestMTU Size: %s, TestResult: %s\n", color.GreenString(DestAddr), color.GreenString(strconv.Itoa(testMTU+28)), color.GreenString(strconv.FormatBool(testStatus)))
 	} else {
-		fmt.Printf("MTU Test - Destination: %s, TestMTU Size: %s, TestResult: %s\n", color.GreenString(DestAddr), color.GreenString(strconv.Itoa(testMTU + 28)), color.RedString(strconv.FormatBool(testStatus)))
-	}	
+		fmt.Printf("MTU Test - Destination: %s, TestMTU Size: %s, TestResult: %s\n", color.GreenString(DestAddr), color.GreenString(strconv.Itoa(testMTU+28)), color.RedString(strconv.FormatBool(testStatus)))
+	}
 }
