@@ -36,7 +36,23 @@ git clone https://github.com/djian01/nt.git
 cd nt
 go build .
 ```
-### Option 3: Download Executable from GitHub Releases
+### Option 3: Makefile
+
+```bash
+git clone https://github.com/djian01/nt.git
+cd nt
+make build-linux
+```
+
+or
+
+```bash
+git clone https://github.com/djian01/nt.git
+cd nt
+make build-windows
+```
+
+### Option 4: Download Executable from GitHub Releases
 
 1. Visit the [Releases](https://github.com/djian01/nt/releases) page of the repository.
 2. Download the `nt_linux_amd64.tar.gz` file for Linux or the `nt_windows_amd64.zip` file for Windows
