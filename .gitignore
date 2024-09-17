@@ -12,3 +12,7 @@ nt
 # git files
 .gitconfig
 .git-credentials
+
+# zip files
+*.zip
+*.tar.gz
