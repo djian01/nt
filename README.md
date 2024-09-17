@@ -36,7 +36,7 @@ git clone https://github.com/djian01/nt.git
 cd nt
 go build .
 ```
-### Option 3: Makefile
+### Option 3: Makefile (requires Docker installed in local machine)
 
 ```bash
 git clone https://github.com/djian01/nt.git
