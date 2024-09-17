@@ -1,6 +1,6 @@
 module github.com/djian01/nt
 
-go 1.22.2
+go 1.23
 
 require (
 	github.com/fatih/color v1.17.0 // indirect
