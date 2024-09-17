@@ -1,7 +1,7 @@
 package terminalOutput
 
 import (
-	"nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntPinger"
 )
 
 // Main func for Output

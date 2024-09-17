@@ -10,9 +10,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"nt/pkg/ntPinger"
-	"nt/pkg/record"
-	output "nt/pkg/terminalOutput"
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/record"
+	output "github.com/djian01/nt/pkg/terminalOutput"
 )
 
 // Iniital tcpCmd
@@ -96,12 +96,12 @@ func DnsCommandMain(recording bool, displayRow int, destHost string, Dns_query s
 
 	// build the InputVar
 	InputVar := ntPinger.InputVars{
-		Type:        "dns",
-		Count:       count,		
-		Timeout:     timeout,
-		Interval:    interval,
-		DestHost:    destHost,
-		Dns_query:   Dns_query,
+		Type:         "dns",
+		Count:        count,
+		Timeout:      timeout,
+		Interval:     interval,
+		DestHost:     destHost,
+		Dns_query:    Dns_query,
 		Dns_Protocol: Dns_protocol,
 	}
 

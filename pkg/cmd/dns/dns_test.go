@@ -5,8 +5,9 @@
 package dns_test
 
 import (
-	"nt/pkg/cmd/dns"
 	"testing"
+
+	"github.com/djian01/nt/pkg/cmd/dns"
 )
 
 // test ProbingFunc

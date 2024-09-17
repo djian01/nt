@@ -3,11 +3,12 @@ package ntTEST
 import (
 	"math"
 	"math/rand"
-	"nt/pkg/ntPinger"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/djian01/nt/pkg/ntPinger"
 )
 
 func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
@@ -171,7 +172,7 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 					RTT:         ranRTT,
 					SendTime:    time.Now(),
 					DestPort:    destPort,
-					Http_path: "",
+					Http_path:   "",
 					Http_scheme: "https",
 
 					PacketsSent:    PacketsSent,
@@ -185,24 +186,24 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				if status {
 					probeResult.Http_response_code = 200
 					probeResult.Http_response = "OK"
-				}else {
+				} else {
 					probeResult.Http_response_code = 0
-				}				
+				}
 
 				*probeChan <- &probeResult
 				time.Sleep(1 * time.Second)
 			case "dns":
 				probeResult := ntPinger.PacketDNS{
-					Seq:         PacketsSent - 1,
-					Type:        Type,
-					DestHost:    "8.8.8.8",
-					Status:      status,
-					RTT:         ranRTT,
-					SendTime:    time.Now(),
-					Dns_query:   "www.microsoft.com",
-					Dns_queryType: "A",
-					Dns_protocol: "udp",
-					Dns_response: "1.2.3.4,2.3.4.5,7.8.9.19",
+					Seq:            PacketsSent - 1,
+					Type:           Type,
+					DestHost:       "8.8.8.8",
+					Status:         status,
+					RTT:            ranRTT,
+					SendTime:       time.Now(),
+					Dns_query:      "www.microsoft.com",
+					Dns_queryType:  "A",
+					Dns_protocol:   "udp",
+					Dns_response:   "1.2.3.4,2.3.4.5,7.8.9.19",
 					PacketsSent:    PacketsSent,
 					PacketsRecv:    PacketsRecv,
 					PacketLoss:     PacketLoss,
@@ -213,7 +214,7 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				}
 
 				*probeChan <- &probeResult
-				time.Sleep(1 * time.Second)	
+				time.Sleep(1 * time.Second)
 			}
 		}
 
@@ -343,13 +344,13 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				destPort := 443
 
 				probeResult := ntPinger.PacketHTTP{
-					Seq:         PacketsSent - 1,
-					Type:        Type,
-					DestHost:    "google.com",
-					Status:      status,
-					RTT:         ranRTT,
-					SendTime:    time.Now(),
-					DestPort:    destPort,
+					Seq:       PacketsSent - 1,
+					Type:      Type,
+					DestHost:  "google.com",
+					Status:    status,
+					RTT:       ranRTT,
+					SendTime:  time.Now(),
+					DestPort:  destPort,
 					Http_path: "c/66dc2804-7f48-8011-88d8-c6bf57428b6a/c/66dc2804-7f48-8011-88d8-c6bf57428b6a",
 					//Http_path: "web/login",
 					Http_scheme: "https",
@@ -366,7 +367,7 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				if status {
 					probeResult.Http_response_code = 200
 					probeResult.Http_response = "OK"
-				}else {
+				} else {
 					probeResult.Http_response_code = 0
 				}
 
@@ -374,16 +375,16 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				time.Sleep(1 * time.Second)
 			case "dns":
 				probeResult := ntPinger.PacketDNS{
-					Seq:         PacketsSent - 1,
-					Type:        Type,
-					DestHost:    "8.8.8.8",
-					Status:      status,
-					RTT:         ranRTT,
-					SendTime:    time.Now(),
-					Dns_query:   "www.microsoft.com",
-					Dns_queryType: "A",
-					Dns_protocol: "udp",
-					Dns_response: "1.2.3.4,2.3.4.5,7.8.9.19",
+					Seq:            PacketsSent - 1,
+					Type:           Type,
+					DestHost:       "8.8.8.8",
+					Status:         status,
+					RTT:            ranRTT,
+					SendTime:       time.Now(),
+					Dns_query:      "www.microsoft.com",
+					Dns_queryType:  "A",
+					Dns_protocol:   "udp",
+					Dns_response:   "1.2.3.4,2.3.4.5,7.8.9.19",
 					PacketsSent:    PacketsSent,
 					PacketsRecv:    PacketsRecv,
 					PacketLoss:     PacketLoss,
@@ -394,7 +395,7 @@ func ResultGenerate(count int, Type string, probeChan *chan ntPinger.Packet) {
 				}
 
 				*probeChan <- &probeResult
-				time.Sleep(1 * time.Second)				
+				time.Sleep(1 * time.Second)
 			}
 		}
 

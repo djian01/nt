@@ -3,11 +3,11 @@ package root
 import (
 	"fmt"
 
-	"nt/pkg/cmd/dns"
-	Http "nt/pkg/cmd/http"
-	"nt/pkg/cmd/icmp"
-	"nt/pkg/cmd/mtu"
-	"nt/pkg/cmd/tcp"
+	"github.com/djian01/nt/pkg/cmd/dns"
+	Http "github.com/djian01/nt/pkg/cmd/http"
+	"github.com/djian01/nt/pkg/cmd/icmp"
+	"github.com/djian01/nt/pkg/cmd/mtu"
+	"github.com/djian01/nt/pkg/cmd/tcp"
 
 	"github.com/spf13/cobra"
 )

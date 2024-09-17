@@ -2,8 +2,9 @@ package mtu
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
-	"nt/pkg/ntScan"
+
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntScan"
 
 	"github.com/spf13/cobra"
 )
@@ -39,7 +40,7 @@ func MtuCommandLink(cmd *cobra.Command, args []string) {
 	ceilingSize, _ := cmd.Flags().GetInt("ceilingsize")
 
 	// Arg - destHost
-	destHost := args[0]	
+	destHost := args[0]
 
 	// call func HttpCommandMain
 	err := MtuCommandMain(ceilingSize, destHost)
@@ -68,7 +69,7 @@ func MtuCommandMain(ceilingSize int, destHost string) error {
 // Func - HttpCommand
 func MtuCommand() *cobra.Command {
 
-    // Customize the help template for the subcommand. Only the sub command Flag description is shown. Remove the Global Flag description.
+	// Customize the help template for the subcommand. Only the sub command Flag description is shown. Remove the Global Flag description.
 	mtuCmd.SetHelpTemplate(`{{.Short}}
 
 Usage:

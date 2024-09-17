@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"nt/pkg/cmd/root" // import root pkg
 	"os"
 	"runtime/debug"
+
+	"github.com/djian01/nt/pkg/cmd/root" // import root pkg
 )
 
 // create a global logFile pointer and logger pointer

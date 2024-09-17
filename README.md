@@ -27,7 +27,7 @@
 
 ```bash
 go install github.com/yourusername/nt@latest
-
+```
 
 
 # Compile for Windows Executable

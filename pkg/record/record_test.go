@@ -6,14 +6,15 @@ package record_test
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
-	"nt/pkg/ntTEST"
-	"nt/pkg/record"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntTEST"
+	"github.com/djian01/nt/pkg/record"
 )
 
 func Test_RecordingFunc(t *testing.T) {

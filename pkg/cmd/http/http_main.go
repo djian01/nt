@@ -3,14 +3,15 @@ package Http
 import (
 	"fmt"
 	"net/url"
-	"nt/pkg/ntPinger"
-	"nt/pkg/record"
-	"nt/pkg/terminalOutput"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/record"
+	"github.com/djian01/nt/pkg/terminalOutput"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"

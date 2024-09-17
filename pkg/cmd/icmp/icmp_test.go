@@ -5,8 +5,9 @@
 package icmp_test
 
 import (
-	"nt/pkg/cmd/icmp"
 	"testing"
+
+	"github.com/djian01/nt/pkg/cmd/icmp"
 )
 
 // test ProbingFunc

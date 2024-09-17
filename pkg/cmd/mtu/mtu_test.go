@@ -6,8 +6,9 @@ package mtu_test
 
 import (
 	"fmt"
-	"nt/pkg/cmd/mtu"
 	"testing"
+
+	"github.com/djian01/nt/pkg/cmd/mtu"
 )
 
 func Test_MtuCommandMain(t *testing.T) {

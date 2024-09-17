@@ -2,8 +2,9 @@ package terminalOutput
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
 	"strings"
+
+	"github.com/djian01/nt/pkg/ntPinger"
 
 	"github.com/fatih/color"
 )
@@ -194,7 +195,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-10s %-15s %-25s %-25s %-12s %-10s %-15s %-20s %-20s  \n", "Seq", "Status", "Resolver", "Query", "Response", "Query_Type", "Protocol", "Response_Time","Send_Time","AddInfo")
+		fmt.Printf("%-5s %-10s %-15s %-25s %-25s %-12s %-10s %-15s %-20s %-20s  \n", "Seq", "Status", "Resolver", "Query", "Response", "Query_Type", "Protocol", "Response_Time", "Send_Time", "AddInfo")
 		fmt.Println(strings.Repeat("-", 158))
 
 		// Print the table & statistics data
@@ -222,17 +223,16 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 				// Response
 				Response := TruncateString(pkt.Dns_response, 22)
 
-
 				// check Status
 				if pkt.Status {
 					// When using the /fatih/color package, the colored string produced by color.GreenString(t.Status) is already
 					// wrapped with escape sequences that apply the color in the terminal. This wrapping adds extra characters to the string,
 					// which affects how the width specifier (like %-20s) is interpreted
 					Status := fmt.Sprintf("%-10v", pkt.Status)
-					fmt.Printf("%-5d %-s %-15s %-25s %-25s %-12v %-10s %-15s %-20s %-s      \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, Query, Response, pkt.Dns_queryType, pkt.Dns_protocol, pkt.RTT,  pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+					fmt.Printf("%-5d %-s %-15s %-25s %-25s %-12v %-10s %-15s %-20s %-s      \n", pkt.Seq, color.GreenString(Status), pkt.DestHost, Query, Response, pkt.Dns_queryType, pkt.Dns_protocol, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				} else {
 					Status := fmt.Sprintf("%-10v", pkt.Status)
-					fmt.Printf("%-5d %-s %-15s %-25s %-25s %-12v %-10s %-15s %-20s %-s      \n", pkt.Seq, color.RedString(Status), pkt.DestHost, Query, Response, pkt.Dns_queryType, pkt.Dns_protocol, pkt.RTT,  pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
+					fmt.Printf("%-5d %-s %-15s %-25s %-25s %-12v %-10s %-15s %-20s %-s      \n", pkt.Seq, color.RedString(Status), pkt.DestHost, Query, Response, pkt.Dns_queryType, pkt.Dns_protocol, pkt.RTT, pkt.SendTime.Format("2006-01-02 15:04:05"), color.YellowString(AddInfo))
 				}
 			}
 

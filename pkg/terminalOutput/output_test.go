@@ -6,10 +6,11 @@ package terminalOutput_test
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
-	"nt/pkg/ntTEST"
-	output "nt/pkg/terminalOutput"
 	"testing"
+
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntTEST"
+	output "github.com/djian01/nt/pkg/terminalOutput"
 )
 
 // test - func Output

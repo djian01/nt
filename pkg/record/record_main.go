@@ -3,10 +3,11 @@ package record
 import (
 	"encoding/csv"
 	"fmt"
-	"nt/pkg/ntPinger"
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/djian01/nt/pkg/ntPinger"
 )
 
 // Func - RecordingFunc, saving the accumulated results into CSV file
@@ -293,16 +294,16 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				pkt := recordItem.(*ntPinger.PacketDNS)
 
 				row := []string{
-					pkt.Type,                                   // Ping Type
-					strconv.Itoa(pkt.Seq),                      // Seq
-					fmt.Sprintf("%t", pkt.Status),              // Status
-					pkt.DestHost,                               // DNS_Resolver
-					pkt.Dns_query,                               // DNS_Query
-					pkt.Dns_response,                        // DNS_Response
+					pkt.Type,                      // Ping Type
+					strconv.Itoa(pkt.Seq),         // Seq
+					fmt.Sprintf("%t", pkt.Status), // Status
+					pkt.DestHost,                  // DNS_Resolver
+					pkt.Dns_query,                 // DNS_Query
+					pkt.Dns_response,              // DNS_Response
 					pkt.Dns_queryType,             // DNS_Query_Type
-					pkt.Dns_protocol,                         // DNS_Protocol
-					(pkt.RTT).String(),                         // Response_Time
-					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime										
+					pkt.Dns_protocol,              // DNS_Protocol
+					(pkt.RTT).String(),            // Response_Time
+					pkt.SendTime.Format("2006-01-02 15:04:05"),         // SendTime
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
 					fmt.Sprintf("%.2f%%", float64(pkt.PacketLoss*100)), // PacketLoss

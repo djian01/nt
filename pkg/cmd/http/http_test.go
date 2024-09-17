@@ -6,8 +6,9 @@ package Http_test
 
 import (
 	"fmt"
-	Http "nt/pkg/cmd/http"
 	"testing"
+
+	Http "github.com/djian01/nt/pkg/cmd/http"
 )
 
 func Test_http(t *testing.T) {

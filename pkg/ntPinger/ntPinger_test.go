@@ -12,8 +12,9 @@ package ntPinger_test
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
 	"testing"
+
+	"github.com/djian01/nt/pkg/ntPinger"
 )
 
 func Test_pingerTCP(t *testing.T) {

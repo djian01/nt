@@ -11,9 +11,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"nt/pkg/ntPinger"
-	"nt/pkg/record"
-	output "nt/pkg/terminalOutput"
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/record"
+	output "github.com/djian01/nt/pkg/terminalOutput"
 )
 
 // Iniital tcpCmd

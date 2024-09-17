@@ -5,8 +5,9 @@
 package tcp_test
 
 import (
-	"nt/pkg/cmd/tcp"
 	"testing"
+
+	"github.com/djian01/nt/pkg/cmd/tcp"
 )
 
 // test ProbingFunc

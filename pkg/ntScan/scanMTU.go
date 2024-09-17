@@ -2,9 +2,10 @@ package ntScan
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
 	"strconv"
 	"strings"
+
+	"github.com/djian01/nt/pkg/ntPinger"
 
 	"github.com/fatih/color"
 )

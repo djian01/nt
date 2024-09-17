@@ -1,4 +1,4 @@
-module nt
+module github.com/djian01/nt
 
 go 1.22.2
 

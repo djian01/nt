@@ -9,9 +9,10 @@ package ntTEST_test
 
 import (
 	"fmt"
-	"nt/pkg/ntPinger"
-	"nt/pkg/ntTEST"
 	"testing"
+
+	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntTEST"
 )
 
 func Test_ResultGenerateICMP(t *testing.T) {
@@ -53,7 +54,6 @@ func Test_ResultGenerateHTTP(t *testing.T) {
 
 	fmt.Println("\n--- ntTEST Testing Completed ---")
 }
-
 
 func Test_ResultGenerateDNS(t *testing.T) {
 
