@@ -21,7 +21,7 @@
 
 ### Prerequisites
 
-- Go 1.22 or higher installed on your system.
+- Go 1.18 or higher installed on your system.
 
 ### Install via `go install`
 
