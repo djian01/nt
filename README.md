@@ -70,6 +70,9 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu> [args]
 
 ```
 
-#### Options
+#### Global Options
 - `-r`: **Enable Recording**
  Save the test results to a CSV file for future analysis.
+
+- `-p <number>`: **Rows Displayed**
+  Specify the number of rows displayed in the terminal during live tests. Default is `10`.
