@@ -47,10 +47,20 @@ func GetSleepTime(PacketStatus bool, Interval int, RTT time.Duration) time.Durat
 
 	// if RTT is not 0
 	if RTT.String() != "0001-01-01 00:00:00 +0000 UTC" {
-		return time.Duration(Interval) * time.Second
+		if time.Duration(Interval)*time.Second > RTT {
+			return (time.Duration(Interval)*time.Second - RTT)
+		} else {
+			return time.Duration(0) * time.Second
+		}
+
 		// if Packet Status is "true"
 	} else if PacketStatus {
-		return time.Duration(Interval) * time.Second
+		if time.Duration(Interval)*time.Second > RTT {
+			return (time.Duration(Interval)*time.Second - RTT)
+		} else {
+			return time.Duration(0) * time.Second
+		}
+
 		// else return 0 sleep time ( in the case of timeout)
 	} else {
 		return time.Duration(0) * time.Second
@@ -108,8 +118,8 @@ func ConstructURL(Http_scheme, DestHost, Http_path string, DestPort int) string 
 }
 
 // Func - resolveDestHost
-func ResolveDestHost (DestHost string) (DestAddr []net.IP, err error){
-		// Check Name Resolution
-		DestAddr, err = net.LookupIP(DestHost)
-		return
+func ResolveDestHost(DestHost string) (DestAddr []net.IP, err error) {
+	// Check Name Resolution
+	DestAddr, err = net.LookupIP(DestHost)
+	return
 }

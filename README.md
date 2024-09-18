@@ -13,7 +13,7 @@
 - **TCP Port Testing**: Test if the remote server is listening on one or multiple given TCP ports.
 - **Recording and Logging**: Save test results to a CSV file for later analysis.
 - **Customizable Output**: Adjust the number of rows displayed in the terminal during live tests.
-- **Cross-Platform**: Compatible with Windows, macOS, and Linux.
+- **Cross-Platform**: Compatible with Windows and Linux.
 
 
 
@@ -21,9 +21,11 @@
 
 ### Prerequisites
 
-- Go 1.18 or higher installed on your system.
+- For Option 1 & 2, Go 1.18 or higher is required on your system.
 
 ### Option 1: Install via `go install`
+
+The compiled executable will be placed in `$GOPATH/bin`
 
 ```bash
 go install github.com/djian01/nt@latest
@@ -36,7 +38,9 @@ git clone https://github.com/djian01/nt.git
 cd nt
 go build .
 ```
-### Option 3: Makefile (requires Docker installed in local machine)
+### Option 3: Makefile (requires Docker & Make are required on your system)
+
+The compiled executable will be placed in `\executable\` inside the code folder
 
 ```bash
 git clone https://github.com/djian01/nt.git
@@ -55,11 +59,17 @@ make build-windows
 ### Option 4: Download Executable from GitHub Releases
 
 1. Visit the [Releases](https://github.com/djian01/nt/releases) page of the repository.
-2. Download the `nt_linux_amd64.tar.gz` file for Linux or the `nt_windows_amd64.zip` file for Windows
+2. Download the `nt_linux_amd64_x.x.x.tar.gz` file for Linux or the `nt_windows_amd64_x.x.x.zip` file for Windows
 
+## Usage
 
-# Compile for Windows Executable
-GOOS=windows GOARCH=amd64 go build -o nt.exe main.go
+### Main Command
 
-# Compile for macOS Executable
-GOOS=darwin GOARCH=amd64 go build -o nt.exe main.go
+```bash
+nt [flags] <sub-command: icmp/tcp/http/dns/mtu> [args]
+
+```
+
+#### Options
+- `-r`: **Enable Recording**
+ Save the test results to a CSV file for future analysis.
