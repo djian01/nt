@@ -100,8 +100,14 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcptest> [args]
 - `-t`:   **ICMP Ping Timeout**  
   Timeout for each ICMP ping request in seconds. Default is `4` seconds.
 
+#### Example 1: ICMP continuous ping to "google.com" with recording enabled
 
-#### Example: ICMP ping to "10.2.3.10" with count: 10, interval: 2 sec,  payload 48 bytes
+```bash
+nt icmp -c 10 -i 2 -s 48 10.2.3.10
+
+```
+
+#### Example 2: ICMP ping to "10.2.3.10" with count: 10, interval: 2 sec,  payload 48 bytes
 
 ```bash
 nt icmp -c 10 -i 2 -s 48 10.2.3.10
@@ -138,6 +144,9 @@ nt tcp -c 10 -i 2 10.2.3.10 22
 
 
 ### HTTP Sub-Command
+**Note:**  
+- If custom port is not specificed, the test will use the default ports (HTTP 80, HTTPS 443).
+- The default interval for HTTP Ping is 5 seconds.
 
 #### HTTP Options
 - `-c`:   **HTTP Ping Count**  
@@ -156,14 +165,19 @@ nt tcp -c 10 -i 2 10.2.3.10 22
   Timeout for each HTTP ping request in seconds. Default is `4` seconds.
 
 
-#### Example: HTTP ping to GET "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
+#### Example 1: HTTP ping to POST "http://10.2.3.10:8080/token" with 2-second interval.
 
 ```bash
-nt http -c 10 -i 2 http://10.2.3.10:8080/token
+nt http -i 2 -m POST http://10.2.3.10:8080/token
 
 ```
 
+#### Example 2: HTTP continuous ping to "https://google.com".
 
+```bash
+nt -r http https://google.com
+
+```
 
 ### DNS Sub-Command
 
@@ -199,6 +213,8 @@ nt dns -c 10 -i 2 4.2.2.2 abc.com
 - `-s`:   **Ceiling Test Size**  
   The maximum MTU size to test, in bytes. Default is `1500` bytes.
 
+- `-h`:   **Help**  
+  Display help information for the `mtu` subcommand.
 
 #### Example 1: MTU check for destination google.com
 ```bash
