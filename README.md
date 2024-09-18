@@ -213,7 +213,8 @@ nt mtu -s 9000 192.168.1.10
 ```
 
 ### TCPTEST Sub-Command
-building
+under construction ...
+
 #### TCPTEST Options
 
 
@@ -225,7 +226,7 @@ Record_<test type>_<test target host>_<timestamp>.csv
 
 ```
 
-- **Example**: `Record_icmp_google.com_20211012T101530.csv` 
+**Example**: `Record_icmp_google.com_20211012T101530.csv` 
 The CSV file captures the detailed test results for different tests.
 
 
