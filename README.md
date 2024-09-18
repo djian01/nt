@@ -66,7 +66,7 @@ make build-windows
 ### Main Command
 
 ```bash
-nt [flags] <sub-command: icmp/tcp/http/dns/mtu> [args]
+nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcptest> [args]
 
 ```
 
@@ -211,3 +211,25 @@ nt mtu google.com
 nt mtu -s 9000 192.168.1.10
 
 ```
+
+### TCPTEST Sub-Command
+building
+#### TCPTEST Options
+
+
+## Logging and Recording
+When the `-r` option is enabled, all test results are saved to a CSV file in the same directory as the executable. The CSV files are named using the format:
+
+```bash
+Record_<test type>_<test target host>_<timestamp>.csv
+
+```
+
+- **Example**: `Record_icmp_google.com_20211012T101530.csv` 
+The CSV file captures the detailed test results for different tests.
+
+
+
+## License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
