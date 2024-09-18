@@ -76,3 +76,59 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu> [args]
 
 - `-p <number>`: **Rows Displayed**
   Specify the number of rows displayed in the terminal during live tests. Default is `10`.
+
+
+### ICMP Sub-Command (required privilege mode in Linux)
+
+#### ICMP Options
+- `-c`: **ICMP Ping Count**  
+  Number of ICMP ping requests to send. Default is `0`, which means it will run non-stop until interrupted with `Ctrl+C`.
+
+- `-d`: **ICMP Ping Do Not Fragment**  
+  Sets the "Do Not Fragment" flag in the ICMP request. Default is `false`.
+
+- `-h`: **Help**  
+  Display help information for the `icmp` subcommand.
+
+- `-i`: **ICMP Ping Interval**  
+  Interval between ICMP ping requests in seconds. Default is `1` second.
+
+- `-s`: **ICMP Ping Payload Size**  
+  Size of the ICMP ping payload in bytes. Default is `32` bytes.
+
+- `-t`: **ICMP Ping Timeout**  
+  Timeout for each ICMP ping request in seconds. Default is `4` seconds.
+
+
+#### Example: ICMP ping to "10.2.3.10" with count: 10, interval: 2 sec,  payload 48 bytes
+
+```bash
+nt icmp -c 10 -i 2 -s 48 10.2.3.10
+
+```
+
+### TCP Sub-Command
+
+#### TCP Options
+- `-c`: **TCP Ping Count**  
+  Number of TCP ping requests to send. Default is `0`, which means it will run non-stop until interrupted with `Ctrl+C`.
+
+- `-h`: **Help**  
+  Display help information for the `tcp` subcommand.
+
+- `-i`: **TCP Ping Interval**  
+  Interval between TCP ping requests in seconds. Default is `1` second.
+
+- `-s`: **TCP Ping Payload Size**  
+  Size of the TCP ping payload in bytes. Default is `0` bytes (no payload).
+
+- `-t`: **TCP Ping Timeout**  
+  Timeout for each TCP ping request in seconds. Default is `4` seconds.
+
+
+#### Example: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
+
+```bash
+nt tcp -c 10 -i 2 10.2.3.10 22
+
+```
