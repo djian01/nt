@@ -38,7 +38,7 @@ git clone https://github.com/djian01/nt.git
 cd nt
 go build .
 ```
-### Option 3: Makefile (requires Docker & Make are required on your system)
+### Option 3: Makefile (Docker & Make are required on your system)
 
 The compiled executable will be placed in `\executable\` inside the code folder
 
