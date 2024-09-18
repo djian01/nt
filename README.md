@@ -228,10 +228,16 @@ Record_<test type>_<test target host>_<timestamp>.csv
 
 - **Example**: `Record_icmp_google.com_20211012T101530.csv` 
 
-The CSV file captures the detailed test results for different tests.
+The CSV file captures the detailed test results based on the test type.
 
 
 
 ## License
 
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+
+## Contact
+
+- **Email**: [dennis.jian@packetstreams.net](mailto:dennis.jian@packetstreams.net)
+- **GitHub**: [djian01](https://github.com/djian01)
