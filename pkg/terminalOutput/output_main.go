@@ -15,7 +15,7 @@ func OutputFunc(outputChan <-chan ntPinger.Packet, len int, recording bool) {
 	}
 
 	// clear the screen
-	clearScreen()
+	ClearScreen()
 
 	// initial displayIdx
 	displayIdx := 0
@@ -48,6 +48,31 @@ func GetAvailableSliceItem(displayTable *[]ntPinger.Packet) int {
 }
 
 // Func - cleanScreen
-func clearScreen() {
+func ClearScreen() {
 	print("\033[H\033[2J")
 }
+
+// Main func for TCPScanOutput
+// func TcpScanOutputFunc(outputChan <-chan ntScan.TcpScanPort, recording bool) {
+
+// 	// initial displayRows
+// 	displayTable := []ntPinger.Packet{}
+
+// 	for i := 0; i < len; i++ {
+// 		displayTable = append(displayTable, nil)
+// 	}
+
+// 	// clear the screen
+// 	clearScreen()
+
+// 	// initial displayIdx
+// 	displayIdx := 0
+
+// 	// process Display Table from Channel NtResultChan
+// 	for PacketPointer := range outputChan {
+// 		idx := GetAvailableSliceItem(&displayTable)
+// 		displayTable[idx] = PacketPointer
+// 		TablePrint(&displayTable, len, recording, displayIdx)
+// 		displayIdx++
+// 	}
+// }
