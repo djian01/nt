@@ -1,6 +1,7 @@
 // *************************
 // go test -run ^Test_OutputMain$
 // go test -run ^Test_ScanTablePrint$
+// go test -run ^Test_TcpScanOutputFunc$
 // *************************
 
 package terminalOutput_test
@@ -8,6 +9,9 @@ package terminalOutput_test
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 	"time"
 
@@ -70,6 +74,9 @@ func Test_ScanTablePrint(t *testing.T) {
 	recording := true
 	destHost := "8.8.8.8"
 
+	min := 1000
+	max := 65535
+
 	// Create a list of 50 items with different statuses
 	Ports := make([]ntScan.TcpScanPort, 50)
 
@@ -77,20 +84,67 @@ func Test_ScanTablePrint(t *testing.T) {
 		status := (i % 3) + 1 // Cycle between statuses 1, 2, and 3
 		Ports[i] = ntScan.TcpScanPort{
 			ID:     i + 1,
-			Port:   randomPort(),
+			Port:   randomInt(min, max),
 			Status: status,
 		}
 	}
 
 	// Display the items in a 10×5 table
-	terminalOutput.ScanTablePrint(Ports, recording, destplayIdx, destHost)
+	terminalOutput.ScanTablePrint(&Ports, recording, destplayIdx, destHost)
 }
 
-// randomPort generates a random integer between min and max
-func randomPort() int {
+func Test_TcpScanOutputFunc(t *testing.T) {
+
+	recording := true
+	destHost := "8.8.8.8"
 
 	min := 1000
 	max := 65535
+
+	// Create a channel to listen for SIGINT (Ctrl+C)
+	interruptChan := make(chan os.Signal, 1)
+	defer close(interruptChan)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// output chan
+	outputChan := make(chan *[]ntScan.TcpScanPort, 1)
+
+	// Create a empty list of 50 items with different statuses
+	Ports := make([]ntScan.TcpScanPort, 50)
+
+	for i := 0; i < 50; i++ {
+		Ports[i] = ntScan.TcpScanPort{
+			ID:   i + 1,
+			Port: randomInt(min, max),
+		}
+	}
+
+	// go routine
+	go terminalOutput.TcpScanOutputFunc(outputChan, recording, destHost)
+
+	// loop
+	loopBreak := false
+	for {
+		if loopBreak {
+			break
+		}
+
+		select {
+		case <-interruptChan: // case interruptChan, close the channel & break the loop
+			close(outputChan)
+			loopBreak = true
+		default:
+			for i := 0; i < 50; i++ {
+				Ports[i].Status = randomInt(1, 3)
+			}
+			outputChan <- &Ports
+		}
+		time.Sleep(time.Duration(1) * time.Second)
+	}
+}
+
+// randomPort generates a random integer between min and max
+func randomInt(min, max int) int {
 
 	source := rand.NewSource(time.Now().UnixNano())
 	ranPort := rand.New(source).Intn(max-min+1) + min

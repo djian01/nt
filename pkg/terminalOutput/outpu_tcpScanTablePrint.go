@@ -16,7 +16,7 @@ const (
 )
 
 // ScanTablePrint function to display the values in a 10x5 table with color based on status (The input item lengh is 50)
-func ScanTablePrint(Ports []ntScan.TcpScanPort, recording bool, displayIdx int, destHost string) {
+func ScanTablePrint(Ports *[]ntScan.TcpScanPort, recording bool, displayIdx int, destHost string) {
 
 	// Set the 1st row for table head
 	var tableHeadRowIdx int
@@ -50,7 +50,7 @@ func ScanTablePrint(Ports []ntScan.TcpScanPort, recording bool, displayIdx int, 
 	// printing table
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			Port := Ports[index]
+			Port := (*Ports)[index]
 
 			// Set color based on status
 			switch Port.Status {
@@ -82,17 +82,16 @@ func ScanTablePrint(Ports []ntScan.TcpScanPort, recording bool, displayIdx int, 
 	countTested, countSuccess, countFail := tcpScanStat(Ports)
 
 	// Print statistic
-	fmt.Printf("\n\n")
-	fmt.Printf("\n\n")
+	fmt.Printf("\n")
 	fmt.Printf("Tested Port(s): %s, Success Port(s): %s, Failed Port(s): %s \n", color.CyanString(strconv.Itoa(countTested)), color.CyanString(strconv.Itoa(countSuccess)), color.CyanString(strconv.Itoa(countFail)))
 	fmt.Printf("\n")
 
 }
 
 // func tcpScanStat
-func tcpScanStat(Ports []ntScan.TcpScanPort) (countTested int, countSuccess int, countFail int) {
+func tcpScanStat(Ports *[]ntScan.TcpScanPort) (countTested int, countSuccess int, countFail int) {
 
-	for _, port := range Ports {
+	for _, port := range *Ports {
 		if port.Status == 2 {
 			countSuccess++
 			countTested++
@@ -101,6 +100,5 @@ func tcpScanStat(Ports []ntScan.TcpScanPort) (countTested int, countSuccess int,
 			countTested++
 		}
 	}
-
 	return
 }

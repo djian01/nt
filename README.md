@@ -66,7 +66,7 @@ make build-windows
 ### Main Command
 
 ```bash
-nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcptest> [args]
+nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcpscan> [args]
 
 ```
 

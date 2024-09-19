@@ -2,6 +2,7 @@ package terminalOutput
 
 import (
 	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntScan"
 )
 
 // Main func for Output
@@ -53,26 +54,17 @@ func ClearScreen() {
 }
 
 // Main func for TCPScanOutput
-// func TcpScanOutputFunc(outputChan <-chan ntScan.TcpScanPort, recording bool) {
+func TcpScanOutputFunc(outputChan <-chan *[]ntScan.TcpScanPort, recording bool, destHost string) {
 
-// 	// initial displayRows
-// 	displayTable := []ntPinger.Packet{}
+	// clear the screen
+	ClearScreen()
 
-// 	for i := 0; i < len; i++ {
-// 		displayTable = append(displayTable, nil)
-// 	}
+	// initial displayIdx
+	displayIdx := 0
 
-// 	// clear the screen
-// 	clearScreen()
-
-// 	// initial displayIdx
-// 	displayIdx := 0
-
-// 	// process Display Table from Channel NtResultChan
-// 	for PacketPointer := range outputChan {
-// 		idx := GetAvailableSliceItem(&displayTable)
-// 		displayTable[idx] = PacketPointer
-// 		TablePrint(&displayTable, len, recording, displayIdx)
-// 		displayIdx++
-// 	}
-// }
+	// process Display Table from Channel NtResultChan
+	for Ports := range outputChan {
+		ScanTablePrint(Ports, recording, displayIdx, destHost)
+		displayIdx++
+	}
+}
