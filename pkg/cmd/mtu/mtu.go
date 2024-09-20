@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Iniital tcpCmd
+// Initial mtuCmd
 var mtuCmd = &cobra.Command{
 	Use:   "mtu [flags] <URL>", // Sub-command, shown in the -h, Usage field
 	Short: "To determine the largest MTU Size to the destination Host/IP",
@@ -27,7 +27,7 @@ nt mtu -s 9000 192.168.1.10
 `,
 }
 
-// Func - IcmpCommandLink: obtain Flags and call IcmpCommandMain()
+// Func - MtuCommandLink: obtain Flags and call MtuCommandMain()
 func MtuCommandLink(cmd *cobra.Command, args []string) {
 
 	// GFlag -r

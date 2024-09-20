@@ -2,7 +2,7 @@ package terminalOutput
 
 import (
 	"github.com/djian01/nt/pkg/ntPinger"
-	"github.com/djian01/nt/pkg/ntScan"
+	"github.com/djian01/nt/pkg/sharedstruct"
 )
 
 // Main func for Output
@@ -54,7 +54,7 @@ func ClearScreen() {
 }
 
 // Main func for TCPScanOutput
-func TcpScanOutputFunc(outputChan <-chan *[]ntScan.TcpScanPort, recording bool, destHost string) {
+func TcpScanOutputFunc(outputChan <-chan *[]sharedstruct.TcpScanPort, recording bool, destHost string) {
 
 	// clear the screen
 	ClearScreen()

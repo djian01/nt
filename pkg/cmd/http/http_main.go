@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Iniital tcpCmd
+// Initial httpCmd
 var httpCmd = &cobra.Command{
 	Use:   "http [flags] <URL>", // Sub-command, shown in the -h, Usage field
 	Short: "HTTP/HTTPs Ping Test Module",
@@ -36,7 +36,7 @@ nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 // Initial the bucket
 var bucket = 10
 
-// Func - IcmpCommandLink: obtain Flags and call IcmpCommandMain()
+// Func - HttpCommandLink: obtain Flags and call HttpCommandMain()
 func HttpCommandLink(cmd *cobra.Command, args []string) {
 
 	// GFlag -r

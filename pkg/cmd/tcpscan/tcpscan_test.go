@@ -1,35 +1,33 @@
 // *************************
-// sudo go test -run ^Test_ScanMTURun$
-// sudo go test -run ^Test_ScanTcpRun$
-
+// go test -run ^Test_IsValidInput$
+// go test -run ^Test_ScanTcpRun$
 // *************************
 
-package ntScan_test
+package tcpscan_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/djian01/nt/pkg/cmd/tcpscan"
-	"github.com/djian01/nt/pkg/ntScan"
 )
 
-func Test_ScanMTURun(t *testing.T) {
+func Test_IsValidInput(t *testing.T) {
 
-	highInput := 1500
+	fault, Ports := tcpscan.IsValidInput("100-150")
+	if !fault {
+		fmt.Println("Errors with input Port(s)")
+	}
 
-	DestAddr := "192.168.1.1"
-	DestHost := "google.com"
-
-	err := ntScan.ScanMTURun(highInput, DestAddr, DestHost)
-	if err != nil {
-		fmt.Println(err)
+	fmt.Println("Input Port:")
+	for _, Port := range Ports {
+		fmt.Printf("%d\n", Port)
 	}
 }
 
 func Test_ScanTcpRun(t *testing.T) {
 
-	recording := true
+	recording := false
 	destHost := "google.com"
 	PortsArgs := []string{"22", "80", "443", "100-120", "1500"}
 	timeout := 4
@@ -46,7 +44,7 @@ func Test_ScanTcpRun(t *testing.T) {
 		}
 	}
 
-	err := ntScan.ScanTcpRun(recording, destHost, Ports, timeout)
+	err := tcpscan.TcpScanCommandMain(recording, destHost, Ports, timeout)
 	if err != nil {
 		fmt.Println(err)
 	}

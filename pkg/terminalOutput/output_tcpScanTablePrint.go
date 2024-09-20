@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/djian01/nt/pkg/ntScan"
+	"github.com/djian01/nt/pkg/sharedstruct"
 	"github.com/fatih/color"
 )
 
@@ -16,7 +16,10 @@ const (
 )
 
 // ScanTablePrint function to display the values in a 10x5 table with color based on status (The input item lengh is 50)
-func ScanTablePrint(Ports *[]ntScan.TcpScanPort, recording bool, displayIdx int, destHost string) {
+func ScanTablePrint(Ports *[]sharedstruct.TcpScanPort, recording bool, displayIdx int, destHost string) {
+
+	// clear the screen
+	ClearScreen()
 
 	// Set the 1st row for table head
 	var tableHeadRowIdx int
@@ -79,7 +82,7 @@ func ScanTablePrint(Ports *[]ntScan.TcpScanPort, recording bool, displayIdx int,
 	}
 
 	// Get statistic
-	countTested, countSuccess, countFail := tcpScanStat(Ports)
+	countTested, countSuccess, countFail := TcpScanStat(Ports)
 
 	// Print statistic
 	fmt.Printf("\n")
@@ -89,7 +92,7 @@ func ScanTablePrint(Ports *[]ntScan.TcpScanPort, recording bool, displayIdx int,
 }
 
 // func tcpScanStat
-func tcpScanStat(Ports *[]ntScan.TcpScanPort) (countTested int, countSuccess int, countFail int) {
+func TcpScanStat(Ports *[]sharedstruct.TcpScanPort) (countTested int, countSuccess int, countFail int) {
 
 	for _, port := range *Ports {
 		if port.Status == 2 {

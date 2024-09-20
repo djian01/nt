@@ -16,7 +16,7 @@ import (
 	output "github.com/djian01/nt/pkg/terminalOutput"
 )
 
-// Iniital tcpCmd
+// Initial tcpCmd
 var tcpCmd = &cobra.Command{
 	Use:   "tcp [flags] <Destination Host> <Destination Port>", // Sub-command, shown in the -h, Usage field
 	Short: "TCP Ping Test Module",
@@ -35,7 +35,7 @@ nt tcp -c 10 -i 2 10.2.3.10 22
 // Initial the bucket
 var bucket = 10
 
-// Func - IcmpCommandLink: obtain Flags and call IcmpCommandMain()
+// Func - IcmpCommandLink: obtain Flags and call TcpCommandMain()
 func TcpCommandLink(cmd *cobra.Command, args []string) {
 
 	// GFlag -r

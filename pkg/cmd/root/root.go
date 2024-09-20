@@ -8,12 +8,13 @@ import (
 	"github.com/djian01/nt/pkg/cmd/icmp"
 	"github.com/djian01/nt/pkg/cmd/mtu"
 	"github.com/djian01/nt/pkg/cmd/tcp"
+	"github.com/djian01/nt/pkg/cmd/tcpscan"
 
 	"github.com/spf13/cobra"
 )
 
 // version
-var version = "0.3.5"
+var version = "1.0.1"
 
 // Initial rootCmd
 var rootCmd = &cobra.Command{
@@ -71,4 +72,5 @@ func init() {
 	rootCmd.AddCommand(Http.HttpCommand())
 	rootCmd.AddCommand(dns.DnsCommand())
 	rootCmd.AddCommand(mtu.MtuCommand())
+	rootCmd.AddCommand(tcpscan.TcpScanCommand())
 }

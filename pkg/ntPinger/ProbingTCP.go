@@ -35,7 +35,7 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 			defer cancel()
 
-			pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
+			pkt, err := TcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
 			if err != nil {
 				errChan <- err
 			}
@@ -64,7 +64,7 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(p.InputVars.Timeout)*time.Second)
 			defer cancel()
 
-			pkt, err := tcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
+			pkt, err := TcpProbing(&ctx, Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.PayLoadSize)
 			if err != nil {
 				errChan <- err
 			}
@@ -92,7 +92,7 @@ func tcpProbingRun(p *Pinger, errChan chan<- error) {
 }
 
 // func: tcpProbing
-func tcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string, destPort int, PayLoadSize int) (PacketTCP, error) {
+func TcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string, destPort int, PayLoadSize int) (PacketTCP, error) {
 
 	// initial packet
 	pkt := PacketTCP{

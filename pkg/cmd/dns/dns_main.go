@@ -15,7 +15,7 @@ import (
 	output "github.com/djian01/nt/pkg/terminalOutput"
 )
 
-// Iniital tcpCmd
+// Initial dnsCmd
 var dnsCmd = &cobra.Command{
 	Use:   "dns [flags] <DNS Resolver IP> <DNS Query Name>", // Sub-command, shown in the -h, Usage field
 	Short: "DNS Ping Test Module",
@@ -34,7 +34,7 @@ nt dns -c 10 -i 2 4.2.2.2 abc.com
 // Initial the bucket
 var bucket = 10
 
-// Func - IcmpCommandLink: obtain Flags and call IcmpCommandMain()
+// Func - DnsCommandLink: obtain Flags and call DnsCommandMain()
 func DnsCommandLink(cmd *cobra.Command, args []string) {
 
 	// GFlag -r

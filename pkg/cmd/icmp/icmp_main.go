@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Iniital icmpCmd
+// Initial icmpCmd
 var icmpCmd = &cobra.Command{
 	Use:   "icmp [flags] <host>", // Sub-command, shown in the -h, Usage field
 	Short: "ICMP Ping Test Module",
