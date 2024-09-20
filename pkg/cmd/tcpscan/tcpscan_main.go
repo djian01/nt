@@ -1,10 +1,17 @@
 package tcpscan
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"time"
 
+	"github.com/djian01/nt/pkg/ntPinger"
 	"github.com/djian01/nt/pkg/ntScan"
+	"github.com/djian01/nt/pkg/record"
+	"github.com/djian01/nt/pkg/terminalOutput"
 	"github.com/spf13/cobra"
 )
 
@@ -57,12 +64,121 @@ func TcpScanCommandLink(cmd *cobra.Command, args []string) {
 // Func TcpScanCommandMain
 func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout int) error {
 
-	err := ntScan.ScanTcpRun(recording, destHost, Ports, timeout)
+	// get the total number of the ports
+	PortCount := len(Ports)
+	countTested := 0
+
+	// resolve destHost
+	destAddr := ""
+
+	resolvedIPs, err := ntPinger.ResolveDestHost(destHost)
 	if err != nil {
-		return err
-	} else {
-		return nil
+		return fmt.Errorf(fmt.Sprintf("failed to resolve domain: %v", destHost))
 	}
+
+	// Get the 1st IPv4 IP from resolved IPs
+	for _, ip := range resolvedIPs {
+		// To4() returns nil if it's not an IPv4 address
+		if ip.To4() != nil {
+			destAddr = ip.String()
+			break
+		}
+	}
+
+	// if the total number of ports is over 50, error and exit
+	if PortCount > 50 {
+		return fmt.Errorf("error: total number of input ports is over 50")
+	}
+
+	// Create a list of 50 empty TcpScanPort items
+	PortsTable := make([]ntScan.TcpScanPort, 50)
+
+	for i := 0; i < PortCount; i++ {
+		PortsTable[i].ID = i
+		PortsTable[i].Port = Ports[i]
+		PortsTable[i].Timeout = timeout
+		PortsTable[i].DestAddr = destAddr
+		PortsTable[i].DestHost = destHost
+		PortsTable[i].Status = 1
+	}
+
+	// Go Routine - Terminal Output
+	go func() {
+
+		destplayIdx := 0
+
+		for {
+			// Display the items in a 10×5 table
+			terminalOutput.ScanTablePrint(&PortsTable, recording, destplayIdx, destHost)
+
+			time.Sleep(time.Duration(1) * time.Second)
+
+			if countTested == PortCount {
+				// display the final output
+				terminalOutput.ScanTablePrint(&PortsTable, recording, destplayIdx, destHost)
+				break
+			}
+
+			destplayIdx++
+		}
+	}()
+
+	// Create TcpScanPort & errChan
+	TcpScanPort := make(chan *ntScan.TcpScanPort, 1)
+	errChan := make(chan error, 1)
+
+	// create 5 workers
+	for i := 0; i < 5; i++ {
+		go ntScan.ScanTcpWorker(TcpScanPort, errChan)
+	}
+
+	// go routine - TcpScanPort <- &PortsTable[i]
+	go func() {
+		for i := 0; i < PortCount; i++ {
+			TcpScanPort <- &PortsTable[i]
+		}
+	}()
+
+	// loop
+	loopBreak := false
+
+	for {
+		if loopBreak {
+			break
+		}
+
+		select {
+		case err := <-errChan:
+			loopBreak = true
+			return err
+		default:
+			countTested, _, _ = ntScan.TcpScanStat(&PortsTable)
+			if countTested == PortCount {
+				loopBreak = true
+			}
+		}
+	}
+
+	// sleep and wait for 1 sec
+	time.Sleep(time.Duration(1) * time.Second)
+
+	// recording
+	if recording {
+
+		// recordingFile Path
+		exeFileFolder, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		// recordingFile Name
+		timeStamp := time.Now().Format("20060102150405")
+		recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", "TcpScan", destHost, timeStamp)
+		recordingFilePath := filepath.Join(exeFileFolder, recordingFileName)
+
+		record.TcpScan_Recording(recordingFilePath, PortsTable)
+	}
+
+	return nil
 }
 
 // Func - TcpScanCommand

@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/djian01/nt/pkg/ntPinger"
+	"github.com/djian01/nt/pkg/ntScan"
 	"github.com/djian01/nt/pkg/ntTEST"
-	"github.com/djian01/nt/pkg/sharedstruct"
 	"github.com/djian01/nt/pkg/terminalOutput"
 	output "github.com/djian01/nt/pkg/terminalOutput"
 )
@@ -78,11 +78,11 @@ func Test_ScanTablePrint(t *testing.T) {
 	max := 65535
 
 	// Create a list of 50 empty TcpScanPort items
-	Ports := make([]sharedstruct.TcpScanPort, 50)
+	Ports := make([]ntScan.TcpScanPort, 50)
 
 	for i := 0; i < 50; i++ {
 		status := (i % 3) + 1 // Cycle between statuses 1, 2, and 3
-		Ports[i] = sharedstruct.TcpScanPort{
+		Ports[i] = ntScan.TcpScanPort{
 			ID:     i + 1,
 			Port:   randomInt(min, max),
 			Status: status,
@@ -107,13 +107,13 @@ func Test_TcpScanOutputFunc(t *testing.T) {
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	// output chan
-	outputChan := make(chan *[]sharedstruct.TcpScanPort, 1)
+	outputChan := make(chan *[]ntScan.TcpScanPort, 1)
 
 	// Create a empty list of 50 items with different statuses
-	Ports := make([]sharedstruct.TcpScanPort, 50)
+	Ports := make([]ntScan.TcpScanPort, 50)
 
 	for i := 0; i < 50; i++ {
-		Ports[i] = sharedstruct.TcpScanPort{
+		Ports[i] = ntScan.TcpScanPort{
 			ID:   i + 1,
 			Port: randomInt(min, max),
 		}

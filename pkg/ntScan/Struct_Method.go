@@ -1,4 +1,4 @@
-package sharedstruct
+package ntScan
 
 type TcpScanPort struct {
 	ID       int

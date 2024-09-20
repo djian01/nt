@@ -2,7 +2,7 @@ package terminalOutput
 
 import (
 	"github.com/djian01/nt/pkg/ntPinger"
-	"github.com/djian01/nt/pkg/sharedstruct"
+	"github.com/djian01/nt/pkg/ntScan"
 )
 
 // Main func for Output
@@ -49,7 +49,7 @@ func GetAvailableSliceItem(displayTable *[]ntPinger.Packet) int {
 }
 
 // Main func for TCPScanOutput
-func TcpScanOutputFunc(outputChan <-chan *[]sharedstruct.TcpScanPort, recording bool, destHost string) {
+func TcpScanOutputFunc(outputChan <-chan *[]ntScan.TcpScanPort, recording bool, destHost string) {
 
 	// clear the screen
 	ClearScreen()
