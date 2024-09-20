@@ -172,7 +172,7 @@ nt http -i 2 -m POST http://10.2.3.10:8080/token
 
 ```
 
-#### Example 2: HTTP continuous ping to "https://google.com".
+#### Example 2: HTTP continuous ping to "https://google.com" with recording enabled.
 
 ```bash
 nt -r http https://google.com
