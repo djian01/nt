@@ -48,11 +48,6 @@ func GetAvailableSliceItem(displayTable *[]ntPinger.Packet) int {
 	return (len(*displayTable) - 1)
 }
 
-// Func - cleanScreen
-func ClearScreen() {
-	print("\033[H\033[2J")
-}
-
 // Main func for TCPScanOutput
 func TcpScanOutputFunc(outputChan <-chan *[]sharedstruct.TcpScanPort, recording bool, destHost string) {
 
@@ -67,4 +62,9 @@ func TcpScanOutputFunc(outputChan <-chan *[]sharedstruct.TcpScanPort, recording 
 		ScanTablePrint(Ports, recording, displayIdx, destHost)
 		displayIdx++
 	}
+}
+
+// Func - cleanScreen
+func ClearScreen() {
+	print("\033[H\033[2J")
 }

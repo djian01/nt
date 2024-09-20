@@ -63,7 +63,7 @@ func ScanTcpRun(recording bool, destHost string, Ports []int, timeout int) error
 			// Display the items in a 10×5 table
 			terminalOutput.ScanTablePrint(&PortsTable, recording, destplayIdx, destHost)
 
-			time.Sleep(time.Duration(500) * time.Millisecond)
+			time.Sleep(time.Duration(1) * time.Second)
 
 			if countTested == PortCount {
 				// display the final output
