@@ -139,6 +139,12 @@ func TcpProbing(ctx *context.Context, Seq int, destAddr string, desetHost string
 			pkt.AdditionalInfo = "Conn_Timeout"
 			return pkt, nil
 
+		// Error: "unreachable"
+		case strings.Contains(err.Error(), "unreachable"):
+			// Add Info
+			pkt.AdditionalInfo = "Network_Unreachable"
+			return pkt, nil
+
 			// Error: Else
 		default:
 			return pkt, fmt.Errorf("conn error: %w", err)

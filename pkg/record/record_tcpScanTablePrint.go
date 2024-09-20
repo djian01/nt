@@ -6,11 +6,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/djian01/nt/pkg/ntScan"
+	"github.com/djian01/nt/pkg/ntScaner"
 	"github.com/fatih/color"
 )
 
-func TcpScan_Recording(filePath string, PortsTable []ntScan.TcpScanPort) error {
+func TcpScan_Recording(filePath string, PortsTable []ntScaner.TcpScanPort) error {
 
 	// Open or create the file with append mode and write-only access
 	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)

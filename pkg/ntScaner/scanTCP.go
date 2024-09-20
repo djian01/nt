@@ -1,4 +1,4 @@
-package ntScan
+package ntScaner
 
 import (
 	"context"
@@ -11,6 +11,9 @@ import (
 func ScanTcpWorker(TestPortChan <-chan *TcpScanPort, errChan chan<- error) {
 
 	for TestPort := range TestPortChan {
+
+		// successFlag
+		successFlag := false
 
 		// WaitGroup to wait for all goroutines
 		var wg sync.WaitGroup
@@ -39,6 +42,7 @@ func ScanTcpWorker(TestPortChan <-chan *TcpScanPort, errChan chan<- error) {
 				}
 
 				if pkt.Status {
+					successFlag = true
 					testResultChan <- true
 				} else {
 					testResultChan <- false
@@ -59,13 +63,13 @@ func ScanTcpWorker(TestPortChan <-chan *TcpScanPort, errChan chan<- error) {
 				mutex.Lock()
 				TestPort.Status = 2 // set the status as 2, success
 				mutex.Unlock()
-				//fmt.Printf("Port %d succeeded!\n", TestPort.Port)
 			} else {
 				// Received failed
-				mutex.Lock()
-				TestPort.Status = 3 // set the status as 3, failed
-				mutex.Unlock()
-				//fmt.Printf("Port %d Failed!\n", TestPort.Port)
+				if !successFlag {
+					mutex.Lock()
+					TestPort.Status = 3 // set the status as 3, failed
+					mutex.Unlock()
+				}
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-package ntScan
+package ntScaner
 
 type TcpScanPort struct {
 	ID       int

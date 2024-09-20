@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/djian01/nt/pkg/ntPinger"
-	"github.com/djian01/nt/pkg/ntScan"
+	"github.com/djian01/nt/pkg/ntScaner"
 	"github.com/djian01/nt/pkg/record"
 	"github.com/djian01/nt/pkg/terminalOutput"
 	"github.com/spf13/cobra"
@@ -91,7 +91,7 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 	}
 
 	// Create a list of 50 empty TcpScanPort items
-	PortsTable := make([]ntScan.TcpScanPort, 50)
+	PortsTable := make([]ntScaner.TcpScanPort, 50)
 
 	for i := 0; i < PortCount; i++ {
 		PortsTable[i].ID = i
@@ -124,12 +124,12 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 	}()
 
 	// Create TcpScanPort & errChan
-	TcpScanPort := make(chan *ntScan.TcpScanPort, 1)
+	TcpScanPort := make(chan *ntScaner.TcpScanPort, 1)
 	errChan := make(chan error, 1)
 
 	// create 5 workers
 	for i := 0; i < 5; i++ {
-		go ntScan.ScanTcpWorker(TcpScanPort, errChan)
+		go ntScaner.ScanTcpWorker(TcpScanPort, errChan)
 	}
 
 	// go routine - TcpScanPort <- &PortsTable[i]
@@ -152,7 +152,7 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 			loopBreak = true
 			return err
 		default:
-			countTested, _, _ = ntScan.TcpScanStat(&PortsTable)
+			countTested, _, _ = ntScaner.TcpScanStat(&PortsTable)
 			if countTested == PortCount {
 				loopBreak = true
 			}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/djian01/nt/pkg/ntPinger"
-	"github.com/djian01/nt/pkg/ntScan"
+	ntScan "github.com/djian01/nt/pkg/ntScaner"
 
 	"github.com/spf13/cobra"
 )

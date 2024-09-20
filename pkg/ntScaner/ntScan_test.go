@@ -4,13 +4,13 @@
 
 // *************************
 
-package ntScan_test
+package ntScaner_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/djian01/nt/pkg/ntScan"
+	"github.com/djian01/nt/pkg/ntScaner"
 )
 
 func Test_ScanMTURun(t *testing.T) {
@@ -20,7 +20,7 @@ func Test_ScanMTURun(t *testing.T) {
 	DestAddr := "192.168.1.1"
 	DestHost := "google.com"
 
-	err := ntScan.ScanMTURun(highInput, DestAddr, DestHost)
+	err := ntScaner.ScanMTURun(highInput, DestAddr, DestHost)
 	if err != nil {
 		fmt.Println(err)
 	}
