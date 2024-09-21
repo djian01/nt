@@ -26,8 +26,8 @@ var tcpScanCmd = &cobra.Command{
 # Example: TCP Scan to "10.123.1.10" for port "80, 443, 8080 & 1500-1505" with recording enabled
 nt -r tcpscan 10.123.1.10 80 443 8080 1500-1505
 
-# Example: TCP SCAN to "10.2.3.10" for port "22, 1522-1525 & 8433" with custom timeout: 5 sec and custom interval: 2 sec
-nt tcpscan -t 5 -i 2 10.2.3.10 22 1522-1525 8433
+# Example: TCP SCAN to "10.2.3.10" for port "22, 1522-1525 & 8433" with custom timeout: 5 sec
+nt tcpscan -t 5 10.2.3.10 22 1522-1525 8433
 `,
 }
 
