@@ -102,6 +102,9 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 		PortsTable[i].Status = 1
 	}
 
+	/// clear screen (only need to clear screen once)
+	terminalOutput.ClearScreen()
+
 	// Go Routine - Terminal Output
 	go func() {
 

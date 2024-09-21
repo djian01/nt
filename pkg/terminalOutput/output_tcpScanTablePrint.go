@@ -18,9 +18,6 @@ const (
 // ScanTablePrint function to display the values in a 10x5 table with color based on status (The input item lengh is 50)
 func ScanTablePrint(Ports *[]ntScaner.TcpScanPort, recording bool, displayIdx int, destHost string) {
 
-	// clear the screen
-	ClearScreen()
-
 	// Set the 1st row for table head
 	var tableHeadRowIdx int
 	if recording {
