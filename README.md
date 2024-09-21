@@ -1,4 +1,4 @@
-# nt (Net Test)
+# nt (Net Test) - A versatile network testing tool that supports ICMP, HTTP(s), DNS, TCP, and MTU testing
 
 `nt` is a Swiss Army knife for network troubleshooting and testing written in Go. It provides continuous testing of network connectivity using various protocols using subcommands, including `icmp`, `tcp`, `http`, and `dns`. Monitor round-trip times (RTT), track packet loss rates, and log high latency events with timestamps to ensure your network's reliability.
 
