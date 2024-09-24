@@ -41,6 +41,9 @@ func ScanTcpWorker(TestPortChan <-chan *TcpScanPort, errChan chan<- error) {
 					return
 				}
 
+				// update the AdditionalInfo
+				TestPort.AdditionalInfo = pkt.AdditionalInfo
+
 				if pkt.Status {
 					successFlag = true
 					testResultChan <- true

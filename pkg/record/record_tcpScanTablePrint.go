@@ -28,6 +28,7 @@ func TcpScan_Recording(filePath string, PortsTable []ntScaner.TcpScanPort) error
 		"DestAddr",
 		"Test_Port",
 		"Status",
+		"AdditionalInfo",
 	}
 
 	err = writer.Write(header)
@@ -54,6 +55,7 @@ func TcpScan_Recording(filePath string, PortsTable []ntScaner.TcpScanPort) error
 				Port.DestAddr,           // Destination Address
 				strconv.Itoa(Port.Port), // Tested Port
 				Status,                  // Test Result
+				Port.AdditionalInfo,     // AdditionalInfo
 			}
 
 			if err := writer.Write(row); err != nil {

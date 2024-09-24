@@ -7,4 +7,6 @@ type TcpScanPort struct {
 	Timeout  int
 	DestHost string
 	DestAddr string
+	// Status update
+	AdditionalInfo string
 }
