@@ -93,6 +93,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"DestAddr",
 					"PayLoadSize",
 					"RTT",
+					"SendDate",
 					"SendTime",
 					"PacketsSent",
 					"PacketsRecv",
@@ -116,14 +117,15 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				pkt := recordItem.(*ntPinger.PacketICMP)
 
 				row := []string{
-					pkt.Type,                      // Ping Type
-					strconv.Itoa(pkt.Seq),         // Seq
-					fmt.Sprintf("%t", pkt.Status), // Status
-					pkt.DestHost,                  // DestHost
-					pkt.DestAddr,                  // DestAddr
-					strconv.Itoa(pkt.PayLoadSize), // PayLoadSize
-					(pkt.RTT).String(),            // RTT
-					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
+					pkt.Type,                          // Ping Type
+					strconv.Itoa(pkt.Seq),             // Seq
+					fmt.Sprintf("%t", pkt.Status),     // Status
+					pkt.DestHost,                      // DestHost
+					pkt.DestAddr,                      // DestAddr
+					strconv.Itoa(pkt.PayLoadSize),     // PayLoadSize
+					(pkt.RTT).String(),                // RTT
+					pkt.SendTime.Format("2006-01-02"), // SendDate
+					pkt.SendTime.Format("15:04:05"),   // SendTime
 
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
@@ -150,6 +152,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"DestPort",
 					"PayLoadSize",
 					"RTT",
+					"SendDate",
 					"SendTime",
 					"PacketsSent",
 					"PacketsRecv",
@@ -173,15 +176,16 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				pkt := recordItem.(*ntPinger.PacketTCP)
 
 				row := []string{
-					pkt.Type,                                   // Ping Type
-					strconv.Itoa(pkt.Seq),                      // Seq
-					fmt.Sprintf("%t", pkt.Status),              // Status
-					pkt.DestHost,                               // DestHost
-					pkt.DestAddr,                               // DestAddr
-					strconv.Itoa(pkt.DestPort),                 // DestPort
-					strconv.Itoa(pkt.PayLoadSize),              // PayLoadSize
-					(pkt.RTT).String(),                         // RTT
-					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
+					pkt.Type,                          // Ping Type
+					strconv.Itoa(pkt.Seq),             // Seq
+					fmt.Sprintf("%t", pkt.Status),     // Status
+					pkt.DestHost,                      // DestHost
+					pkt.DestAddr,                      // DestAddr
+					strconv.Itoa(pkt.DestPort),        // DestPort
+					strconv.Itoa(pkt.PayLoadSize),     // PayLoadSize
+					(pkt.RTT).String(),                // RTT
+					pkt.SendTime.Format("2006-01-02"), // SendDate
+					pkt.SendTime.Format("15:04:05"),   // SendTime
 
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
@@ -208,6 +212,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"Response_Code",
 					"Response_Phase",
 					"Response_Time",
+					"SendDate",
 					"SendTime",
 					"PacketsSent",
 					"PacketsRecv",
@@ -243,7 +248,8 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					strconv.Itoa(pkt.Http_response_code), // Response_Code
 					pkt.Http_response,                    // Response Phase
 					(pkt.RTT).String(),                   // RTT (Response_Time)
-					pkt.SendTime.Format("2006-01-02 15:04:05"), // SendTime
+					pkt.SendTime.Format("2006-01-02"),    // SendDate
+					pkt.SendTime.Format("15:04:05"),      // SendTime
 
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
@@ -271,10 +277,11 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"Record",
 					"DNS_Protocol",
 					"Response_Time",
+					"SendDate",
 					"SendTime",
 					"PacketsSent",
-					"PacketsRecv",
-					"PacketLoss",
+					"SuccessResponse",
+					"FailureRate",
 					"MinRtt",
 					"AvgRtt",
 					"MaxRtt",
@@ -294,23 +301,24 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				pkt := recordItem.(*ntPinger.PacketDNS)
 
 				row := []string{
-					pkt.Type,                      // Ping Type
-					strconv.Itoa(pkt.Seq),         // Seq
-					fmt.Sprintf("%t", pkt.Status), // Status
-					pkt.DestHost,                  // DNS_Resolver
-					pkt.Dns_query,                 // DNS_Query
-					pkt.Dns_response,              // DNS_Response
-					pkt.Dns_queryType,             // Record
-					pkt.Dns_protocol,              // DNS_Protocol
-					(pkt.RTT).String(),            // Response_Time
-					pkt.SendTime.Format("2006-01-02 15:04:05"),         // SendTime
-					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
-					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
+					pkt.Type,                          // Ping Type
+					strconv.Itoa(pkt.Seq),             // Seq
+					fmt.Sprintf("%t", pkt.Status),     // Status
+					pkt.DestHost,                      // DNS_Resolver
+					pkt.Dns_query,                     // DNS_Query
+					pkt.Dns_response,                  // DNS_Response
+					pkt.Dns_queryType,                 // Record
+					pkt.Dns_protocol,                  // DNS_Protocol
+					(pkt.RTT).String(),                // Response_Time
+					pkt.SendTime.Format("2006-01-02"), // SendDate
+					pkt.SendTime.Format("15:04:05"),   // SendTime
+					strconv.Itoa(pkt.PacketsSent),     // PacketsSent
+					strconv.Itoa(pkt.PacketsRecv),     // PacketsRecv
 					fmt.Sprintf("%.2f%%", float64(pkt.PacketLoss*100)), // PacketLoss
-					pkt.MinRtt.String(),                                // MinRtt
-					pkt.AvgRtt.String(),                                // AvgRtt
-					pkt.MaxRtt.String(),                                // MaxRtt
-					pkt.AdditionalInfo,                                 // AdditionalInfo
+					pkt.MinRtt.String(), // MinRtt
+					pkt.AvgRtt.String(), // AvgRtt
+					pkt.MaxRtt.String(), // MaxRtt
+					pkt.AdditionalInfo,  // AdditionalInfo
 				}
 
 				if err := writer.Write(row); err != nil {

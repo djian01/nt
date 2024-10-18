@@ -240,7 +240,7 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 			if pkt.SendTime.String() != "0001-01-01 00:00:00 +0000 UTC" {
 				moveToRow(len + tableHeadRowIdx + 3)
 				fmt.Printf("\n--- %s %s statistics ---\n", pkt.DestAddr, color.CyanString(fmt.Sprintf("%v Ping", pkt.Type)))
-				fmt.Printf("%d packets transmitted, %d packets received, %.2f%% packet loss\n", pkt.PacketsSent, pkt.PacketsRecv, float64(pkt.PacketLoss*100))
+				fmt.Printf("%d packets transmitted, %d successful response received, %.2f%% failure rate\n", pkt.PacketsSent, pkt.PacketsRecv, float64(pkt.PacketLoss*100))
 				fmt.Printf("round-trip min/avg/max = %v/%v/%v       \n", pkt.MinRtt, pkt.AvgRtt, pkt.MaxRtt)
 			}
 
