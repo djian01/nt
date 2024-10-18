@@ -268,7 +268,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"DNS_Resolver",
 					"DNS_Query",
 					"DNS_Response",
-					"DNS_Query_Type",
+					"Record",
 					"DNS_Protocol",
 					"Response_Time",
 					"SendTime",
@@ -300,7 +300,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.DestHost,                  // DNS_Resolver
 					pkt.Dns_query,                 // DNS_Query
 					pkt.Dns_response,              // DNS_Response
-					pkt.Dns_queryType,             // DNS_Query_Type
+					pkt.Dns_queryType,             // Record
 					pkt.Dns_protocol,              // DNS_Protocol
 					(pkt.RTT).String(),            // Response_Time
 					pkt.SendTime.Format("2006-01-02 15:04:05"),         // SendTime

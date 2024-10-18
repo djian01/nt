@@ -160,8 +160,8 @@ func Test_ProbingDNS(t *testing.T) {
 		Count:        0,
 		Timeout:      4,
 		Interval:     5,
-		DestHost:     "8.8.8.8",
-		Dns_query:    "www.microsoft.com",
+		DestHost:     "172.16.200.101",
+		Dns_query:    "controller01.ocplab.homelab.local",
 		Dns_Protocol: "udp", // "udp" or "tcp"
 	}
 

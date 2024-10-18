@@ -195,8 +195,8 @@ func TablePrint(displayTable *[]ntPinger.Packet, len int, recording bool, displa
 		// Print the table header
 		moveToRow(tableHeadRowIdx + 1)
 
-		fmt.Printf("%-5s %-10s %-15s %-25s %-25s %-12s %-10s %-15s %-20s %-20s  \n", "Seq", "Status", "Resolver", "Query", "Response", "Query_Type", "Protocol", "Response_Time", "Send_Time", "AddInfo")
-		fmt.Println(strings.Repeat("-", 158))
+		fmt.Printf("%-5s %-10s %-15s %-25s %-25s %-12s %-10s %-15s %-20s %-20s  \n", "Seq", "Status", "Resolver", "Query", "Response", "Record", "Protocol", "Response_Time", "Send_Time", "AddInfo")
+		fmt.Println(strings.Repeat("-", 162))
 
 		// Print the table & statistics data
 		for idx, t := range *displayTable {

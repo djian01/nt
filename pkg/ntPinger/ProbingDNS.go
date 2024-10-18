@@ -122,46 +122,58 @@ func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string,
 	// Record the start time
 	pkt.SendTime = time.Now()
 
-	// Attempt to resolve "A" record first within the context
+	// LookupHost within the context
 	var err error
 	Dns_response_slice, err := resolver.LookupHost(ctx, Dns_query)
-	pkt.Dns_response = IPSlideToString(Dns_response_slice)
-
-	if err == nil {
-		pkt.Status = true
-		pkt.Dns_queryType = "A"
-
-	} else {
-		// If "A" record is not found, attempt "CNAME" within the context
-		pkt.Dns_response, err = resolver.LookupCNAME(ctx, Dns_query)
-		if err == nil {
-			pkt.Status = true
-			pkt.Dns_queryType = "CNAME"
-			//pkt.AdditionalInfo = fmt.Sprintf("CNAME resolves to: %s", cname)
-		} else {
-			// If neither "A" nor "CNAME" is found, handle the error
-			// Capture specific error message in AdditionalInfo
-			switch {
-			case strings.Contains(err.Error(), "no such host"):
-				pkt.AdditionalInfo = "No_Such_Host"
-			case strings.Contains(err.Error(), "timeout"):
-				pkt.AdditionalInfo = "Timeout"
-			case strings.Contains(err.Error(), "temporary failure"):
-				pkt.AdditionalInfo = "Temporary_failure"
-			case strings.Contains(err.Error(), "query refused"):
-				pkt.AdditionalInfo = "DNS_query_refused"
-			case strings.Contains(err.Error(), "invalid domain name"):
-				pkt.AdditionalInfo = "Invalid_domain_name"
-			case strings.Contains(err.Error(), "permission denied"):
-				pkt.AdditionalInfo = "Permission_denied"
-			default:
-				return pkt, fmt.Errorf("dns query failed: %w", err) // return error
-			}
-		}
-	}
 
 	// Calculate RTT
 	pkt.RTT = time.Since(pkt.SendTime)
+
+	// DNS response
+	pkt.Dns_response = IPSlideToString(Dns_response_slice)
+
+	// err check
+	var cname string
+	var cnameErr error
+
+	if err == nil {
+		cname, cnameErr = resolver.LookupCNAME(ctx, Dns_query)
+		pkt.Status = true
+
+	} else {
+		// If neither "A" nor "CNAME" is found, handle the error
+		// Capture specific error message in AdditionalInfo
+		switch {
+		case strings.Contains(err.Error(), "no such host"):
+			pkt.AdditionalInfo = "Non_Existent_Domain"
+		case strings.Contains(err.Error(), "timeout"):
+			pkt.AdditionalInfo = "Timeout"
+		case strings.Contains(err.Error(), "temporary failure"):
+			pkt.AdditionalInfo = "Temporary_failure"
+		case strings.Contains(err.Error(), "query refused"):
+			pkt.AdditionalInfo = "DNS_query_refused"
+		case strings.Contains(err.Error(), "invalid domain name"):
+			pkt.AdditionalInfo = "Invalid_domain_name"
+		case strings.Contains(err.Error(), "permission denied"):
+			pkt.AdditionalInfo = "Permission_denied"
+		default:
+			return pkt, fmt.Errorf("dns query failed: %w", err) // return error
+		}
+	}
+
+	// CNAME check
+	if err == nil {
+		if cnameErr == nil {
+			cname = strings.TrimSuffix(cname, ".")
+		}
+
+		if cname != Dns_query {
+			// If CNAME lookup succeeds and the CNAME is different from the query
+			pkt.Dns_queryType = "CNAME"
+		} else {
+			pkt.Dns_queryType = "A"
+		}
+	}
 
 	// Check Latency
 	if CheckLatency(pkt.AvgRtt, pkt.RTT) {
