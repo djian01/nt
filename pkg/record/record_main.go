@@ -115,6 +115,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 			for _, recordItem := range accumulatedRecords {
 				// interface assertion
 				pkt := recordItem.(*ntPinger.PacketICMP)
+				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				row := []string{
 					pkt.Type,                          // Ping Type
@@ -123,7 +124,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.DestHost,                      // DestHost
 					pkt.DestAddr,                      // DestAddr
 					strconv.Itoa(pkt.PayLoadSize),     // PayLoadSize
-					(pkt.RTT).String(),                // RTT
+					fmt.Sprintf("%v", RTT),            // Response_Time
 					pkt.SendTime.Format("2006-01-02"), // SendDate
 					pkt.SendTime.Format("15:04:05"),   // SendTime
 
@@ -174,6 +175,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 			for _, recordItem := range accumulatedRecords {
 				// interface assertion
 				pkt := recordItem.(*ntPinger.PacketTCP)
+				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				row := []string{
 					pkt.Type,                          // Ping Type
@@ -183,7 +185,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.DestAddr,                      // DestAddr
 					strconv.Itoa(pkt.DestPort),        // DestPort
 					strconv.Itoa(pkt.PayLoadSize),     // PayLoadSize
-					(pkt.RTT).String(),                // RTT
+					fmt.Sprintf("%v", RTT),            // Response_Time
 					pkt.SendTime.Format("2006-01-02"), // SendDate
 					pkt.SendTime.Format("15:04:05"),   // SendTime
 
@@ -235,6 +237,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 
 				// interface assertion
 				pkt := recordItem.(*ntPinger.PacketHTTP)
+				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				// url
 				url := ntPinger.ConstructURL(pkt.Http_scheme, pkt.DestHost, pkt.Http_path, pkt.DestPort)
@@ -247,7 +250,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					url,                                  // DestHost
 					strconv.Itoa(pkt.Http_response_code), // Response_Code
 					pkt.Http_response,                    // Response Phase
-					(pkt.RTT).String(),                   // RTT (Response_Time)
+					fmt.Sprintf("%v", RTT),               // Response_Time
 					pkt.SendTime.Format("2006-01-02"),    // SendDate
 					pkt.SendTime.Format("15:04:05"),      // SendTime
 
@@ -276,7 +279,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					"DNS_Response",
 					"Record",
 					"DNS_Protocol",
-					"Response_Time",
+					"Response_Time(ms)",
 					"SendDate",
 					"SendTime",
 					"PacketsSent",
@@ -299,6 +302,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 			for _, recordItem := range accumulatedRecords {
 				// interface assertion
 				pkt := recordItem.(*ntPinger.PacketDNS)
+				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				row := []string{
 					pkt.Type,                          // Ping Type
@@ -309,7 +313,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.Dns_response,                  // DNS_Response
 					pkt.Dns_queryType,                 // Record
 					pkt.Dns_protocol,                  // DNS_Protocol
-					(pkt.RTT).String(),                // Response_Time
+					fmt.Sprintf("%v", RTT),            // Response_Time
 					pkt.SendTime.Format("2006-01-02"), // SendDate
 					pkt.SendTime.Format("15:04:05"),   // SendTime
 					strconv.Itoa(pkt.PacketsSent),     // PacketsSent
