@@ -14,7 +14,7 @@ import (
 )
 
 // version
-var version = "1.0.2"
+var version = "1.0.3"
 
 // Initial rootCmd
 var rootCmd = &cobra.Command{
