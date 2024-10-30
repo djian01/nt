@@ -122,7 +122,7 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcpscan> [args]
 #### Example 1: ICMP continuous ping to "google.com" with recording enabled
 
 ```bash
-nt icmp -c 10 -i 2 -s 48 10.2.3.10
+nt -r icmp google.com
 
 ```
 
@@ -153,14 +153,19 @@ nt icmp -c 10 -i 2 -s 48 10.2.3.10
   Timeout for each TCP ping request in seconds. Default is `4` seconds.
 
 
-#### Example: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
+#### Example 1: TCP ping to "google.com:443" with recording enabled
+
+```bash
+nt -r tcp google.com 443
+
+```
+
+#### Example 2: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
 
 ```bash
 nt tcp -c 10 -i 2 10.2.3.10 22
 
 ```
-
-
 
 ### HTTP Sub-Command
 **Note:**  
@@ -184,17 +189,17 @@ nt tcp -c 10 -i 2 10.2.3.10 22
   Timeout for each HTTP ping request in seconds. Default is `4` seconds.
 
 
-#### Example 1: HTTP ping to POST "http://10.2.3.10:8080/token" with 2-second interval.
-
-```bash
-nt http -i 2 -m POST http://10.2.3.10:8080/token
-
-```
-
-#### Example 2: HTTP continuous ping to "https://google.com" with recording enabled.
+#### Example 1: HTTP ping to "https://google.com" with recording enabled (With default values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s)
 
 ```bash
 nt -r http https://google.com
+
+```
+
+#### Example 2: HTTP ping to POST "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
+
+```bash
+nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 
 ```
 
@@ -217,14 +222,19 @@ nt -r http https://google.com
   Timeout for each DNS ping request in seconds. Default is `4` seconds.
 
 
-#### Example: DNS ping to "4.2.2.2" with query "abc.com" with count: 10, interval: 2 sec and default protocol UDP
+#### Example 1: DNS ping to "8.8.8.8" with query "google.com" and have recording enabled
+
+```bash
+nt -r dns 8.8.8.8 google.com
+
+```
+
+#### Example 2: DNS ping to "4.2.2.2" with query "abc.com" with count: 10 and interval: 2 sec
 
 ```bash
 nt dns -c 10 -i 2 4.2.2.2 abc.com
 
 ```
-
-
 
 ### MTU Sub-Command
 
