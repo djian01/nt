@@ -2,6 +2,25 @@
 
 `nt` is a versatile tool for network troubleshooting and testing written in Go. It provides continuous testing of network connectivity using various protocols using subcommands, including `icmp`, `tcp`, `http`, and `dns`. Monitor round-trip times (RTT), track packet loss rates, and log high latency events with timestamps to ensure your network's reliability.
 
+## Table of Contents
+- [Features](#features)
+- [Installation](#installation)
+  - [Option 1 - go install](#option-1-install-via-go-install)
+  - [Option 2 - build from source](#option-2-build-from-source)
+  - [Option 3 - Makefile](#option-3-makefile-docker--make-are-required-on-your-system)
+  - [Option 4 - Download from Release](#option-4-download-executable-from-github-releases)
+- [Usage](#usage)
+  - [Main Command](#main-command)
+  - [ICMP Ping Sub-Command](#icmp-sub-command-required-privilege-mode-in-linux)
+  - [TCP Ping Sub-Command](#tcp-sub-command)
+  - [HTTP Ping Sub-Command](#http-sub-command)
+  - [DNS Ping Sub-Command](#dns-sub-command)
+  - [MTU Discovery Sub-Command](#mtu-sub-command)
+  - [TCP Scan Sub-Command](#tcp-scan-sub-command)
+- [Logging and Recording](#logging-and-recording)
+- [License](#license)  
+- [Contact](#contact)  
+
 ## Features
 
 - **Subcommands for Protocols**: Use specific subcommands (`icmp`, `tcp`, `http`, `dns`) to perform tests.
