@@ -119,14 +119,14 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcpscan> [args]
 - `-t`:   **ICMP Ping Timeout**  
   Timeout for each ICMP ping request in seconds. Default is `4` seconds.
 
-#### 💼 Example 1: ICMP continuous ping to "google.com" with recording enabled
+#### 💻 Example 1: ICMP continuous ping to "google.com" with recording enabled
 
 ```bash
 nt -r icmp google.com
 
 ```
 
-#### 💼 Example 2: ICMP ping to "10.2.3.10" with count: 10, interval: 2 sec,  payload 48 bytes
+#### 💻 Example 2: ICMP ping to "10.2.3.10" with count: 10, interval: 2 sec,  payload 48 bytes
 
 ```bash
 nt icmp -c 10 -i 2 -s 48 10.2.3.10
@@ -153,14 +153,14 @@ nt icmp -c 10 -i 2 -s 48 10.2.3.10
   Timeout for each TCP ping request in seconds. Default is `4` seconds.
 
 
-#### 💼 Example 1: TCP ping to "google.com:443" with recording enabled
+#### 💻 Example 1: TCP ping to "google.com:443" with recording enabled
 
 ```bash
 nt -r tcp google.com 443
 
 ```
 
-#### 💼 Example 2: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
+#### 💻 Example 2: TCP ping to "10.2.3.10:22" with count: 10 and interval: 2 sec
 
 ```bash
 nt tcp -c 10 -i 2 10.2.3.10 22
@@ -189,14 +189,14 @@ nt tcp -c 10 -i 2 10.2.3.10 22
   Timeout for each HTTP ping request in seconds. Default is `4` seconds.
 
 
-#### 💼 Example 1: HTTP ping to "https://google.com" with recording enabled (With default values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s)
+#### 💻 Example 1: HTTP ping to "https://google.com" with recording enabled (With default values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s)
 
 ```bash
 nt -r http https://google.com
 
 ```
 
-#### 💼 Example 2: HTTP ping to POST "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
+#### 💻 Example 2: HTTP ping to POST "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
 
 ```bash
 nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
@@ -222,14 +222,14 @@ nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
   Timeout for each DNS ping request in seconds. Default is `4` seconds.
 
 
-#### 💼 Example 1: DNS ping to "8.8.8.8" with query "google.com" and have recording enabled
+#### 💻 Example 1: DNS ping to "8.8.8.8" with query "google.com" and have recording enabled
 
 ```bash
 nt -r dns 8.8.8.8 google.com
 
 ```
 
-#### 💼 Example 2: DNS ping to "4.2.2.2" with query "abc.com" with count: 10 and interval: 2 sec
+#### 💻 Example 2: DNS ping to "4.2.2.2" with query "abc.com" with count: 10 and interval: 2 sec
 
 ```bash
 nt dns -c 10 -i 2 4.2.2.2 abc.com
@@ -245,13 +245,13 @@ nt dns -c 10 -i 2 4.2.2.2 abc.com
 - `-h`:   **Help**  
   Display help information for the `mtu` subcommand.
 
-#### 💼 Example 1: MTU check for destination google.com
+#### 💻 Example 1: MTU check for destination google.com
 ```bash
 nt mtu google.com
 
 ```
 
-#### 💼 Example 2: MTU check for destination 192.168.1.10 with user defined ceiling test size 9000 set (for Jumbo Frame enabled environment)
+#### 💻 Example 2: MTU check for destination 192.168.1.10 with user defined ceiling test size 9000 set (for Jumbo Frame enabled environment)
 ```bash
 nt mtu -s 9000 192.168.1.10
 
@@ -268,13 +268,13 @@ nt mtu -s 9000 192.168.1.10
 - `-h`:   **Help**  
   Display help information for the `mtu` subcommand.
 
-#### 💼 Example 1: TCP Scan to "10.123.1.10" for port "80, 443, 8080 & 1500-1505" with recording enabled
+#### 💻 Example 1: TCP Scan to "10.123.1.10" for port "80, 443, 8080 & 1500-1505" with recording enabled
 ```bash
 nt -r tcpscan 10.123.1.10 80 443 8080 1500-1505
 
 ```
 
-#### 💼 Example 2: TCP SCAN to "10.2.3.10" for port "22, 1522-1525 & 8433" with custom timeout: 5 sec
+#### 💻 Example 2: TCP SCAN to "10.2.3.10" for port "22, 1522-1525 & 8433" with custom timeout: 5 sec
 ```bash
 nt tcpscan -t 5 10.2.3.10 22 1522-1525 8433
 
