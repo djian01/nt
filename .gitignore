@@ -1,5 +1,6 @@
 # Executable
 *.exe
+*.exe~
 nt
 /executable/
 
