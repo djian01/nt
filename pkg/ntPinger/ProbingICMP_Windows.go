@@ -76,15 +76,17 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, Ic
 func parseWinPingOutput(output string) (status bool, rtt time.Duration, AdditionalInfo string) {
 
 	// Regular expression to capture RTT from the "time=" part
-	rttRegex := regexp.MustCompile(`time=(\d+ms)`)
+	rttRegex := regexp.MustCompile(`time(=|<)(\d+ms)`)
 
 	// Check if there's a reply indicating success
 	if strings.Contains(output, "Reply from") {
 		// Find the RTT value
 		rttMatch := rttRegex.FindStringSubmatch(output)
 		if len(rttMatch) > 1 {
+			rttStr := rttMatch[2]
+
 			// Convert RTT string (e.g., "13ms") to time.Duration
-			rttDuration, err := time.ParseDuration(rttMatch[1]) // string "13ms" -> time.Duration(13)*time.Millisecond
+			rttDuration, err := time.ParseDuration(rttStr) // string "13ms" -> time.Duration(13)*time.Millisecond
 			if err == nil {
 				rtt = rttDuration
 			} else {
