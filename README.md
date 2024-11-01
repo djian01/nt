@@ -282,12 +282,24 @@ nt tcpscan -t 5 10.2.3.10 22 1522-1525 8433
 
 
 ## Logging and Recording
-When the `-r` option is enabled, all test results are saved to a CSV file in the same directory as the executable. The CSV files are named using the format:
+When the `-r` option is enabled, all test results are saved to a CSV file in the same directory as the executable. 
+
+During the testing/recording process, the CSV file is named in the following format:
+
+```bash
+[recording...]_Record_<test type>_<test target host>_<timestamp>.csv
+
+```
+
+When the testing/recording is completed, the file name will be like this:
 
 ```bash
 Record_<test type>_<test target host>_<timestamp>.csv
 
 ```
+
+### 📌 Note:
+During testing/recording, the file name will be prefixed with "[recording...]_". Please DO NOT open this CSV file at that time, as doing so will prevent test records from being saved to the file and will interrupt the test process.
 
 - **Example**: `Record_icmp_google.com_20211012T101530.csv` 
 
