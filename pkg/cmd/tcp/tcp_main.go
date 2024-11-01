@@ -136,7 +136,7 @@ func TcpCommandMain(recording bool, displayRow int, destHost string, destPort in
 		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
-		go record.RecordingFunc(recordingFilePath, bucket, recordingChan, &wgRecord)
+		go record.RecordingFunc(exeFileFolder, recordingFileName, bucket, recordingChan, &wgRecord)
 	}
 
 	// harvest the result

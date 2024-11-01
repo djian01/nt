@@ -2,6 +2,7 @@ package ntPinger
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -131,6 +132,11 @@ func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string,
 
 	// DNS response
 	pkt.Dns_response = IPSlideToString(Dns_response_slice)
+
+	// check timeout
+	if pkt.RTT >= time.Duration(timeout)*time.Second {
+		err = errors.New("timeout")
+	}
 
 	// err check
 	var cname string

@@ -7,7 +7,6 @@ package record_test
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -43,10 +42,9 @@ func Test_RecordingFunc(t *testing.T) {
 	// recordingFile Name
 	timeStamp := time.Now().Format("20060102150405")
 	recordingFileName := fmt.Sprintf("Record_%v_%v_%v.csv", Type, dest, timeStamp)
-	recordingFilePath := filepath.Join(exeFileFolder, recordingFileName)
 
 	// go routine, Recording Func
-	go record.RecordingFunc(recordingFilePath, 10, recordingChan, &wg)
+	go record.RecordingFunc(exeFileFolder, recordingFileName, 10, recordingChan, &wg)
 
 	// go routine, Result Generator
 	go ntTEST.ResultGenerate(count, Type, &probeChan)

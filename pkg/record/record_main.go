@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 
@@ -11,12 +12,16 @@ import (
 )
 
 // Func - RecordingFunc, saving the accumulated results into CSV file
-func RecordingFunc(filePath string, bucket int, recordingChan <-chan ntPinger.Packet, wg *sync.WaitGroup) {
+func RecordingFunc(filePath string, fileName string, bucket int, recordingChan <-chan ntPinger.Packet, wg *sync.WaitGroup) {
 
 	// Initial the bucket
 	count := 0
 	writeHeader := true
 	accumulatedRecords := []ntPinger.Packet{}
+
+	// file path name
+	recordingFilePathName := filepath.Join(filePath, fmt.Sprintf("[recording...]_%s", fileName))
+	completedFilePathName := filepath.Join(filePath, fileName)
 
 	// The ticker loop for CSV file write
 	for {
@@ -28,7 +33,7 @@ func RecordingFunc(filePath string, bucket int, recordingChan <-chan ntPinger.Pa
 		// if the recordingChan is closed, save the rest of the accumulatedRecords to CSV
 		if !ok {
 			// save to CSV
-			err := SaveToCSV(filePath, accumulatedRecords, writeHeader)
+			err := SaveToCSV(recordingFilePathName, accumulatedRecords, writeHeader)
 			if err != nil {
 				panic(err)
 			}
@@ -37,6 +42,12 @@ func RecordingFunc(filePath string, bucket int, recordingChan <-chan ntPinger.Pa
 
 			// clear wait group
 			wg.Done()
+
+			// change the file name, remove the "recording_" prefix
+			err = os.Rename(recordingFilePathName, completedFilePathName)
+			if err != nil {
+				panic(err)
+			}
 
 			break
 
@@ -48,7 +59,7 @@ func RecordingFunc(filePath string, bucket int, recordingChan <-chan ntPinger.Pa
 			// if the bucket is full, Save to CSV
 			if count%bucket == 0 {
 				// save to CSV
-				err := SaveToCSV(filePath, accumulatedRecords, writeHeader)
+				err := SaveToCSV(recordingFilePathName, accumulatedRecords, writeHeader)
 				if err != nil {
 					panic(err)
 				}
