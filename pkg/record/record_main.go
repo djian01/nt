@@ -40,14 +40,14 @@ func RecordingFunc(filePath string, fileName string, bucket int, recordingChan <
 			// reset bucket
 			accumulatedRecords = nil
 
-			// clear wait group
-			wg.Done()
-
 			// change the file name, remove the "recording_" prefix
 			err = os.Rename(recordingFilePathName, completedFilePathName)
 			if err != nil {
 				panic(err)
 			}
+
+			// clear wait group
+			wg.Done()
 
 			break
 
