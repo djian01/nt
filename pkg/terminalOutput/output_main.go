@@ -1,8 +1,11 @@
 package terminalOutput
 
 import (
+	"os"
+
 	"github.com/djian01/nt/pkg/ntPinger"
 	"github.com/djian01/nt/pkg/ntScaner"
+	"golang.org/x/term"
 )
 
 // Main func for Output
@@ -21,8 +24,23 @@ func OutputFunc(outputChan <-chan ntPinger.Packet, len int, recording bool) {
 	// initial displayIdx
 	displayIdx := 0
 
+	// get current terminal window size
+	windowW, windowH, err := getTerminaSize()
+	if err != nil {
+		return
+	}
+
 	// process Display Table from Channel NtResultChan
 	for PacketPointer := range outputChan {
+		w, h, _ := getTerminaSize()
+
+		// if the terminal window size changed, clear Screen
+		if w != windowW || h != windowH {
+			windowW = w
+			windowH = h
+			ClearScreen()
+		}
+
 		idx := GetAvailableSliceItem(&displayTable)
 		displayTable[idx] = PacketPointer
 		TablePrint(&displayTable, len, recording, displayIdx)
@@ -67,4 +85,10 @@ func TcpScanOutputFunc(outputChan <-chan *[]ntScaner.TcpScanPort, recording bool
 // Func - cleanScreen
 func ClearScreen() {
 	print("\033[H\033[2J")
+}
+
+// Func - get the terminal window size
+func getTerminaSize() (width int, height int, err error) {
+	width, height, err = term.GetSize(int(os.Stdout.Fd()))
+	return
 }
