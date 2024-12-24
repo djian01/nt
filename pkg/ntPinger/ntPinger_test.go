@@ -53,7 +53,7 @@ func Test_pingerICMP(t *testing.T) {
 		Timeout:     1,
 		Interval:    1,
 		DestHost:    "4.2.2.2",
-		Icmp_DF:     false,
+		Icmp_DF:     true,
 		PayLoadSize: 1480,
 	}
 
@@ -80,7 +80,7 @@ func Test_ProbingICMP(t *testing.T) {
 	DestAddr := "8.8.8.8"
 	DestHost := "google.com"
 	Timeout := 1
-	NBypes := 50
+	NBypes := 8505
 	Seq := 1
 	size := 50
 	df := true

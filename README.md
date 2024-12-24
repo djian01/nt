@@ -114,7 +114,9 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcpscan> [args]
   Interval between ICMP ping requests in seconds. Default is `1` second.
 
 - `-s`:   **ICMP Ping Payload Size**  
-  Size of the ICMP ping payload in bytes. Default is `32` bytes.
+  Size of the ICMP ping payload in bytes. Default is `32` bytes. 
+  Total IP Packet size = IP Header (20 bytes) + ICMP Header (8 bytes) + Payload Size (specificed with '-s')
+  Example: If Payload Size is 1472, the IP Packet size is 1500 bytes (20 + 8 + 1472)
 
 - `-t`:   **ICMP Ping Timeout**  
   Timeout for each ICMP ping request in seconds. Default is `4` seconds.
