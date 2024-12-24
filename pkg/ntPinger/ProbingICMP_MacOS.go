@@ -85,16 +85,17 @@ func parseMacPingOutput(output string) (status bool, rtt time.Duration, Addition
 		}
 
 		status = true
-	} else if strings.Contains(output, "Request timeout for") {
-		// In case of a timeout
-		status = false
-		rtt = 0
-		AdditionalInfo = "Timeout"
-	} else if strings.Contains(output, "sendto: Message too long") || strings.Contains(output, "frag needed and DF set") {
+
+	} else if strings.Contains(output, "Message too long") || strings.Contains(output, "frag needed and DF set") {
 		// MTU_Exceed
 		status = false
 		AdditionalInfo = "MTU Exceed, DF set"
 		rtt = 0
+	} else if strings.Contains(output, "100.0% packet loss") {
+		// In case of a timeout
+		status = false
+		rtt = 0
+		AdditionalInfo = "Timeout"
 	} else {
 		status = false
 		rtt = 0
