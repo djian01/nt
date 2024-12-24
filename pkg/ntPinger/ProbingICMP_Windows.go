@@ -78,8 +78,14 @@ func parseWinPingOutput(output string) (status bool, rtt time.Duration, Addition
 	// Regular expression to capture RTT from the "time=" part
 	rttRegex := regexp.MustCompile(`time(=|<)(\d+ms)`)
 
-	// Check if there's a reply indicating success
-	if strings.Contains(output, "Reply from") {
+	if strings.Contains(output, "Destination host unreachable") {
+		// In case of "Destination host unreachable"
+		status = false
+		rtt = 0
+		AdditionalInfo = "NoRoute"
+
+		// Check if there's a reply indicating success
+	} else if strings.Contains(output, "Reply from") {
 		// Find the RTT value
 		rttMatch := rttRegex.FindStringSubmatch(output)
 		if len(rttMatch) > 1 {
@@ -94,8 +100,8 @@ func parseWinPingOutput(output string) (status bool, rtt time.Duration, Addition
 				rtt = 0
 			}
 		}
-
 		status = true
+
 	} else if strings.Contains(output, "Request timed out") && strings.Contains(output, "Packets: Sent = 1, Received = 0") {
 		// In case of a timeout or packet loss
 		status = false
