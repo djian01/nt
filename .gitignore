@@ -9,6 +9,7 @@ nt
 
 # CSV file
 *.csv
+*.csv#
 
 # git files
 .gitconfig
