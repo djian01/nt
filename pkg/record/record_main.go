@@ -129,15 +129,15 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				row := []string{
-					pkt.Type,                          // Ping Type
-					strconv.Itoa(pkt.Seq),             // Seq
-					fmt.Sprintf("%t", pkt.Status),     // Status
-					pkt.DestHost,                      // DestHost
-					pkt.DestAddr,                      // DestAddr
-					strconv.Itoa(pkt.PayLoadSize),     // PayLoadSize
-					fmt.Sprintf("%v", RTT),            // Response_Time
-					pkt.SendTime.Format("2006-01-02"), // SendDate
-					pkt.SendTime.Format("15:04:05"),   // SendTime
+					pkt.Type,                            // Ping Type
+					strconv.Itoa(pkt.Seq),               // Seq
+					fmt.Sprintf("%t", pkt.Status),       // Status
+					pkt.DestHost,                        // DestHost
+					pkt.DestAddr,                        // DestAddr
+					strconv.Itoa(pkt.PayLoadSize),       // PayLoadSize
+					fmt.Sprintf("%v", RTT),              // Response_Time
+					pkt.SendTime.Format("2006-01-02"),   // SendDate
+					pkt.SendTime.Format("15:04:05 MST"), // SendTime
 
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
@@ -189,16 +189,16 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				row := []string{
-					pkt.Type,                          // Ping Type
-					strconv.Itoa(pkt.Seq),             // Seq
-					fmt.Sprintf("%t", pkt.Status),     // Status
-					pkt.DestHost,                      // DestHost
-					pkt.DestAddr,                      // DestAddr
-					strconv.Itoa(pkt.DestPort),        // DestPort
-					strconv.Itoa(pkt.PayLoadSize),     // PayLoadSize
-					fmt.Sprintf("%v", RTT),            // Response_Time
-					pkt.SendTime.Format("2006-01-02"), // SendDate
-					pkt.SendTime.Format("15:04:05"),   // SendTime
+					pkt.Type,                            // Ping Type
+					strconv.Itoa(pkt.Seq),               // Seq
+					fmt.Sprintf("%t", pkt.Status),       // Status
+					pkt.DestHost,                        // DestHost
+					pkt.DestAddr,                        // DestAddr
+					strconv.Itoa(pkt.DestPort),          // DestPort
+					strconv.Itoa(pkt.PayLoadSize),       // PayLoadSize
+					fmt.Sprintf("%v", RTT),              // Response_Time
+					pkt.SendTime.Format("2006-01-02"),   // SendDate
+					pkt.SendTime.Format("15:04:05 MST"), // SendTime
 
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
@@ -263,7 +263,7 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 					pkt.Http_response,                    // Response Phase
 					fmt.Sprintf("%v", RTT),               // Response_Time
 					pkt.SendTime.Format("2006-01-02"),    // SendDate
-					pkt.SendTime.Format("15:04:05"),      // SendTime
+					pkt.SendTime.Format("15:04:05 MST"),  // SendTime
 
 					strconv.Itoa(pkt.PacketsSent),                      // PacketsSent
 					strconv.Itoa(pkt.PacketsRecv),                      // PacketsRecv
@@ -316,19 +316,19 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				RTT := (float64((pkt.RTT).Nanoseconds())) / 1e6
 
 				row := []string{
-					pkt.Type,                          // Ping Type
-					strconv.Itoa(pkt.Seq),             // Seq
-					fmt.Sprintf("%t", pkt.Status),     // Status
-					pkt.DestHost,                      // DNS_Resolver
-					pkt.Dns_query,                     // DNS_Query
-					pkt.Dns_response,                  // DNS_Response
-					pkt.Dns_queryType,                 // Record
-					pkt.Dns_protocol,                  // DNS_Protocol
-					fmt.Sprintf("%v", RTT),            // Response_Time
-					pkt.SendTime.Format("2006-01-02"), // SendDate
-					pkt.SendTime.Format("15:04:05"),   // SendTime
-					strconv.Itoa(pkt.PacketsSent),     // PacketsSent
-					strconv.Itoa(pkt.PacketsRecv),     // PacketsRecv
+					pkt.Type,                            // Ping Type
+					strconv.Itoa(pkt.Seq),               // Seq
+					fmt.Sprintf("%t", pkt.Status),       // Status
+					pkt.DestHost,                        // DNS_Resolver
+					pkt.Dns_query,                       // DNS_Query
+					pkt.Dns_response,                    // DNS_Response
+					pkt.Dns_queryType,                   // Record
+					pkt.Dns_protocol,                    // DNS_Protocol
+					fmt.Sprintf("%v", RTT),              // Response_Time
+					pkt.SendTime.Format("2006-01-02"),   // SendDate
+					pkt.SendTime.Format("15:04:05 MST"), // SendTime
+					strconv.Itoa(pkt.PacketsSent),       // PacketsSent
+					strconv.Itoa(pkt.PacketsRecv),       // PacketsRecv
 					fmt.Sprintf("%.2f%%", float64(pkt.PacketLoss*100)), // PacketLoss
 					pkt.MinRtt.String(), // MinRtt
 					pkt.AvgRtt.String(), // AvgRtt
