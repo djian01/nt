@@ -167,13 +167,11 @@ func IcmpCommandMain(recording bool, displayRow int, destHost string, count int,
 	// wait for the last interval (1 sec)
 	time.Sleep(time.Duration(1) * time.Second)
 
-	// if recording Enabled
-	if recording {
-		wgRecord.Add(1)
-		close(recordingChan)
-		// waiting the recording function to save the last records
-		wgRecord.Wait()
-	}
+	// close recordingChan
+	wgRecord.Add(1)
+	close(recordingChan)
+	// waiting the recording function to save the last records
+	wgRecord.Wait()
 
 	// display testing completed
 	fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))
