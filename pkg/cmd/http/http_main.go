@@ -173,11 +173,15 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 	// wait for the last interval
 	time.Sleep(time.Duration(1) * time.Second)
 
-	// Close recordingChan
-	wgRecord.Add(1)
-	close(recordingChan)
-	// waiting the recording function to save the last records
-	wgRecord.Wait()
+	// close recordingChan
+	if recording {
+		wgRecord.Add(1)
+		close(recordingChan)
+		// waiting the recording function to save the last records
+		wgRecord.Wait()
+	} else {
+		close(recordingChan)
+	}
 
 	// display testing completed
 	fmt.Printf("\033[%d;1H", (displayRow + recordingRow + 7))

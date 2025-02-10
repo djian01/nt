@@ -28,8 +28,14 @@ func icmpProbingRun(p *Pinger, errChan chan<- error) {
 	if p.InputVars.Count == 0 {
 
 		for {
+			// Loop End Signal
 			if forLoopEnds {
 				break
+			}
+
+			// Pinger end Singal
+			if p.PingerEnd {
+				interruptChan <- os.Interrupt //send interrupt to interruptChan
 			}
 
 			pkt, err := IcmpProbing(Seq, p.DestAddr, p.InputVars.DestHost, p.InputVars.PayLoadSize, p.InputVars.Icmp_DF, p.InputVars.Timeout, payLoad)

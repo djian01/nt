@@ -28,8 +28,14 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 	// count
 	if p.InputVars.Count == 0 {
 		for {
+			// Loop End Signal
 			if forLoopEnds {
 				break
+			}
+
+			// Pinger end Singal
+			if p.PingerEnd {
+				interruptChan <- os.Interrupt //send interrupt to interruptChan
 			}
 
 			// Perform HTTP probing

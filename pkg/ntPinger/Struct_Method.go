@@ -260,6 +260,9 @@ type Pinger struct {
 
 	// probeChan
 	ProbeChan chan Packet
+
+	// PingerEnd Signal (for future app interaction ONLY)
+	PingerEnd bool
 }
 
 // Method (Pinger) - Resolve does the DNS lookup for the Pinger address and sets IP protocol.
@@ -330,6 +333,10 @@ func (p *Pinger) UpdateStatistics(pkt Packet) {
 // Method (Pinger) - Update pinger statistics
 func (p *Pinger) Run(errChan chan<- error) {
 
+	// initial Pinger End Signal
+	p.PingerEnd = false
+
+	// switch probe
 	switch p.InputVars.Type {
 
 	// Type: tcp
