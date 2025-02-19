@@ -12,7 +12,7 @@ import (
 type InputVars struct {
 	Type          string // Select one of these: tcp, icmp, http, dns
 	Count         int    // Default is 0 which means nonstop till interruption.
-	PayLoadSize   int    // Specific the payload. ICMP default payload is 24 bytes. TCP/HTTP have no payload by default.
+	PayLoadSize   int    // Specific the payload. ICMP default payload is 32 bytes. TCP/HTTP have no payload by default.
 	Timeout       int    // default timeout is 4 seconds
 	Interval      int    // Interval is the wait time between each packet send. Default is 1s.
 	SourceHost    string
