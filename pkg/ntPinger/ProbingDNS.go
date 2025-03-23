@@ -109,17 +109,13 @@ func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string,
 	}
 
 	// Set up the DNS resolver with custom protocol (TCP or UDP)
-	resolver := &net.Resolver{}
-
-	if destHost != "" {
+	resolver := &net.Resolver{
 		// Custom DNS resolver
-		resolver = &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				// Use the protocol ("tcp" or "udp") to establish the connection
-				return net.Dial(Dns_Protocol, fmt.Sprintf("%s:53", destHost))
-			},
-		}
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			// Use the protocol ("tcp" or "udp") to establish the connection
+			return net.Dial(Dns_Protocol, fmt.Sprintf("%s:53", destHost))
+		},
 	}
 
 	// Create a context with the specified timeout
