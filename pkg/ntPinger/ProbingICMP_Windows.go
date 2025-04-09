@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -36,6 +37,10 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, Ic
 	// if DF bit is set
 	if Icmp_DF {
 		cmd := exec.Command("ping", destAddr, "-f", "-l", strconv.Itoa(PayLoadSize), "-n", "1", "-w", strconv.Itoa(timeout*1000))
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow: true,
+		}
+
 		// output
 		cmdOutput, err = cmd.CombinedOutput()
 		if err != nil {
@@ -50,6 +55,10 @@ func IcmpProbing(Seq int, destAddr string, desetHost string, PayLoadSize int, Ic
 		// if DF bit is NOT set
 	} else {
 		cmd := exec.Command("ping", destAddr, "-l", strconv.Itoa(PayLoadSize), "-n", "1", "-w", strconv.Itoa(timeout*1000))
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			HideWindow: true,
+		}
+
 		// output
 		cmdOutput, err = cmd.CombinedOutput()
 		if err != nil {
