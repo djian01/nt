@@ -63,8 +63,11 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 	// Flag -m
 	HttpMethod, _ := cmd.Flags().GetString("method")
 
+	// Flag -s
+	HttpStatusCode, _ := cmd.Flags().GetStringSlice("statuscode")
+
 	// call func HttpCommandMain
-	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, count, timeout, interval)
+	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, HttpStatusCode, count, timeout, interval)
 	if err != nil {
 		// fmt.Println(err.Error())
 		// os.Exit(1)
@@ -74,7 +77,7 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 }
 
 // Func - HttpCommandMain
-func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpMethod string, count int, timeout int, interval int) error {
+func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpMethod string, HttpStatusCode []string, count int, timeout int, interval int) error {
 
 	// Wait Group
 	var wgRecord sync.WaitGroup
@@ -101,15 +104,16 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 
 	// build the InputVar
 	InputVar := ntPinger.InputVars{
-		Type:        "http",
-		Count:       count,
-		Timeout:     timeout,
-		Interval:    interval,
-		DestHost:    HttpVarInput.Hostname,
-		DestPort:    HttpVarInput.Port,
-		Http_scheme: HttpVarInput.Scheme,
-		Http_method: HttpMethod,
-		Http_path:   HttpVarInput.Path,
+		Type:            "http",
+		Count:           count,
+		Timeout:         timeout,
+		Interval:        interval,
+		DestHost:        HttpVarInput.Hostname,
+		DestPort:        HttpVarInput.Port,
+		Http_scheme:     HttpVarInput.Scheme,
+		Http_method:     HttpMethod,
+		Http_statusCode: HttpStatusCode,
+		Http_path:       HttpVarInput.Path,
 	}
 
 	// Start Ping Main Command, manually input display Len
@@ -218,6 +222,10 @@ func init() {
 	// Flag - Ping interval
 	var interval int
 	httpCmd.Flags().IntVarP(&interval, "interval", "i", 5, "HTTP Ping Interval (default: 5 sec)")
+
+	// Flag - Status Code
+	var statusCodes []string
+	httpCmd.Flags().StringSliceVarP(&statusCodes, "statuscode", "s", []string{"2xx", "3xx"}, "Success HTTP Status Code (default: 2xx, 3xx)")
 }
 
 type HttpVar struct {
