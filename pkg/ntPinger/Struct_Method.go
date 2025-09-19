@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -392,4 +393,27 @@ func (s *Statistics) UpdatePacketLoss() {
 type HttpStatusCode struct {
 	LowerCode int
 	UpperCode int
+}
+
+func (h HttpStatusCode) Code2String() string {
+
+	// single code
+	if h.LowerCode == h.UpperCode {
+		return strconv.Itoa(h.LowerCode)
+	}
+
+	// shorthand ranges
+	switch {
+	case h.LowerCode == 200 && h.UpperCode == 299:
+		return "2xx"
+	case h.LowerCode == 300 && h.UpperCode == 399:
+		return "3xx"
+	case h.LowerCode == 400 && h.UpperCode == 499:
+		return "4xx"
+	case h.LowerCode == 500 && h.UpperCode == 599:
+		return "5xx"
+	}
+
+	// generic fallback
+	return fmt.Sprintf("%d-%d", h.LowerCode, h.UpperCode)
 }
