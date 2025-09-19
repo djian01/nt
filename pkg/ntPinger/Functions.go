@@ -107,11 +107,11 @@ func ConstructURL(Http_scheme, DestHost, Http_path string, DestPort int) string 
 
 	} else {
 		if Http_scheme == "http" && DestPort == 80 {
-			url = fmt.Sprintf("%s://%s/%s", Http_scheme, DestHost, Http_path)
+			url = fmt.Sprintf("%s://%s%s", Http_scheme, DestHost, Http_path)
 		} else if Http_scheme == "https" && DestPort == 443 {
-			url = fmt.Sprintf("%s://%s/%s", Http_scheme, DestHost, Http_path)
+			url = fmt.Sprintf("%s://%s%s", Http_scheme, DestHost, Http_path)
 		} else {
-			url = fmt.Sprintf("%s://%s:%d/%s", Http_scheme, DestHost, DestPort, Http_path)
+			url = fmt.Sprintf("%s://%s:%d%s", Http_scheme, DestHost, DestPort, Http_path)
 		}
 	}
 	return url
