@@ -170,6 +170,9 @@ nt tcp -c 10 -i 2 10.2.3.10 22
 ```
 
 ### HTTP Sub-Command
+The `http` subcommand allows you to perform HTTP/HTTPS probing against a target host.  
+You can customize the HTTP method, expected status codes, and more.
+
 **Note:**  
 - If custom port is not specificed, the test will use the default ports (HTTP 80, HTTPS 443).
 - The default interval for HTTP Ping is 5 seconds.
@@ -186,6 +189,10 @@ nt tcp -c 10 -i 2 10.2.3.10 22
 
 - `-m`:   **HTTP Ping Method**  
   HTTP request method to use (e.g., `GET`, `POST`). Default is `"GET"`.
+
+- `-s, --statuscode` : Expected HTTP status code(s). Accepts:  
+  - Shorthand ranges: `2xx`, `3xx`, `4xx`, `5xx`  
+  - Exact codes: `200`, `301`, `404`, etc.  
 
 - `-t`:   **HTTP Ping Timeout**  
   Timeout for each HTTP ping request in seconds. Default is `4` seconds.
@@ -204,6 +211,11 @@ nt -r http https://google.com
 nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 
 ```
+
+#### 💻 Example 3: HTTP ping using the GET http://10.3.4.10:8080/health. The probe will be considered successful if the response status code is within the 200–299 range or exactly 301.
+
+```bash
+nt http -s 2xx -s 301 http://10.3.4.10:8080/health
 
 ### DNS Sub-Command
 

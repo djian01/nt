@@ -39,7 +39,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 
 			// Perform HTTP probing
-			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Timeout)
+			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Http_statusCodes, p.InputVars.Timeout)
 			if err != nil {
 				errChan <- err
 			}
@@ -68,7 +68,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 
 			// Perform HTTP probing
-			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Timeout)
+			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Http_statusCodes, p.InputVars.Timeout)
 			if err != nil {
 				errChan <- err
 			}
@@ -97,7 +97,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 }
 
 // HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
-func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, timeout int) (PacketHTTP, error) {
+func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, Http_statusCodes []HttpStatusCode, timeout int) (PacketHTTP, error) {
 
 	// Initial PacketHTTP
 	pkt := PacketHTTP{
@@ -187,13 +187,18 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 
 	// Fill in the HTTP response code & response phase
 	pkt.Http_response_code = resp.StatusCode
-	pkt.Http_response = strings.SplitN(resp.Status, " ", 2)[1]
-
-	// Set pkt.Status to true for 2xx or 3xx status codes, else false
-	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
-		pkt.Status = true
+	if parts := strings.SplitN(resp.Status, " ", 2); len(parts) == 2 {
+		pkt.Http_response = parts[1]
 	} else {
-		pkt.Status = false
+		pkt.Http_response = resp.Status
+	}
+
+	// Status decision based on allowed ranges
+	pkt.Status = statusAllowed(resp.StatusCode, Http_statusCodes)
+	if !pkt.Status {
+		if pkt.AdditionalInfo == "" {
+			pkt.AdditionalInfo = "StatusNotAllowed"
+		}
 	}
 
 	// Check for latency (assuming CheckLatency is a separate function)
@@ -202,4 +207,22 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 	}
 
 	return pkt, nil
+}
+
+// statusAllowed returns true if code falls within any allowed [Lower,Upper] range.
+// If no ranges are provided, it falls back to treating 2xx/3xx as success (to match old behavior).
+func statusAllowed(code int, allowed []HttpStatusCode) bool {
+	if len(allowed) == 0 {
+		return code >= 200 && code < 400
+	}
+	for _, r := range allowed {
+		low, high := r.LowerCode, r.UpperCode
+		if low > high {
+			low, high = high, low
+		}
+		if code >= low && code <= high {
+			return true
+		}
+	}
+	return false
 }
