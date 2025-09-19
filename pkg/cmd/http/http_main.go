@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -63,11 +64,24 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 	// Flag -m
 	HttpMethod, _ := cmd.Flags().GetString("method")
 
+	// validate allowed methods
+	switch HttpMethod {
+	case "GET", "POST", "PATCH":
+		// ok
+	default:
+		panic(fmt.Errorf("invalid HTTP method: %s (allowed: GET, POST, PATCH)", HttpMethod))
+	}
+
 	// Flag -s
-	HttpStatusCode, _ := cmd.Flags().GetStringSlice("statuscode")
+	HttpStatusCodeStrings, _ := cmd.Flags().GetStringSlice("statuscode")
+
+	HttpStatusCodes, err := ParseStatusCodes(HttpStatusCodeStrings)
+	if err != nil {
+		panic(err)
+	}
 
 	// call func HttpCommandMain
-	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, HttpStatusCode, count, timeout, interval)
+	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, HttpStatusCodes, count, timeout, interval)
 	if err != nil {
 		// fmt.Println(err.Error())
 		// os.Exit(1)
@@ -77,7 +91,7 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 }
 
 // Func - HttpCommandMain
-func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpMethod string, HttpStatusCode []string, count int, timeout int, interval int) error {
+func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpMethod string, HttpStatusCodes []ntPinger.HttpStatusCode, count int, timeout int, interval int) error {
 
 	// Wait Group
 	var wgRecord sync.WaitGroup
@@ -104,16 +118,16 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 
 	// build the InputVar
 	InputVar := ntPinger.InputVars{
-		Type:            "http",
-		Count:           count,
-		Timeout:         timeout,
-		Interval:        interval,
-		DestHost:        HttpVarInput.Hostname,
-		DestPort:        HttpVarInput.Port,
-		Http_scheme:     HttpVarInput.Scheme,
-		Http_method:     HttpMethod,
-		Http_statusCode: HttpStatusCode,
-		Http_path:       HttpVarInput.Path,
+		Type:             "http",
+		Count:            count,
+		Timeout:          timeout,
+		Interval:         interval,
+		DestHost:         HttpVarInput.Hostname,
+		DestPort:         HttpVarInput.Port,
+		Http_scheme:      HttpVarInput.Scheme,
+		Http_method:      HttpMethod,
+		Http_statusCodes: HttpStatusCodes,
+		Http_path:        HttpVarInput.Path,
 	}
 
 	// Start Ping Main Command, manually input display Len
@@ -266,4 +280,47 @@ func ParseURL(inputURL string) (HttpVar, error) {
 	}
 
 	return HttpVarNew, nil
+}
+
+// ParseStatusCodes converts []string into []HttpStatusCode
+// Accepts only "2xx", "3xx", "4xx", "5xx" or exact codes (100–599).
+func ParseStatusCodes(inputs []string) ([]ntPinger.HttpStatusCode, error) {
+	var result []ntPinger.HttpStatusCode
+
+	for _, in := range inputs {
+		in = strings.TrimSpace(in)
+		if in == "" {
+			continue
+		}
+
+		// Handle shorthand "2xx", "3xx", "4xx", "5xx"
+		if strings.HasSuffix(in, "xx") && len(in) == 3 {
+			switch in {
+			case "2xx":
+				result = append(result, ntPinger.HttpStatusCode{LowerCode: 200, UpperCode: 299})
+			case "3xx":
+				result = append(result, ntPinger.HttpStatusCode{LowerCode: 300, UpperCode: 399})
+			case "4xx":
+				result = append(result, ntPinger.HttpStatusCode{LowerCode: 400, UpperCode: 499})
+			case "5xx":
+				result = append(result, ntPinger.HttpStatusCode{LowerCode: 500, UpperCode: 599})
+			default:
+				return nil, fmt.Errorf("invalid shorthand code: %s (allowed: 2xx, 3xx, 4xx, 5xx)", in)
+			}
+			continue
+		}
+
+		// Handle exact numeric code
+		if code, err := strconv.Atoi(in); err == nil {
+			if code < 100 || code > 599 {
+				return nil, fmt.Errorf("invalid HTTP status code: %s", in)
+			}
+			result = append(result, ntPinger.HttpStatusCode{LowerCode: code, UpperCode: code})
+			continue
+		}
+
+		return nil, fmt.Errorf("unrecognized status code format: %s", in)
+	}
+
+	return result, nil
 }

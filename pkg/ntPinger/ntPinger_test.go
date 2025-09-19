@@ -94,24 +94,38 @@ func Test_ProbingICMP(t *testing.T) {
 	fmt.Println(pkt)
 }
 
+// go test -run ^Test_ProbingHTTP$
 func Test_ProbingHTTP(t *testing.T) {
+
+	// Http Status Codes
+	StatusCodes := []ntPinger.HttpStatusCode{
+		{
+			LowerCode: 200,
+			UpperCode: 299,
+		},
+		{
+			LowerCode: 304,
+			UpperCode: 304,
+		},
+	}
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
-		Type:        "http",
-		Count:       0,
-		Timeout:     4,
-		Interval:    5,
-		DestHost:    "google.com",
-		DestPort:    80,
-		Http_scheme: "http",
-		Http_method: "GET",
-		Http_path:   "",
+		Type:             "http",
+		Count:            0,
+		Timeout:          4,
+		Interval:         5,
+		DestHost:         "google.com",
+		DestPort:         80,
+		Http_scheme:      "http",
+		Http_method:      "GET",
+		Http_statusCodes: StatusCodes,
+		Http_path:        "",
 	}
 
 	Seq := 0
 
-	pkt, err := ntPinger.HttpProbing(Seq, InputVar.DestHost, InputVar.DestPort, InputVar.Http_path, InputVar.Http_scheme, InputVar.Http_method, InputVar.Timeout)
+	pkt, err := ntPinger.HttpProbing(Seq, InputVar.DestHost, InputVar.DestPort, InputVar.Http_path, InputVar.Http_scheme, InputVar.Http_method, InputVar.Http_statusCodes, InputVar.Timeout)
 	if err != nil {
 		fmt.Println(err)
 	}
