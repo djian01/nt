@@ -1,14 +1,20 @@
 package ntPinger
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	"golang.org/x/net/proxy" // for SOCKS5
 )
 
 // func: httpProbingRun
@@ -26,7 +32,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 	forLoopEnds := false
 
 	// count
-	if p.InputVars.Count == 0 {
+	if p.InputVars.Count == 0 { // no specificed test count
 		for {
 			// Loop End Signal
 			if forLoopEnds {
@@ -39,7 +45,17 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 
 			// Perform HTTP probing
-			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Http_statusCodes, p.InputVars.Timeout)
+			pkt, err := HttpProbing(
+				Seq,
+				p.InputVars.DestHost,
+				p.InputVars.DestPort,
+				p.InputVars.Http_path,
+				p.InputVars.Http_scheme,
+				p.InputVars.Http_method,
+				p.InputVars.Http_statusCodes,
+				p.InputVars.Timeout,
+				p.InputVars.Http_proxy,
+			)
 			if err != nil {
 				errChan <- err
 			}
@@ -60,7 +76,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 		}
 
-	} else {
+	} else { // specificed test count
 		for i := 0; i < p.InputVars.Count; i++ {
 
 			if forLoopEnds {
@@ -68,7 +84,17 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 
 			// Perform HTTP probing
-			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Http_statusCodes, p.InputVars.Timeout)
+			pkt, err := HttpProbing(
+				Seq,
+				p.InputVars.DestHost,
+				p.InputVars.DestPort,
+				p.InputVars.Http_path,
+				p.InputVars.Http_scheme,
+				p.InputVars.Http_method,
+				p.InputVars.Http_statusCodes,
+				p.InputVars.Timeout,
+				p.InputVars.Http_proxy,
+			)
 			if err != nil {
 				errChan <- err
 			}
@@ -96,8 +122,29 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 	}
 }
 
+// Returns "Basic <token>" or "" if no credentials present.
+func basicAuthFromURLUser(u *url.Userinfo) string {
+	if u == nil {
+		return ""
+	}
+	username := u.Username()
+	password, _ := u.Password()
+	token := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	return "Basic " + token
+}
+
 // HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
-func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, Http_statusCodes []HttpStatusCode, timeout int) (PacketHTTP, error) {
+func HttpProbing(
+	Seq int,
+	destHost string,
+	destPort int,
+	Http_path string,
+	Http_scheme string,
+	Http_method string,
+	Http_statusCodes []HttpStatusCode,
+	timeout int,
+	proxyStr string,
+) (PacketHTTP, error) {
 
 	// Initial PacketHTTP
 	pkt := PacketHTTP{
@@ -112,11 +159,69 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 	}
 
 	// Construct the URL for HTTP or HTTPS
-	url := ConstructURL(Http_scheme, destHost, Http_path, destPort)
+	testUrl := ConstructURL(Http_scheme, destHost, Http_path, destPort)
 
 	// Create a custom Transport to ignore certificate errors
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		// Good defaults for probes:
+		DisableCompression:  true,
+		ForceAttemptHTTP2:   true,
+		MaxIdleConns:        100,
+		IdleConnTimeout:     90 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	// Configure proxy
+	if proxyStr != "none" {
+		u, err := url.Parse(proxyStr)
+		if err != nil {
+			return pkt, fmt.Errorf("invalid proxy URL: %w", err)
+		}
+
+		switch u.Scheme {
+		case "http", "https":
+			tr.Proxy = http.ProxyURL(u)
+
+			// If credentials present, ensure CONNECT gets Proxy-Authorization
+			if u.User != nil {
+				if h := basicAuthFromURLUser(u.User); h != "" {
+					if tr.ProxyConnectHeader == nil {
+						tr.ProxyConnectHeader = make(http.Header, 1)
+					}
+					tr.ProxyConnectHeader.Set("Proxy-Authorization", h)
+				}
+			}
+
+		case "socks5", "socks5h":
+			// Build a SOCKS5 dialer, optionally with auth
+			var auth *proxy.Auth
+			if u.User != nil {
+				pass, _ := u.User.Password()
+				auth = &proxy.Auth{User: u.User.Username(), Password: pass}
+			}
+
+			// host:port
+			addr := u.Host
+			if !strings.Contains(addr, ":") {
+				// default SOCKS5 port
+				addr = net.JoinHostPort(addr, "1080")
+			}
+
+			d, err := proxy.SOCKS5("tcp", addr, auth, proxy.Direct)
+			if err != nil {
+				return pkt, fmt.Errorf("failed to create SOCKS5 dialer: %w", err)
+			}
+
+			// Adapt to DialContext
+			tr.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+				// socks5 dialer only exposes Dial, so wrap it
+				return d.Dial(network, address)
+			}
+
+		default:
+			return pkt, fmt.Errorf("unsupported proxy scheme %q (use http(s) or socks5)", u.Scheme)
+		}
 	}
 
 	// Create a new HTTP client with the custom Transport and timeout
@@ -129,7 +234,7 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 	pkt.SendTime = time.Now()
 
 	// Create a new request based on the specified HTTP method
-	req, err := http.NewRequest(Http_method, url, nil)
+	req, err := http.NewRequest(Http_method, testUrl, nil)
 	if err != nil {
 		return pkt, fmt.Errorf("failed to create request: %w", err)
 	}

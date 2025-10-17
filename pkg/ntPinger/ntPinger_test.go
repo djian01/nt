@@ -121,11 +121,22 @@ func Test_ProbingHTTP(t *testing.T) {
 		Http_method:      "GET",
 		Http_statusCodes: StatusCodes,
 		Http_path:        "",
+		Http_proxy:       "",
 	}
 
 	Seq := 0
 
-	pkt, err := ntPinger.HttpProbing(Seq, InputVar.DestHost, InputVar.DestPort, InputVar.Http_path, InputVar.Http_scheme, InputVar.Http_method, InputVar.Http_statusCodes, InputVar.Timeout)
+	pkt, err := ntPinger.HttpProbing(
+		Seq,
+		InputVar.DestHost,
+		InputVar.DestPort,
+		InputVar.Http_path,
+		InputVar.Http_scheme,
+		InputVar.Http_method,
+		InputVar.Http_statusCodes,
+		InputVar.Timeout,
+		InputVar.Http_proxy,
+	)
 	if err != nil {
 		fmt.Println(err)
 	}
