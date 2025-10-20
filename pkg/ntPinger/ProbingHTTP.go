@@ -3,7 +3,6 @@ package ntPinger
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,6 +15,80 @@ import (
 
 	"golang.org/x/net/proxy" // for SOCKS5
 )
+
+var HTTPStatusDescription = map[int]string{
+	// 1xx — Informational
+	100: "Continue",
+	101: "Switching Protocols",
+	102: "Processing",
+	103: "Early Hints",
+
+	// 2xx — Success
+	200: "OK",
+	201: "Created",
+	202: "Accepted",
+	203: "Non-Authoritative Information",
+	204: "No Content",
+	205: "Reset Content",
+	206: "Partial Content",
+	207: "Multi-Status",
+	208: "Already Reported",
+	226: "IM Used",
+
+	// 3xx — Redirection
+	300: "Multiple Choices",
+	301: "Moved Permanently",
+	302: "Found",
+	303: "See Other",
+	304: "Not Modified",
+	305: "Use Proxy (Deprecated)",
+	307: "Temporary Redirect",
+	308: "Permanent Redirect",
+
+	// 4xx — Client Error
+	400: "Bad Request",
+	401: "Unauthorized",
+	402: "Payment Required",
+	403: "Forbidden",
+	404: "Not Found",
+	405: "Method Not Allowed",
+	406: "Not Acceptable",
+	407: "Proxy Authentication Required",
+	408: "Request Timeout",
+	409: "Conflict",
+	410: "Gone",
+	411: "Length Required",
+	412: "Precondition Failed",
+	413: "Payload Too Large",
+	414: "URI Too Long",
+	415: "Unsupported Media Type",
+	416: "Range Not Satisfiable",
+	417: "Expectation Failed",
+	418: "I'm a teapot",
+	421: "Misdirected Request",
+	422: "Unprocessable Entity",
+	423: "Locked",
+	424: "Failed Dependency",
+	425: "Too Early",
+	426: "Upgrade Required",
+	428: "Precondition Required",
+	429: "Too Many Requests",
+	431: "Request Header Fields Too Large",
+	451: "Unavailable For Legal Reasons",
+
+	// 5xx — Server Error
+	500: "Internal Server Error",
+	501: "Not Implemented",
+	502: "Bad Gateway",
+	503: "Service Unavailable",
+	504: "Gateway Timeout",
+	505: "HTTP Version Not Supported",
+	506: "Variant Also Negotiates",
+	507: "Insufficient Storage",
+	508: "Loop Detected",
+	510: "Not Extended",
+	511: "Network Authentication Required",
+}
 
 // func: httpProbingRun
 func httpProbingRun(p *Pinger, errChan chan<- error) {
@@ -120,17 +193,6 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 		}
 	}
-}
-
-// Returns "Basic <token>" or "" if no credentials present.
-func basicAuthFromURLUser(u *url.Userinfo) string {
-	if u == nil {
-		return ""
-	}
-	username := u.Username()
-	password, _ := u.Password()
-	token := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
-	return "Basic " + token
 }
 
 // HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
@@ -241,7 +303,7 @@ func HttpProbing(
 
 	// Perform the HTTP request
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil { // This happens before or instead of a valid HTTP response — Network or Protocol Failure
 		switch {
 		case strings.Contains(err.Error(), "context deadline exceeded"):
 			// Timeout error
@@ -282,6 +344,7 @@ func HttpProbing(
 			return pkt, nil
 
 		default:
+			fmt.Println(err)
 			return pkt, fmt.Errorf("failed to send request: %w", err)
 		}
 	}
@@ -302,7 +365,12 @@ func HttpProbing(
 	pkt.Status = statusAllowed(resp.StatusCode, Http_statusCodes)
 	if !pkt.Status {
 		if pkt.AdditionalInfo == "" {
-			pkt.AdditionalInfo = "StatusNotAllowed"
+			// Additional Info for Failures
+			if desc, ok := HTTPStatusDescription[resp.StatusCode]; ok {
+				pkt.AdditionalInfo = desc
+			} else {
+				pkt.AdditionalInfo = "StatusNotAllowed"
+			}
 		}
 	}
 

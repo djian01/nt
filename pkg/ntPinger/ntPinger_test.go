@@ -111,17 +111,20 @@ func Test_ProbingHTTP(t *testing.T) {
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
-		Type:             "http",
-		Count:            0,
-		Timeout:          4,
-		Interval:         5,
-		DestHost:         "google.com",
-		DestPort:         80,
-		Http_scheme:      "http",
+		Type:     "http",
+		Count:    0,
+		Timeout:  4,
+		Interval: 5,
+		//DestHost: "httpbin.org/status/403",
+		//DestHost: "https://dl.broadcom.com/%3CDownloadToken%3E/PROD/COMP/VCENTER/vmw/8.0.3.00500/package-pool/155c73ec8a8de71373b88686fddbe039e9a93649d8d1de5abe8257cc91f61d56.blo",
+		DestHost: "www.youtube.com",
+
+		DestPort:         443,
+		Http_scheme:      "https",
 		Http_method:      "GET",
 		Http_statusCodes: StatusCodes,
 		Http_path:        "",
-		Http_proxy:       "",
+		Http_proxy:       "http://user01:S%40cretPass@172.16.200.102:3128",
 	}
 
 	Seq := 0
