@@ -1,20 +1,16 @@
 package ntPinger
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
-
-	"golang.org/x/net/proxy" // for SOCKS5
+	// for SOCKS5
 )
 
 var HTTPStatusDescription = map[int]string{
@@ -242,53 +238,9 @@ func HttpProbing(
 
 		usedProxy = true
 
-		u, err := url.Parse(proxyStr)
+		err := configureProxy(proxyStr, tr)
 		if err != nil {
-			return pkt, fmt.Errorf("invalid proxy URL: %w", err)
-		}
-
-		switch u.Scheme {
-		case "http", "https":
-			tr.Proxy = http.ProxyURL(u)
-
-			// If credentials present, ensure CONNECT gets Proxy-Authorization
-			if u.User != nil {
-				if h := basicAuthFromURLUser(u.User); h != "" {
-					if tr.ProxyConnectHeader == nil {
-						tr.ProxyConnectHeader = make(http.Header, 1)
-					}
-					tr.ProxyConnectHeader.Set("Proxy-Authorization", h)
-				}
-			}
-
-		case "socks5", "socks5h":
-			// Build a SOCKS5 dialer, optionally with auth
-			var auth *proxy.Auth
-			if u.User != nil {
-				pass, _ := u.User.Password()
-				auth = &proxy.Auth{User: u.User.Username(), Password: pass}
-			}
-
-			// host:port
-			addr := u.Host
-			if !strings.Contains(addr, ":") {
-				// default SOCKS5 port
-				addr = net.JoinHostPort(addr, "1080")
-			}
-
-			d, err := proxy.SOCKS5("tcp", addr, auth, proxy.Direct)
-			if err != nil {
-				return pkt, fmt.Errorf("failed to create SOCKS5 dialer: %w", err)
-			}
-
-			// Adapt to DialContext
-			tr.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
-				// socks5 dialer only exposes Dial, so wrap it
-				return d.Dial(network, address)
-			}
-
-		default:
-			return pkt, fmt.Errorf("unsupported proxy scheme %q (use http(s) or socks5)", u.Scheme)
+			return pkt, err
 		}
 	}
 

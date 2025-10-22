@@ -31,6 +31,9 @@ nt -r http https://google.com
 
 # Example: HTTP ping to POST "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
 nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
+
+# Example: HTTP ping to GET "http://www.youtube.com" with proxy: http://user01:S3cret%40Pass%21@172.16.200.102:3128 (username: user01, password: S3cret@Pass!)
+nt http -p http://user01:S3cret%40Pass%21@172.16.200.102:3128 https://www.youtube.com
 `,
 }
 
