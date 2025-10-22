@@ -118,7 +118,6 @@ func Test_ProbingHTTP(t *testing.T) {
 		//DestHost: "httpbin.org/status/403",
 		//DestHost: "dl.broadcom.com/%3CDownloadToken%3E/PROD/COMP/VCENTER/vmw/8.0.3.00500/package-pool/155c73ec8a8de71373b88686fddbe039e9a93649d8d1de5abe8257cc91f61d56.blo",
 		DestHost: "www.youtube.com/watch?v=IQl8QcZzSKU",
-		//DestHost: "www.dell.com",
 
 		DestPort:         443,
 		Http_scheme:      "https",

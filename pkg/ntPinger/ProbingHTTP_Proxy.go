@@ -30,7 +30,7 @@ func isProxyConnectError(err error) bool {
 	}
 	e := strings.ToLower(err.Error())
 	// typical patterns: "proxyconnect", "bad response from proxy", "proxy error"
-	if strings.Contains(e, "forbidden") {
+	if strings.Contains(e, "forbidden") || strings.Contains(e, "proxy") {
 		return true
 	}
 	return false
@@ -83,8 +83,10 @@ func isProxyResponse(resp *http.Response, usedProxy bool, bodySnippet string) bo
 // configureProxy updates the provided http.Transport (tr) based on the given proxy string.
 // Supported proxy schemes: http, https, socks5, socks5h
 // Pass "none" or an empty string to skip proxy configuration.
+// proxyStr is already check before calling this function. proxyStr is NOT empty in the input.
 func configureProxy(proxyStr string, tr *http.Transport) error {
 
+	// Parse the proxy URL
 	u, err := url.Parse(proxyStr)
 	if err != nil {
 		return fmt.Errorf("invalid proxy URL: %w", err)

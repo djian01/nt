@@ -197,6 +197,26 @@ You can customize the HTTP method, expected status codes, and more.
 - `-t`:   **HTTP Ping Timeout**  
   Timeout for each HTTP ping request in seconds. Default is `4` seconds.
 
+- `-x, --proxy` : **HTTP or SOCKS5 Proxy**  
+  Route all HTTP/HTTPS requests through a proxy.  
+  Supported schemes:  
+  - `http://` or `https://` (standard web proxies)  
+  - `socks5://` or `socks5h://` (SOCKS proxies)  
+
+  Examples:  
+  - No authentication:  
+    ```bash
+    -x http://172.16.200.102:3128
+    ```  
+  - With authentication:  
+    ```bash
+    -x http://user01:S%40cretPass@172.16.200.102:3128
+    ```
+    **Important:** If your password contains special characters (`@`, `:`, `/`, `%`, etc.),  
+    you must **URL-encode** them. See the [URL Encoding Reference](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) for the full table of encodings.
+    Example:  
+    - Actual password: `S@cretPass`  
+    - Encoded: `S%40cretPass` (because `@` → `%40`)  
 
 #### 💻 Example 1: HTTP ping to "https://google.com" with recording enabled (With default values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s)
 
@@ -216,6 +236,15 @@ nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 
 ```bash
 nt http -s 2xx -s 301 http://10.3.4.10:8080/health
+
+```
+
+#### 💻 Example 4: Using a proxy with authentication. Perform HTTPS probe via an HTTP proxy at 172.16.200.102:3128, authenticating as user01 (password S@cretPass → encoded as S%40cretPass) and interval is 2 sec :
+
+```bash
+nt http -x http://user01:S%40cretPass@172.16.200.102:3128 -i 2 https://www.youtube.com
+
+```
 
 ### DNS Sub-Command
 

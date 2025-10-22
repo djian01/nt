@@ -264,8 +264,14 @@ func HttpProbing(
 	if err != nil { // This happens before or instead of a valid HTTP response — Network or Protocol Failure
 		switch {
 		case usedProxy && isProxyConnectError(err):
-			// Proxy Block
-			pkt.AdditionalInfo = "Proxy_Block"
+
+			e := strings.ToLower(err.Error())
+			// typical patterns: "proxyconnect", "bad response from proxy", "proxy error"
+			if strings.Contains(e, "authentication") { // Proxy Auth Error
+				pkt.AdditionalInfo = "Proxy_Auth_Error"
+			} else { // Other Proxy Block Situations
+				pkt.AdditionalInfo = "Proxy_Block"
+			}
 			return pkt, nil
 
 		case strings.Contains(err.Error(), "context deadline exceeded"):

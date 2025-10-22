@@ -202,7 +202,7 @@ func init() {
 
 	// Flag - DNS Protocol Type
 	var protocol string
-	dnsCmd.Flags().StringVarP(&protocol, "protocol", "o", "udp", "DNS Ping Protocol Type (default: udp)")
+	dnsCmd.Flags().StringVarP(&protocol, "protocol", "o", "udp", "DNS Ping Protocol Type")
 
 	// Flag - Ping timeout
 	var timeout int

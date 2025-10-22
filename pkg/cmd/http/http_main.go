@@ -33,7 +33,7 @@ nt -r http https://google.com
 nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 
 # Example: HTTP ping to GET "http://www.youtube.com" with proxy: http://user01:S3cret%40Pass%21@172.16.200.102:3128 (username: user01, password: S3cret@Pass!)
-nt http -p http://user01:S3cret%40Pass%21@172.16.200.102:3128 https://www.youtube.com
+nt http -x http://user01:S3cret%40Pass%21@172.16.200.102:3128 https://www.youtube.com
 `,
 }
 
@@ -67,6 +67,9 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 	// Flag -m
 	HttpMethod, _ := cmd.Flags().GetString("method")
 
+	// Flag -p
+	HttpProxy, _ := cmd.Flags().GetString("proxy")
+
 	// validate allowed methods
 	switch HttpMethod {
 	case "GET", "POST", "PATCH":
@@ -84,7 +87,7 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 	}
 
 	// call func HttpCommandMain
-	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, HttpStatusCodes, count, timeout, interval)
+	err = HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, HttpStatusCodes, count, timeout, interval, HttpProxy)
 	if err != nil {
 		// fmt.Println(err.Error())
 		// os.Exit(1)
@@ -94,7 +97,15 @@ func HttpCommandLink(cmd *cobra.Command, args []string) {
 }
 
 // Func - HttpCommandMain
-func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpMethod string, HttpStatusCodes []ntPinger.HttpStatusCode, count int, timeout int, interval int) error {
+func HttpCommandMain(recording bool,
+	displayRow int,
+	HttpVarInput HttpVar,
+	HttpMethod string,
+	HttpStatusCodes []ntPinger.HttpStatusCode,
+	count int,
+	timeout int,
+	interval int,
+	HttpProxy string) error {
 
 	// Wait Group
 	var wgRecord sync.WaitGroup
@@ -131,6 +142,7 @@ func HttpCommandMain(recording bool, displayRow int, HttpVarInput HttpVar, HttpM
 		Http_method:      HttpMethod,
 		Http_statusCodes: HttpStatusCodes,
 		Http_path:        HttpVarInput.Path,
+		Http_proxy:       HttpProxy,
 	}
 
 	// Start Ping Main Command, manually input display Len
@@ -230,7 +242,7 @@ func init() {
 
 	// Flag - HTTP Method
 	var method string
-	httpCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP Ping Metohd (default: GET)")
+	httpCmd.Flags().StringVarP(&method, "method", "m", "GET", "HTTP Ping Metohd")
 
 	// Flag - Ping timeout
 	var timeout int
@@ -242,7 +254,11 @@ func init() {
 
 	// Flag - Status Code
 	var statusCodes []string
-	httpCmd.Flags().StringSliceVarP(&statusCodes, "statuscode", "s", []string{"2xx", "3xx"}, "Success HTTP Status Code (default: 2xx, 3xx)")
+	httpCmd.Flags().StringSliceVarP(&statusCodes, "statuscode", "s", []string{"2xx", "3xx"}, "Success HTTP Status Code")
+
+	// Flag - HTTP Proxy
+	var proxy string
+	httpCmd.Flags().StringVarP(&proxy, "proxy", "x", "none", "HTTP proxy")
 }
 
 type HttpVar struct {

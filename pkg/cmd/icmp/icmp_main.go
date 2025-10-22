@@ -216,5 +216,5 @@ func init() {
 
 	// Flag - de-fregmentation bit
 	var df bool
-	icmpCmd.Flags().BoolVarP(&df, "df", "d", false, "ICMP Ping de-fregmentation (default: false)")
+	icmpCmd.Flags().BoolVarP(&df, "df", "d", false, "ICMP Ping de-fregmentation")
 }
