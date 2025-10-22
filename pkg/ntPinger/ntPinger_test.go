@@ -116,8 +116,9 @@ func Test_ProbingHTTP(t *testing.T) {
 		Timeout:  4,
 		Interval: 5,
 		//DestHost: "httpbin.org/status/403",
-		//DestHost: "https://dl.broadcom.com/%3CDownloadToken%3E/PROD/COMP/VCENTER/vmw/8.0.3.00500/package-pool/155c73ec8a8de71373b88686fddbe039e9a93649d8d1de5abe8257cc91f61d56.blo",
-		DestHost: "www.youtube.com",
+		//DestHost: "dl.broadcom.com/%3CDownloadToken%3E/PROD/COMP/VCENTER/vmw/8.0.3.00500/package-pool/155c73ec8a8de71373b88686fddbe039e9a93649d8d1de5abe8257cc91f61d56.blo",
+		DestHost: "www.youtube.com/watch?v=IQl8QcZzSKU",
+		//DestHost: "www.dell.com",
 
 		DestPort:         443,
 		Http_scheme:      "https",
@@ -125,6 +126,7 @@ func Test_ProbingHTTP(t *testing.T) {
 		Http_statusCodes: StatusCodes,
 		Http_path:        "",
 		Http_proxy:       "http://user01:S%40cretPass@172.16.200.102:3128",
+		//Http_proxy: "http://172.16.200.102:3128",
 	}
 
 	Seq := 0
@@ -147,20 +149,23 @@ func Test_ProbingHTTP(t *testing.T) {
 	fmt.Println(pkt)
 }
 
+// go test -run ^Test_pingerHTTP$
 func Test_pingerHTTP(t *testing.T) {
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
-		Type:        "http",
-		Count:       0,
-		Timeout:     4,
-		Interval:    5,
-		DestHost:    "google.com",
+		Type:     "http",
+		Count:    0,
+		Timeout:  4,
+		Interval: 1,
+		DestHost: "google.com",
+		//DestHost:    "www.youtube.com",
 		DestPort:    443,
 		Http_scheme: "https",
 		Http_method: "GET",
 		Http_path:   "",
-		//Http_path: "en-gb/use",
+		//Http_path:  "/watch?v=IQl8QcZzSKU",
+		Http_proxy: "http://user01:S%40cretPass@172.16.200.102:3128",
 	}
 
 	// Channel - error

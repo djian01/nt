@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -235,7 +236,12 @@ func HttpProbing(
 	}
 
 	// Configure proxy
-	if proxyStr != "none" {
+	usedProxy := false
+
+	if proxyStr != "none" && strings.TrimSpace(proxyStr) != "" {
+
+		usedProxy = true
+
 		u, err := url.Parse(proxyStr)
 		if err != nil {
 			return pkt, fmt.Errorf("invalid proxy URL: %w", err)
@@ -305,6 +311,11 @@ func HttpProbing(
 	resp, err := client.Do(req)
 	if err != nil { // This happens before or instead of a valid HTTP response — Network or Protocol Failure
 		switch {
+		case usedProxy && isProxyConnectError(err):
+			// Proxy Block
+			pkt.AdditionalInfo = "Proxy_Block"
+			return pkt, nil
+
 		case strings.Contains(err.Error(), "context deadline exceeded"):
 			// Timeout error
 			pkt.AdditionalInfo = "Conn_Timeout"
@@ -365,11 +376,24 @@ func HttpProbing(
 	pkt.Status = statusAllowed(resp.StatusCode, Http_statusCodes)
 	if !pkt.Status {
 		if pkt.AdditionalInfo == "" {
-			// Additional Info for Failures
-			if desc, ok := HTTPStatusDescription[resp.StatusCode]; ok {
-				pkt.AdditionalInfo = desc
+
+			// if status code is 403 & proxy is in-used
+			if resp.StatusCode == 403 && usedProxy {
+				b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+				bodySnippet := string(b)
+				if isProxyResponse(resp, usedProxy, bodySnippet) {
+					pkt.AdditionalInfo = "Proxy_Block"
+				} else {
+					// origin block
+					pkt.AdditionalInfo = "Forbidden"
+				}
 			} else {
-				pkt.AdditionalInfo = "StatusNotAllowed"
+				// Additional Info for Failures
+				if desc, ok := HTTPStatusDescription[resp.StatusCode]; ok {
+					pkt.AdditionalInfo = desc
+				} else {
+					pkt.AdditionalInfo = "StatusNotAllowed"
+				}
 			}
 		}
 	}
