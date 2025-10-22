@@ -23,7 +23,8 @@ type InputVars struct {
 	Http_scheme      string
 	Http_method      string
 	Http_statusCodes []HttpStatusCode
-	Icmp_DF          bool // ipv4 only
+	Http_proxy       string // e.g. "", "http://user:pass@192.168.1.10:3128", "socks5://127.0.0.1:1080"
+	Icmp_DF          bool   // ipv4 only
 	Dns_query        string
 	Dns_queryType    string
 	Dns_Protocol     string
@@ -275,7 +276,7 @@ func (p *Pinger) Resolve() error {
 	// Check Name Resolution
 	resolvedIPs, err := ResolveDestHost(p.InputVars.DestHost)
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("failed to resolve domain: %v", p.InputVars.DestHost))
+		return fmt.Errorf("failed to resolve domain: %s", p.InputVars.DestHost)
 	}
 
 	// Get the 1st IPv4 IP from resolved IPs

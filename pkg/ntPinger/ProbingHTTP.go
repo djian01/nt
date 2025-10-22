@@ -3,13 +3,89 @@ package ntPinger
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+	// for SOCKS5
 )
+
+var HTTPStatusDescription = map[int]string{
+	// 1xx — Informational
+	100: "Continue",
+	101: "Switching Protocols",
+	102: "Processing",
+	103: "Early Hints",
+
+	// 2xx — Success
+	200: "OK",
+	201: "Created",
+	202: "Accepted",
+	203: "Non-Authoritative Information",
+	204: "No Content",
+	205: "Reset Content",
+	206: "Partial Content",
+	207: "Multi-Status",
+	208: "Already Reported",
+	226: "IM Used",
+
+	// 3xx — Redirection
+	300: "Multiple Choices",
+	301: "Moved Permanently",
+	302: "Found",
+	303: "See Other",
+	304: "Not Modified",
+	305: "Use Proxy (Deprecated)",
+	307: "Temporary Redirect",
+	308: "Permanent Redirect",
+
+	// 4xx — Client Error
+	400: "Bad Request",
+	401: "Unauthorized",
+	402: "Payment Required",
+	403: "Forbidden",
+	404: "Not Found",
+	405: "Method Not Allowed",
+	406: "Not Acceptable",
+	407: "Proxy Authentication Required",
+	408: "Request Timeout",
+	409: "Conflict",
+	410: "Gone",
+	411: "Length Required",
+	412: "Precondition Failed",
+	413: "Payload Too Large",
+	414: "URI Too Long",
+	415: "Unsupported Media Type",
+	416: "Range Not Satisfiable",
+	417: "Expectation Failed",
+	418: "I'm a teapot",
+	421: "Misdirected Request",
+	422: "Unprocessable Entity",
+	423: "Locked",
+	424: "Failed Dependency",
+	425: "Too Early",
+	426: "Upgrade Required",
+	428: "Precondition Required",
+	429: "Too Many Requests",
+	431: "Request Header Fields Too Large",
+	451: "Unavailable For Legal Reasons",
+
+	// 5xx — Server Error
+	500: "Internal Server Error",
+	501: "Not Implemented",
+	502: "Bad Gateway",
+	503: "Service Unavailable",
+	504: "Gateway Timeout",
+	505: "HTTP Version Not Supported",
+	506: "Variant Also Negotiates",
+	507: "Insufficient Storage",
+	508: "Loop Detected",
+	510: "Not Extended",
+	511: "Network Authentication Required",
+}
 
 // func: httpProbingRun
 func httpProbingRun(p *Pinger, errChan chan<- error) {
@@ -26,7 +102,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 	forLoopEnds := false
 
 	// count
-	if p.InputVars.Count == 0 {
+	if p.InputVars.Count == 0 { // no specificed test count
 		for {
 			// Loop End Signal
 			if forLoopEnds {
@@ -39,7 +115,17 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 
 			// Perform HTTP probing
-			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Http_statusCodes, p.InputVars.Timeout)
+			pkt, err := HttpProbing(
+				Seq,
+				p.InputVars.DestHost,
+				p.InputVars.DestPort,
+				p.InputVars.Http_path,
+				p.InputVars.Http_scheme,
+				p.InputVars.Http_method,
+				p.InputVars.Http_statusCodes,
+				p.InputVars.Timeout,
+				p.InputVars.Http_proxy,
+			)
 			if err != nil {
 				errChan <- err
 			}
@@ -60,7 +146,7 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 		}
 
-	} else {
+	} else { // specificed test count
 		for i := 0; i < p.InputVars.Count; i++ {
 
 			if forLoopEnds {
@@ -68,7 +154,17 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 			}
 
 			// Perform HTTP probing
-			pkt, err := HttpProbing(Seq, p.InputVars.DestHost, p.InputVars.DestPort, p.InputVars.Http_path, p.InputVars.Http_scheme, p.InputVars.Http_method, p.InputVars.Http_statusCodes, p.InputVars.Timeout)
+			pkt, err := HttpProbing(
+				Seq,
+				p.InputVars.DestHost,
+				p.InputVars.DestPort,
+				p.InputVars.Http_path,
+				p.InputVars.Http_scheme,
+				p.InputVars.Http_method,
+				p.InputVars.Http_statusCodes,
+				p.InputVars.Timeout,
+				p.InputVars.Http_proxy,
+			)
 			if err != nil {
 				errChan <- err
 			}
@@ -97,7 +193,17 @@ func httpProbingRun(p *Pinger, errChan chan<- error) {
 }
 
 // HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
-func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_scheme string, Http_method string, Http_statusCodes []HttpStatusCode, timeout int) (PacketHTTP, error) {
+func HttpProbing(
+	Seq int,
+	destHost string,
+	destPort int,
+	Http_path string,
+	Http_scheme string,
+	Http_method string,
+	Http_statusCodes []HttpStatusCode,
+	timeout int,
+	proxyStr string,
+) (PacketHTTP, error) {
 
 	// Initial PacketHTTP
 	pkt := PacketHTTP{
@@ -112,11 +218,30 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 	}
 
 	// Construct the URL for HTTP or HTTPS
-	url := ConstructURL(Http_scheme, destHost, Http_path, destPort)
+	testUrl := ConstructURL(Http_scheme, destHost, Http_path, destPort)
 
 	// Create a custom Transport to ignore certificate errors
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		// Good defaults for probes:
+		DisableCompression:  true,
+		ForceAttemptHTTP2:   true,
+		MaxIdleConns:        100,
+		IdleConnTimeout:     90 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	// Configure proxy
+	usedProxy := false
+
+	if proxyStr != "none" && strings.TrimSpace(proxyStr) != "" {
+
+		usedProxy = true
+
+		err := configureProxy(proxyStr, tr)
+		if err != nil {
+			return pkt, err
+		}
 	}
 
 	// Create a new HTTP client with the custom Transport and timeout
@@ -129,15 +254,26 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 	pkt.SendTime = time.Now()
 
 	// Create a new request based on the specified HTTP method
-	req, err := http.NewRequest(Http_method, url, nil)
+	req, err := http.NewRequest(Http_method, testUrl, nil)
 	if err != nil {
 		return pkt, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Perform the HTTP request
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil { // This happens before or instead of a valid HTTP response — Network or Protocol Failure
 		switch {
+		case usedProxy && isProxyConnectError(err):
+
+			e := strings.ToLower(err.Error())
+			// typical patterns: "proxyconnect", "bad response from proxy", "proxy error"
+			if strings.Contains(e, "authentication") { // Proxy Auth Error
+				pkt.AdditionalInfo = "Proxy_Auth_Error"
+			} else { // Other Proxy Block Situations
+				pkt.AdditionalInfo = "Proxy_Block"
+			}
+			return pkt, nil
+
 		case strings.Contains(err.Error(), "context deadline exceeded"):
 			// Timeout error
 			pkt.AdditionalInfo = "Conn_Timeout"
@@ -177,6 +313,7 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 			return pkt, nil
 
 		default:
+			fmt.Println(err)
 			return pkt, fmt.Errorf("failed to send request: %w", err)
 		}
 	}
@@ -197,7 +334,25 @@ func HttpProbing(Seq int, destHost string, destPort int, Http_path string, Http_
 	pkt.Status = statusAllowed(resp.StatusCode, Http_statusCodes)
 	if !pkt.Status {
 		if pkt.AdditionalInfo == "" {
-			pkt.AdditionalInfo = "StatusNotAllowed"
+
+			// if status code is 403 & proxy is in-used
+			if resp.StatusCode == 403 && usedProxy {
+				b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+				bodySnippet := string(b)
+				if isProxyResponse(resp, usedProxy, bodySnippet) {
+					pkt.AdditionalInfo = "Proxy_Block"
+				} else {
+					// origin block
+					pkt.AdditionalInfo = "Forbidden"
+				}
+			} else {
+				// Additional Info for Failures
+				if desc, ok := HTTPStatusDescription[resp.StatusCode]; ok {
+					pkt.AdditionalInfo = desc
+				} else {
+					pkt.AdditionalInfo = "StatusNotAllowed"
+				}
+			}
 		}
 	}
 
