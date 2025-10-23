@@ -51,32 +51,6 @@ func isProxyResponse(resp *http.Response, usedProxy bool, bodySnippet string) bo
 		return true
 	}
 
-	// Proxy-specific headers
-	if h.Get("X-Squid-Error") != "" || h.Get("Proxy-Agent") != "" ||
-		strings.Contains(strings.ToLower(h.Get("Via")), "zscaler") ||
-		strings.Contains(strings.ToLower(h.Get("Via")), "squid") {
-		return true
-	}
-
-	// Body sniffing (small snippet) for vendor keywords
-	b := strings.ToLower(bodySnippet)
-	if b != "" {
-		if strings.Contains(b, "zscaler") || strings.Contains(b, "x-squid-error") ||
-			strings.Contains(b, "this request was blocked by") || strings.Contains(b, "access denied by proxy") {
-			return true
-		}
-	}
-
-	// TLS issuer check (if TLS present)
-	if resp.TLS != nil && len(resp.TLS.PeerCertificates) > 0 {
-		iss := resp.TLS.PeerCertificates[0].Issuer
-		issStr := strings.ToLower(strings.Join(append(iss.Organization, iss.CommonName), " "))
-		if strings.Contains(issStr, "zscaler") || strings.Contains(issStr, "zscaler, inc") ||
-			strings.Contains(issStr, "bluecoat") || strings.Contains(issStr, "symantec") {
-			return true
-		}
-	}
-
 	return false
 }
 
