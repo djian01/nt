@@ -6,7 +6,6 @@ package record_test
 
 import (
 	"fmt"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -32,12 +31,8 @@ func Test_RecordingFunc(t *testing.T) {
 
 	// record file name
 
-	// recordingFile Path
-	exeFileFolder, err := os.Getwd()
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
+	// Keep generated recordings outside the repository.
+	exeFileFolder := t.TempDir()
 
 	// recordingFile Name
 	timeStamp := time.Now().Format("20060102150405")

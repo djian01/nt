@@ -73,7 +73,7 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 
 	resolvedIPs, err := ntPinger.ResolveDestHost(destHost)
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("failed to resolve domain: %v", destHost))
+		return fmt.Errorf("failed to resolve domain: %v", destHost)
 	}
 
 	// Get the 1st IPv4 IP from resolved IPs

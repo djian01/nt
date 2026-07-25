@@ -23,7 +23,7 @@ type InputVars struct {
 	Http_scheme      string
 	Http_method      string
 	Http_statusCodes []HttpStatusCode
-	Http_proxy       string // e.g. "", "http://user:pass@192.168.1.10:3128", "socks5://127.0.0.1:1080"
+	Http_proxy       string // Proxy URL supplied by the caller; empty uses a direct connection.
 	Icmp_DF          bool   // ipv4 only
 	Dns_query        string
 	Dns_queryType    string

@@ -12,6 +12,7 @@ package ntPinger_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/djian01/nt/pkg/ntPinger"
@@ -124,8 +125,7 @@ func Test_ProbingHTTP(t *testing.T) {
 		Http_method:      "GET",
 		Http_statusCodes: StatusCodes,
 		Http_path:        "",
-		Http_proxy:       "http://user01:S%40cretPass@172.16.200.102:3128",
-		//Http_proxy: "http://172.16.200.102:3128",
+		Http_proxy:       os.Getenv("NT_HTTP_PROXY"),
 	}
 
 	Seq := 0
@@ -164,7 +164,7 @@ func Test_pingerHTTP(t *testing.T) {
 		Http_method: "GET",
 		Http_path:   "",
 		//Http_path:  "/watch?v=IQl8QcZzSKU",
-		Http_proxy: "http://user01:S%40cretPass@172.16.200.102:3128",
+		Http_proxy: os.Getenv("NT_HTTP_PROXY"),
 	}
 
 	// Channel - error

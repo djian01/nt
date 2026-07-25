@@ -12,6 +12,7 @@ import (
 
 // test ProbingFunc
 func Test_IcmpCommandMain(t *testing.T) {
+	t.Chdir(t.TempDir())
 
 	// initial test vars
 	recording := true

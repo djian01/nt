@@ -6,6 +6,7 @@ package Http_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	Http "github.com/djian01/nt/pkg/cmd/http"
@@ -22,6 +23,7 @@ func Test_http(t *testing.T) {
 }
 
 func Test_HttpCommandMain(t *testing.T) {
+	t.Chdir(t.TempDir())
 
 	// initial InputVar
 	HttpVarInput := Http.HttpVar{
@@ -48,7 +50,7 @@ func Test_HttpCommandMain(t *testing.T) {
 	count := 3
 	timeout := 2
 	interval := 2
-	HttpProxy := "http://user01:S%40cretPass@172.16.200.102:3128"
+	HttpProxy := os.Getenv("NT_HTTP_PROXY")
 
 	// call the func IcmpProbingFunc
 	err := Http.HttpCommandMain(recording, displayRow, HttpVarInput, HttpMethod, StatusCodes, count, timeout, interval, HttpProxy)

@@ -12,6 +12,7 @@ import (
 
 // test ProbingFunc
 func Test_TcpCommandMain(t *testing.T) {
+	t.Chdir(t.TempDir())
 
 	// initial test vars
 	recording := true
