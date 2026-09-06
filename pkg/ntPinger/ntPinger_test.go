@@ -19,6 +19,7 @@ import (
 )
 
 func Test_pingerTCP(t *testing.T) {
+	requireLiveNetwork(t)
 
 	InputVar := ntPinger.InputVars{
 		Type:     "tcp",
@@ -47,6 +48,7 @@ func Test_pingerTCP(t *testing.T) {
 }
 
 func Test_pingerICMP(t *testing.T) {
+	requireLiveNetwork(t)
 
 	InputVar := ntPinger.InputVars{
 		Type:        "icmp",
@@ -76,6 +78,7 @@ func Test_pingerICMP(t *testing.T) {
 }
 
 func Test_ProbingICMP(t *testing.T) {
+	requireLiveNetwork(t)
 
 	// initial testing
 	DestAddr := "8.8.8.8"
@@ -97,6 +100,7 @@ func Test_ProbingICMP(t *testing.T) {
 
 // go test -run ^Test_ProbingHTTP$
 func Test_ProbingHTTP(t *testing.T) {
+	requireLiveNetwork(t)
 
 	// Http Status Codes
 	StatusCodes := []ntPinger.HttpStatusCode{
@@ -150,6 +154,7 @@ func Test_ProbingHTTP(t *testing.T) {
 
 // go test -run ^Test_pingerHTTP$
 func Test_pingerHTTP(t *testing.T) {
+	requireLiveNetwork(t)
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
@@ -185,6 +190,7 @@ func Test_pingerHTTP(t *testing.T) {
 }
 
 func Test_ProbingDNS(t *testing.T) {
+	requireLiveNetwork(t)
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
@@ -208,6 +214,7 @@ func Test_ProbingDNS(t *testing.T) {
 }
 
 func Test_pingerDNS(t *testing.T) {
+	requireLiveNetwork(t)
 
 	// initial testing
 	InputVar := ntPinger.InputVars{
@@ -234,5 +241,12 @@ func Test_pingerDNS(t *testing.T) {
 	for pkt := range p.ProbeChan {
 		fmt.Println(pkt)
 
+	}
+}
+
+func requireLiveNetwork(t *testing.T) {
+	t.Helper()
+	if os.Getenv("NT_RUN_LIVE_TESTS") != "1" {
+		t.Skip("set NT_RUN_LIVE_TESTS=1 to run live network tests")
 	}
 }

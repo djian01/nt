@@ -10,6 +10,11 @@ import (
 
 // Main func for Output
 func OutputFunc(outputChan <-chan ntPinger.Packet, len int, recording bool) {
+	if len <= 0 {
+		for range outputChan {
+		}
+		return
+	}
 
 	// initial displayRows
 	displayTable := []ntPinger.Packet{}
@@ -25,10 +30,7 @@ func OutputFunc(outputChan <-chan ntPinger.Packet, len int, recording bool) {
 	displayIdx := 0
 
 	// get current terminal window size
-	windowW, windowH, err := getTerminaSize()
-	if err != nil {
-		return
-	}
+	windowW, windowH, _ := getTerminaSize()
 
 	// process Display Table from Channel NtResultChan
 	for PacketPointer := range outputChan {

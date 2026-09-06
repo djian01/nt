@@ -24,6 +24,9 @@ import (
 
 // test - func Output
 func Test_OutputMain(t *testing.T) {
+	if os.Getenv("NT_RUN_DEMO_TESTS") != "1" {
+		t.Skip("set NT_RUN_DEMO_TESTS=1 to run interactive output demonstrations")
+	}
 
 	count := 20
 	Type := "dns"
@@ -66,6 +69,13 @@ func Test_mytest(t *testing.T) {
 	}
 }
 
+func TestOutputFuncDrainsInvalidDisplayRows(t *testing.T) {
+	outputChan := make(chan ntPinger.Packet, 1)
+	outputChan <- &ntPinger.PacketICMP{Type: "icmp"}
+	close(outputChan)
+	terminalOutput.OutputFunc(outputChan, 0, false)
+}
+
 func Test_ScanTablePrint(t *testing.T) {
 
 	terminalOutput.ClearScreen()
@@ -94,6 +104,9 @@ func Test_ScanTablePrint(t *testing.T) {
 }
 
 func Test_TcpScanOutputFunc(t *testing.T) {
+	if os.Getenv("NT_RUN_DEMO_TESTS") != "1" {
+		t.Skip("set NT_RUN_DEMO_TESTS=1 to run interactive output demonstrations")
+	}
 
 	recording := true
 	destHost := "8.8.8.8"

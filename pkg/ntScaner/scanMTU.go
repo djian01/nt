@@ -12,13 +12,12 @@ import (
 
 // func - ScanMTURun
 func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
-	// initial vars
-	low := 576
-	high := ceilingSize
-	payLoadSize := 0
-	var pkt ntPinger.PacketICMP
-	largestMTU := 0
-	devideModeResult := false
+	if ceilingSize < 29 {
+		return fmt.Errorf("ceiling MTU must be at least 29 bytes")
+	}
+	if ceilingSize > 65535 {
+		return fmt.Errorf("ceiling MTU cannot exceed 65535 bytes")
+	}
 
 	// clear screen
 	print("\033[H\033[2J")
@@ -27,94 +26,20 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 	fmt.Printf("Max MTU Size Check for %s:\n", color.GreenString(DestHost))
 	fmt.Println(strings.Repeat("-", 80))
 
-	// Larget MTU scan
-	for {
-		// ************ divide mode ************
-		if (high - low) > 10 {
-
-			// Get test MTU
-			payLoadSize = getMidMtu(high, low)
-
-			// generate payload
-			payLoad := ntPinger.GeneratePayloadData(payLoadSize)
-
-			// IcmpProbing
-			pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
-			if err != nil {
-				return
-			}
-
-			// display test result
-			testTerminalOutput(DestAddr, pkt.Status, payLoadSize)
-
-			// if the testMTU success
-			if pkt.Status {
-				low = payLoadSize
-				devideModeResult = true
-				// if the test MTU fail
-			} else {
-				high = payLoadSize
-				devideModeResult = false
-			}
-
-			// ************** increase / decrease mode ****************
-		} else {
-
-			// devideModeResult is true -> increase
-			if devideModeResult {
-				// update test MTU
-				payLoadSize = low
-
-				// generate payload
-				payLoad := ntPinger.GeneratePayloadData(payLoadSize)
-
-				// IcmpProbing
-				pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
-				if err != nil {
-					return
-				}
-
-				// display test result
-				testTerminalOutput(DestAddr, pkt.Status, payLoadSize)
-
-				// if the testMTU success
-				if pkt.Status {
-					low = payLoadSize + 1
-					// if the test MTU fail
-				} else {
-					payLoadSize = payLoadSize - 1
-					largestMTU = payLoadSize + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
-					break
-				}
-				// devideModeResult is false -> decrease
-			} else {
-				// update test MTU
-				payLoadSize = high
-
-				// generate payload
-				payLoad := ntPinger.GeneratePayloadData(payLoadSize)
-
-				// IcmpProbing
-				pkt, err = ntPinger.IcmpProbing(0, DestAddr, DestAddr, payLoadSize, true, 1, payLoad)
-				if err != nil {
-					return
-				}
-
-				// display test result
-				testTerminalOutput(DestAddr, pkt.Status, payLoadSize)
-
-				// if the testMTU fails
-				if !pkt.Status {
-					high = payLoadSize - 1
-					// if the test MTU success
-				} else {
-					largestMTU = payLoadSize + 28 // the larget MTU = 20 byptes (IP Header) + 8 bytes (ICMP Header) + testMTU (Payload)
-					break
-				}
-			}
-
+	maxPayload := ceilingSize - 28
+	payLoadSize, err := findLargestPayload(maxPayload, func(size int) (bool, error) {
+		payload := ntPinger.GeneratePayloadData(size)
+		pkt, probeErr := ntPinger.IcmpProbing(0, DestAddr, DestHost, size, true, 1, payload)
+		if probeErr != nil {
+			return false, probeErr
 		}
+		testTerminalOutput(DestAddr, pkt.Status, size)
+		return pkt.Status, nil
+	})
+	if err != nil {
+		return err
 	}
+	largestMTU := payLoadSize + 28
 	// print result
 	fmt.Printf("\nThe Max MTU Size to destination %s is %s bytes\n", color.CyanString(DestAddr), color.CyanString(strconv.Itoa(largestMTU)))
 	fmt.Println("In this test:")
@@ -122,9 +47,31 @@ func ScanMTURun(ceilingSize int, DestAddr string, DestHost string) (err error) {
 	return nil
 }
 
-// func - get the mid MTU
-func getMidMtu(high, low int) int {
-	return ((high-low)/2 + low)
+func findLargestPayload(maxPayload int, probe func(int) (bool, error)) (int, error) {
+	reachable, err := probe(0)
+	if err != nil {
+		return 0, err
+	}
+	if !reachable {
+		return 0, fmt.Errorf("destination did not answer the minimum-size DF probe")
+	}
+
+	low, high := 1, maxPayload
+	largest := 0
+	for low <= high {
+		mid := low + (high-low)/2
+		success, err := probe(mid)
+		if err != nil {
+			return 0, err
+		}
+		if success {
+			largest = mid
+			low = mid + 1
+		} else {
+			high = mid - 1
+		}
+	}
+	return largest, nil
 }
 
 // test Terminal output

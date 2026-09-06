@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 	// for SOCKS5
 )
@@ -89,107 +86,20 @@ var HTTPStatusDescription = map[int]string{
 
 // func: httpProbingRun
 func httpProbingRun(p *Pinger, errChan chan<- error) {
-
-	// Create a channel to listen for SIGINT (Ctrl+C)
-	interruptChan := make(chan os.Signal, 1)
-	defer close(interruptChan)
-	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// Sequence number
-	Seq := 0
-
-	// forLoopEnds Flag
-	forLoopEnds := false
-
-	// count
-	if p.InputVars.Count == 0 { // no specificed test count
-		for {
-			// Loop End Signal
-			if forLoopEnds {
-				break
-			}
-
-			// Pinger end Singal
-			if p.PingerEnd {
-				interruptChan <- os.Interrupt //send interrupt to interruptChan
-			}
-
-			// Perform HTTP probing
-			pkt, err := HttpProbing(
-				Seq,
-				p.InputVars.DestHost,
-				p.InputVars.DestPort,
-				p.InputVars.Http_path,
-				p.InputVars.Http_scheme,
-				p.InputVars.Http_method,
-				p.InputVars.Http_statusCodes,
-				p.InputVars.Timeout,
-				p.InputVars.Http_proxy,
-			)
-			if err != nil {
-				errChan <- err
-			}
-
-			// Update statistics and send packet
-			p.UpdateStatistics(&pkt)
-			pkt.UpdateStatistics(p.Stat)
-			p.ProbeChan <- &pkt
-			Seq++
-
-			// sleep for interval
-			select {
-			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
-				// wait for SleepTime
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				forLoopEnds = true
-				close(p.ProbeChan)
-			}
-		}
-
-	} else { // specificed test count
-		for i := 0; i < p.InputVars.Count; i++ {
-
-			if forLoopEnds {
-				break
-			}
-
-			// Perform HTTP probing
-			pkt, err := HttpProbing(
-				Seq,
-				p.InputVars.DestHost,
-				p.InputVars.DestPort,
-				p.InputVars.Http_path,
-				p.InputVars.Http_scheme,
-				p.InputVars.Http_method,
-				p.InputVars.Http_statusCodes,
-				p.InputVars.Timeout,
-				p.InputVars.Http_proxy,
-			)
-			if err != nil {
-				errChan <- err
-			}
-
-			// Update statistics and send packet
-			p.UpdateStatistics(&pkt)
-			pkt.UpdateStatistics(p.Stat)
-			p.ProbeChan <- &pkt
-			Seq++
-
-			// check the last loop of the probing, close probeChan
-			if i == (p.InputVars.Count - 1) {
-				close(p.ProbeChan)
-			}
-
-			// sleep for interval
-			select {
-			case <-time.After(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT)):
-				// wait for SleepTime
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				forLoopEnds = true
-				close(p.ProbeChan)
-			}
-		}
-	}
+	runProbes(p, errChan, func(seq int) (Packet, error) {
+		pkt, err := HttpProbing(
+			seq,
+			p.InputVars.DestHost,
+			p.InputVars.DestPort,
+			p.InputVars.Http_path,
+			p.InputVars.Http_scheme,
+			p.InputVars.Http_method,
+			p.InputVars.Http_statusCodes,
+			p.InputVars.Timeout,
+			p.InputVars.Http_proxy,
+		)
+		return &pkt, err
+	})
 }
 
 // HttpProbing performs HTTP probing with the ability to choose HTTP methods and ignore certificate errors
@@ -230,6 +140,7 @@ func HttpProbing(
 		IdleConnTimeout:     90 * time.Second,
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
+	defer tr.CloseIdleConnections()
 
 	// Configure proxy
 	usedProxy := false
@@ -354,11 +265,6 @@ func HttpProbing(
 				}
 			}
 		}
-	}
-
-	// Check for latency (assuming CheckLatency is a separate function)
-	if CheckLatency(pkt.AvgRtt, pkt.RTT) {
-		pkt.AdditionalInfo = "High_Latency"
 	}
 
 	return pkt, nil

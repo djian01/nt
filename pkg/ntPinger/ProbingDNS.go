@@ -5,94 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 )
 
 // func: dnsProbingRun
 func dnsProbingRun(p *Pinger, errChan chan<- error) {
-
-	// Create a channel to listen for SIGINT (Ctrl+C)
-	interruptChan := make(chan os.Signal, 1)
-	defer close(interruptChan)
-	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// Sequence number
-	Seq := 0
-
-	// forLoopEnds Flag
-	forLoopEnds := false
-
-	// count
-	if p.InputVars.Count == 0 {
-		for {
-			// Loop End Signal
-			if forLoopEnds {
-				break
-			}
-
-			// Pinger end Singal
-			if p.PingerEnd {
-				interruptChan <- os.Interrupt //send interrupt to interruptChan
-			}
-
-			select {
-			case <-interruptChan: // case interruptChan, close the channel & break the loop
-				close(p.ProbeChan)
-				forLoopEnds = true
-			default:
-				// Perform DNS probing
-				pkt, err := DnsProbing(Seq, p.InputVars.DestHost, p.InputVars.Dns_query, p.InputVars.Dns_Protocol, p.InputVars.Timeout)
-				if err != nil {
-					errChan <- err
-				}
-
-				// Update statistics and send packet
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
-			}
-		}
-	} else {
-		for i := 0; i < p.InputVars.Count; i++ {
-			if forLoopEnds {
-				break
-			}
-
-			select {
-			case <-interruptChan:
-				close(p.ProbeChan)
-				forLoopEnds = true
-			default:
-				// Perform DNS probing
-				pkt, err := DnsProbing(Seq, p.InputVars.DestHost, p.InputVars.Dns_query, p.InputVars.Dns_Protocol, p.InputVars.Timeout)
-				if err != nil {
-					errChan <- err
-				}
-
-				// Update statistics and send packet
-				p.UpdateStatistics(&pkt)
-				pkt.UpdateStatistics(p.Stat)
-				p.ProbeChan <- &pkt
-				Seq++
-
-				// check the last loop of the probing, close probeChan
-				if i == (p.InputVars.Count - 1) {
-					close(p.ProbeChan)
-				}
-
-				// sleep for interval
-				time.Sleep(GetSleepTime(pkt.Status, p.InputVars.Interval, pkt.RTT))
-			}
-		}
-	}
+	runProbes(p, errChan, func(seq int) (Packet, error) {
+		pkt, err := DnsProbing(seq, p.InputVars.DestHost, p.InputVars.Dns_query, p.InputVars.Dns_Protocol, p.InputVars.Timeout)
+		return &pkt, err
+	})
 }
 
 // func DnsProbing
@@ -114,7 +36,8 @@ func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string,
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			// Use the protocol ("tcp" or "udp") to establish the connection
-			return net.Dial(Dns_Protocol, fmt.Sprintf("%s:53", destHost))
+			dialer := net.Dialer{}
+			return dialer.DialContext(ctx, Dns_Protocol, net.JoinHostPort(destHost, "53"))
 		},
 	}
 
@@ -181,11 +104,6 @@ func DnsProbing(Seq int, destHost string, Dns_query string, Dns_Protocol string,
 		} else {
 			pkt.Dns_queryType = "A"
 		}
-	}
-
-	// Check Latency
-	if CheckLatency(pkt.AvgRtt, pkt.RTT) {
-		pkt.AdditionalInfo = "High_Latency"
 	}
 
 	return pkt, nil

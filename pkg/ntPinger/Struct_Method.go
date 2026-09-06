@@ -276,7 +276,7 @@ func (p *Pinger) Resolve() error {
 	// Check Name Resolution
 	resolvedIPs, err := ResolveDestHost(p.InputVars.DestHost)
 	if err != nil {
-		return fmt.Errorf("failed to resolve domain: %s", p.InputVars.DestHost)
+		return fmt.Errorf("failed to resolve domain %s: %w", p.InputVars.DestHost, err)
 	}
 
 	// Get the 1st IPv4 IP from resolved IPs
@@ -287,6 +287,9 @@ func (p *Pinger) Resolve() error {
 			p.DestAddr = ip.String()
 			break
 		}
+	}
+	if p.DestIpAddr == nil {
+		return fmt.Errorf("destination has no IPv4 address: %s", p.InputVars.DestHost)
 	}
 	return nil
 }

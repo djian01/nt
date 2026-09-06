@@ -11,7 +11,7 @@
   - [Option 4 - Download from Release](#option-4-download-executable-from-github-releases)
 - [Usage](#usage)
   - [Main Command](#main-command)
-  - [ICMP Ping Sub-Command](#icmp-sub-command-required-privilege-mode-in-linux)
+  - [ICMP Ping Sub-Command](#icmp-sub-command)
   - [TCP Ping Sub-Command](#tcp-sub-command)
   - [HTTP Ping Sub-Command](#http-sub-command)
   - [DNS Ping Sub-Command](#dns-sub-command)
@@ -32,7 +32,7 @@
 - **TCP Port Testing**: Test if the remote server is listening on one or multiple given TCP ports.
 - **Recording and Logging**: Save test results to a CSV file for later analysis.
 - **Customizable Output**: Adjust the number of rows displayed in the terminal during live tests.
-- **Cross-Platform**: Compatible with Windows and Linux.
+- **Cross-Platform**: Compatible with macOS, Windows, and Linux.
 
 
 
@@ -98,7 +98,13 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcpscan> [args]
 
 
 
-### ICMP Sub-Command (required privilege mode in Linux)
+### ICMP Sub-Command
+
+Standard ICMP probes use Go's unprivileged ICMP socket on macOS and Linux, so
+they do not launch the operating system `ping` command. If the host disables
+unprivileged ICMP sockets, `nt` automatically uses the operating system command.
+Windows, DF probes, and MTU discovery continue to use the operating system
+command for compatibility with platform-specific behavior.
 
 #### ICMP Options
 - `-c`:   **ICMP Ping Count**  

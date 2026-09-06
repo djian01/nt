@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/djian01/nt/pkg/ntPinger"
@@ -66,14 +67,27 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 
 	// get the total number of the ports
 	PortCount := len(Ports)
-	countTested := 0
+	if PortCount == 0 {
+		return fmt.Errorf("at least one port is required")
+	}
+	if PortCount > 50 {
+		return fmt.Errorf("total number of input ports is over 50")
+	}
+	if timeout <= 0 {
+		return fmt.Errorf("timeout must be greater than zero")
+	}
+	for _, port := range Ports {
+		if port < 1 || port > 65535 {
+			return fmt.Errorf("port must be between 1 and 65535: %d", port)
+		}
+	}
 
 	// resolve destHost
 	destAddr := ""
 
 	resolvedIPs, err := ntPinger.ResolveDestHost(destHost)
 	if err != nil {
-		return fmt.Errorf("failed to resolve domain: %v", destHost)
+		return fmt.Errorf("failed to resolve domain %s: %w", destHost, err)
 	}
 
 	// Get the 1st IPv4 IP from resolved IPs
@@ -84,10 +98,8 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 			break
 		}
 	}
-
-	// if the total number of ports is over 50, error and exit
-	if PortCount > 50 {
-		return fmt.Errorf("error: total number of input ports is over 50")
+	if destAddr == "" {
+		return fmt.Errorf("destination has no IPv4 address: %s", destHost)
 	}
 
 	// Create a list of 50 empty TcpScanPort items
@@ -105,65 +117,47 @@ func TcpScanCommandMain(recording bool, destHost string, Ports []int, timeout in
 	/// clear screen (only need to clear screen once)
 	terminalOutput.ClearScreen()
 
-	// Go Routine - Terminal Output
-	go func() {
+	terminalOutput.ScanTablePrint(&PortsTable, recording, 0, destHost)
 
-		destplayIdx := 0
-
-		for {
-			// Display the items in a 10×5 table
-			terminalOutput.ScanTablePrint(&PortsTable, recording, destplayIdx, destHost)
-
-			time.Sleep(time.Duration(1) * time.Second)
-
-			if countTested == PortCount {
-				// display the final output
-				terminalOutput.ScanTablePrint(&PortsTable, recording, destplayIdx, destHost)
-				break
-			}
-
-			destplayIdx++
-		}
-	}()
-
-	// Create TcpScanPort & errChan
-	TcpScanPort := make(chan *ntScaner.TcpScanPort, 1)
-	errChan := make(chan error, 1)
+	jobs := make(chan ntScaner.TcpScanPort, PortCount)
+	results := make(chan ntScaner.TcpScanResult, PortCount)
 
 	// create 5 workers
-	for i := 0; i < 5; i++ {
-		go ntScaner.ScanTcpWorker(TcpScanPort, errChan)
+	workerCount := 5
+	if PortCount < workerCount {
+		workerCount = PortCount
+	}
+	var workers sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			ntScaner.ScanTcpWorkerResults(jobs, results)
+		}()
 	}
 
 	// go routine - TcpScanPort <- &PortsTable[i]
-	go func() {
-		for i := 0; i < PortCount; i++ {
-			TcpScanPort <- &PortsTable[i]
-		}
-	}()
-
-	// loop
-	loopBreak := false
-
-	for {
-		if loopBreak {
-			break
-		}
-
-		select {
-		case err := <-errChan:
-			loopBreak = true
-			return err
-		default:
-			countTested, _, _ = ntScaner.TcpScanStat(&PortsTable)
-			if countTested == PortCount {
-				loopBreak = true
-			}
-		}
+	for i := 0; i < PortCount; i++ {
+		jobs <- PortsTable[i]
 	}
+	close(jobs)
 
-	// sleep and wait for 1 sec
-	time.Sleep(time.Duration(1) * time.Second)
+	var scanErr error
+	for completed := 0; completed < PortCount; completed++ {
+		result := <-results
+		if result.Err != nil {
+			if scanErr == nil {
+				scanErr = result.Err
+			}
+			continue
+		}
+		PortsTable[result.Port.ID] = result.Port
+		terminalOutput.ScanTablePrint(&PortsTable, recording, completed+1, destHost)
+	}
+	workers.Wait()
+	if scanErr != nil {
+		return scanErr
+	}
 
 	// recording
 	if recording {
@@ -203,7 +197,7 @@ func IsValidInput(arg string) (bool, []int) {
 	// Check if it's a single integer
 	port, err := strconv.Atoi(arg)
 	if err == nil {
-		if port > 65535 { // Check if the port exceeds 65535
+		if port < 1 || port > 65535 {
 			return false, nil
 		}
 		return true, []int{port}
@@ -218,7 +212,7 @@ func IsValidInput(arg string) (bool, []int) {
 		end, _ := strconv.Atoi(matches[2])
 
 		// Ensure the range is valid (start <= end)
-		if start <= end && end <= 65535 {
+		if start >= 1 && start <= end && end <= 65535 {
 			var result []int
 			for i := start; i <= end; i++ {
 				result = append(result, i)
