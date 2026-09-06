@@ -51,6 +51,12 @@ func MtuCommandLink(cmd *cobra.Command, args []string) {
 
 // Func - HttpCommandMain
 func MtuCommandMain(ceilingSize int, destHost string) error {
+	if ceilingSize < 29 {
+		return fmt.Errorf("ceiling MTU must be at least 29 bytes")
+	}
+	if ceilingSize > 65535 {
+		return fmt.Errorf("ceiling MTU cannot exceed 65535 bytes")
+	}
 
 	// Resolve destHost
 	DestAddrs, err := ntPinger.ResolveDestHost(destHost)
@@ -58,8 +64,19 @@ func MtuCommandMain(ceilingSize int, destHost string) error {
 		return err
 	}
 
+	destAddr := ""
+	for _, ip := range DestAddrs {
+		if ip.To4() != nil {
+			destAddr = ip.String()
+			break
+		}
+	}
+	if destAddr == "" {
+		return fmt.Errorf("destination has no IPv4 address: %s", destHost)
+	}
+
 	// call the ScanMTURun
-	err = ntScan.ScanMTURun(ceilingSize, fmt.Sprint(DestAddrs[0]), destHost)
+	err = ntScan.ScanMTURun(ceilingSize, destAddr, destHost)
 	if err != nil {
 		return err
 	}

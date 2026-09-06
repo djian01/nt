@@ -11,6 +11,9 @@ nt
 *.csv
 *.csv#
 
+# Local project memory
+/docs/memory/
+
 # macOS metadata
 .DS_Store
 

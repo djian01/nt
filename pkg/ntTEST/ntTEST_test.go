@@ -9,6 +9,7 @@ package ntTEST_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/djian01/nt/pkg/ntPinger"
@@ -16,6 +17,7 @@ import (
 )
 
 func Test_ResultGenerateICMP(t *testing.T) {
+	requireDemoTests(t)
 
 	count := 20
 	Type := "icmp"
@@ -36,6 +38,7 @@ func Test_ResultGenerateICMP(t *testing.T) {
 }
 
 func Test_ResultGenerateHTTP(t *testing.T) {
+	requireDemoTests(t)
 
 	count := 0
 	Type := "http"
@@ -56,6 +59,7 @@ func Test_ResultGenerateHTTP(t *testing.T) {
 }
 
 func Test_ResultGenerateDNS(t *testing.T) {
+	requireDemoTests(t)
 
 	count := 0
 	Type := "dns"
@@ -73,4 +77,11 @@ func Test_ResultGenerateDNS(t *testing.T) {
 	}
 
 	fmt.Println("\n--- ntTEST Testing Completed ---")
+}
+
+func requireDemoTests(t *testing.T) {
+	t.Helper()
+	if os.Getenv("NT_RUN_DEMO_TESTS") != "1" {
+		t.Skip("set NT_RUN_DEMO_TESTS=1 to run interactive output demonstrations")
+	}
 }

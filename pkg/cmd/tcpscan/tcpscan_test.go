@@ -7,10 +7,20 @@ package tcpscan_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/djian01/nt/pkg/cmd/tcpscan"
 )
+
+func TestIsValidInputRejectsInvalidPorts(t *testing.T) {
+	for _, input := range []string{"0", "-1", "65536", "0-5"} {
+		valid, _ := tcpscan.IsValidInput(input)
+		if valid {
+			t.Fatalf("port input %q was accepted", input)
+		}
+	}
+}
 
 func Test_IsValidInput(t *testing.T) {
 
@@ -26,6 +36,9 @@ func Test_IsValidInput(t *testing.T) {
 }
 
 func Test_ScanTcpRun(t *testing.T) {
+	if os.Getenv("NT_RUN_LIVE_TESTS") != "1" {
+		t.Skip("set NT_RUN_LIVE_TESTS=1 to run live network tests")
+	}
 
 	recording := false
 	destHost := "google.com"

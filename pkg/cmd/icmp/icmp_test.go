@@ -5,13 +5,24 @@
 package icmp_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/djian01/nt/pkg/cmd/icmp"
 )
 
+func TestIcmpCommandRejectsInvalidDisplayRows(t *testing.T) {
+	if err := icmp.IcmpCommandMain(false, 0, "localhost", 1, 8, false, 1, 0); err == nil {
+		t.Fatal("expected invalid display row error")
+	}
+}
+
 // test ProbingFunc
 func Test_IcmpCommandMain(t *testing.T) {
+	if os.Getenv("NT_RUN_LIVE_TESTS") != "1" {
+		t.Skip("set NT_RUN_LIVE_TESTS=1 to run live network tests")
+	}
+	t.Chdir(t.TempDir())
 
 	// initial test vars
 	recording := true

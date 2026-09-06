@@ -70,6 +70,9 @@ func DnsCommandLink(cmd *cobra.Command, args []string) {
 
 // Func - TcpCommandMain
 func DnsCommandMain(recording bool, displayRow int, destHost string, Dns_query string, Dns_protocol string, count int, timeout int, interval int) error {
+	if displayRow <= 0 {
+		return fmt.Errorf("display row count must be greater than zero")
+	}
 
 	// Wait Group
 	var wgRecord sync.WaitGroup
@@ -85,11 +88,9 @@ func DnsCommandMain(recording bool, displayRow int, destHost string, Dns_query s
 
 	// Channel - outputChan (if there are N go routine, the channel deep is N)
 	outputChan := make(chan ntPinger.Packet, 1)
-	defer close(outputChan)
 
 	// Channel - error (for Go Routines)
 	errChan := make(chan error, 1)
-	defer close(errChan)
 
 	// Channel - recordingChan, closed in the end of the testing, no need to defer close
 	recordingChan := make(chan ntPinger.Packet, 1)
@@ -115,7 +116,11 @@ func DnsCommandMain(recording bool, displayRow int, destHost string, Dns_query s
 
 	// Output
 	//// Go Routine: OutputFunc
-	go output.OutputFunc(outputChan, displayRow, recording)
+	outputDone := make(chan struct{})
+	go func() {
+		defer close(outputDone)
+		output.OutputFunc(outputChan, displayRow, recording)
+	}()
 
 	// Recording
 	if recording {
@@ -132,11 +137,13 @@ func DnsCommandMain(recording bool, displayRow int, destHost string, Dns_query s
 		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
+		wgRecord.Add(1)
 		go record.RecordingFunc(exeFileFolder, recordingFileName, bucket, recordingChan, &wgRecord)
 	}
 
 	// harvest the result
 	loopClose := false
+	var runErr error
 	for {
 		// check loopClose Flag
 		if loopClose {
@@ -159,21 +166,24 @@ func DnsCommandMain(recording bool, displayRow int, destHost string, Dns_query s
 				recordingChan <- pkt
 			}
 		case err := <-errChan:
-			return err
+			runErr = err
+			loopClose = true
 		}
 	}
 
-	// wait for the last interval (1 sec)
-	time.Sleep(time.Duration(1) * time.Second)
+	close(outputChan)
+	<-outputDone
 
 	// close recordingChan
 	if recording {
-		wgRecord.Add(1)
 		close(recordingChan)
 		// waiting the recording function to save the last records
 		wgRecord.Wait()
 	} else {
 		close(recordingChan)
+	}
+	if runErr != nil {
+		return runErr
 	}
 
 	// display testing completed

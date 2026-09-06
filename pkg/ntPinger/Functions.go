@@ -8,6 +8,9 @@ import (
 
 // New returns a new Pinger struct pointer.
 func NewPinger(InputVars InputVars) (*Pinger, error) {
+	if err := validateInputVars(InputVars); err != nil {
+		return nil, err
+	}
 
 	// Inital Pinger
 	var p Pinger
@@ -42,29 +45,38 @@ func NewPinger(InputVars InputVars) (*Pinger, error) {
 	return &p, nil
 }
 
-// Func - Get Sleep Time
-func GetSleepTime(PacketStatus bool, Interval int, RTT time.Duration) time.Duration {
-
-	// if RTT is not 0
-	if RTT.String() != "0001-01-01 00:00:00 +0000 UTC" {
-		if time.Duration(Interval)*time.Second > RTT {
-			return (time.Duration(Interval)*time.Second - RTT)
-		} else {
-			return time.Duration(0) * time.Second
-		}
-
-		// if Packet Status is "true"
-	} else if PacketStatus {
-		if time.Duration(Interval)*time.Second > RTT {
-			return (time.Duration(Interval)*time.Second - RTT)
-		} else {
-			return time.Duration(0) * time.Second
-		}
-
-		// else return 0 sleep time ( in the case of timeout)
-	} else {
-		return time.Duration(0) * time.Second
+func validateInputVars(input InputVars) error {
+	if input.Count < 0 {
+		return fmt.Errorf("count cannot be negative")
 	}
+	if input.PayLoadSize < 0 {
+		return fmt.Errorf("payload size cannot be negative")
+	}
+	if input.Type == "icmp" && input.PayLoadSize > 65507 {
+		return fmt.Errorf("ICMP payload size cannot exceed 65507 bytes")
+	}
+	if input.Timeout <= 0 {
+		return fmt.Errorf("timeout must be greater than zero")
+	}
+	if input.Interval < 0 {
+		return fmt.Errorf("interval cannot be negative")
+	}
+	if (input.Type == "tcp" || input.Type == "http") && (input.DestPort < 1 || input.DestPort > 65535) {
+		return fmt.Errorf("destination port must be between 1 and 65535")
+	}
+	if input.Type == "dns" && input.Dns_Protocol != "udp" && input.Dns_Protocol != "tcp" {
+		return fmt.Errorf("DNS protocol must be udp or tcp")
+	}
+	return nil
+}
+
+// Func - Get Sleep Time
+func GetSleepTime(_ bool, interval int, rtt time.Duration) time.Duration {
+	delay := time.Duration(interval)*time.Second - rtt
+	if delay < 0 {
+		return 0
+	}
+	return delay
 }
 
 // Func - Check Latency. If the AvgRTT is over 10ms and current RTT > 2 * AvgRTT -> High_Latency

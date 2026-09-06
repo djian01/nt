@@ -11,7 +11,7 @@
   - [Option 4 - Download from Release](#option-4-download-executable-from-github-releases)
 - [Usage](#usage)
   - [Main Command](#main-command)
-  - [ICMP Ping Sub-Command](#icmp-sub-command-required-privilege-mode-in-linux)
+  - [ICMP Ping Sub-Command](#icmp-sub-command)
   - [TCP Ping Sub-Command](#tcp-sub-command)
   - [HTTP Ping Sub-Command](#http-sub-command)
   - [DNS Ping Sub-Command](#dns-sub-command)
@@ -32,7 +32,7 @@
 - **TCP Port Testing**: Test if the remote server is listening on one or multiple given TCP ports.
 - **Recording and Logging**: Save test results to a CSV file for later analysis.
 - **Customizable Output**: Adjust the number of rows displayed in the terminal during live tests.
-- **Cross-Platform**: Compatible with Windows and Linux.
+- **Cross-Platform**: Compatible with macOS, Windows, and Linux.
 
 
 
@@ -40,7 +40,7 @@
 
 ### Prerequisites
 
-- For Option 1 & 2, Go 1.18 or higher is required on your system.
+- For Option 1 & 2, Go 1.25.0 or higher is required on your system.
 
 ### Option 1: Install via `go install`
 
@@ -98,7 +98,13 @@ nt [flags] <sub-command: icmp/tcp/http/dns/mtu/tcpscan> [args]
 
 
 
-### ICMP Sub-Command (required privilege mode in Linux)
+### ICMP Sub-Command
+
+Standard ICMP probes use Go's unprivileged ICMP socket on macOS and Linux, so
+they do not launch the operating system `ping` command. If the host disables
+unprivileged ICMP sockets, `nt` automatically uses the operating system command.
+Windows, DF probes, and MTU discovery continue to use the operating system
+command for compatibility with platform-specific behavior.
 
 #### ICMP Options
 - `-c`:   **ICMP Ping Count**  
@@ -206,17 +212,27 @@ You can customize the HTTP method, expected status codes, and more.
   Examples:  
   - No authentication:  
     ```bash
-    -x http://172.16.200.102:3128
+    -x http://proxy.example.com:3128
     ```  
-  - With authentication:  
-    ```bash
-    -x http://user01:S%40cretPass@172.16.200.102:3128
+  - With authentication:
+
+    `NT_HTTP_PROXY` must contain the complete proxy URL in this format:
+    ```text
+    scheme://username:url-encoded-password@hostname-or-IP:port
     ```
+    For example, a proxy username of `proxyuser`, password of `MyP@ssword`,
+    host of `proxy.example.com`, and port `3128` would be represented as:
+    ```bash
+    export NT_HTTP_PROXY='http://proxyuser:MyP%40ssword@proxy.example.com:3128'
+    nt http -x "$NT_HTTP_PROXY" https://www.youtube.com
+    ```
+    The tests read `NT_HTTP_PROXY` directly. The `nt` command receives it
+    through the `-x`/`--proxy` flag.
+
     **Important:** If your password contains special characters (`@`, `:`, `/`, `%`, etc.),  
     you must **URL-encode** them. See the [URL Encoding Reference](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) for the full table of encodings.
-    Example:  
-    - Actual password: `S@cretPass`  
-    - Encoded: `S%40cretPass` (because `@` → `%40`)  
+    Common encodings include `@` → `%40`, `:` → `%3A`, `/` → `%2F`,
+    `%` → `%25`, and space → `%20`.
 
 #### 💻 Example 1: HTTP ping to "https://google.com" with recording enabled (With default values: Port-443, Method-GET, Count-0, Interval-5s, Timeout-4s)
 
@@ -239,10 +255,11 @@ nt http -s 2xx -s 301 http://10.3.4.10:8080/health
 
 ```
 
-#### 💻 Example 4: Using a proxy with authentication. Perform HTTPS probe via an HTTP proxy at 172.16.200.102:3128, authenticating as user01 (password S@cretPass → encoded as S%40cretPass) and interval is 2 sec :
+#### 💻 Example 4: Using a proxy with authentication. Supply the authenticated proxy URL through the environment rather than storing credentials in source or shell history:
 
 ```bash
-nt http -x http://user01:S%40cretPass@172.16.200.102:3128 -i 2 https://www.youtube.com
+export NT_HTTP_PROXY='http://proxyuser:MyP%40ssword@proxy.example.com:3128'
+nt http -x "$NT_HTTP_PROXY" -i 2 https://www.youtube.com
 
 ```
 

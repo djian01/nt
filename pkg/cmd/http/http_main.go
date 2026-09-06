@@ -32,8 +32,8 @@ nt -r http https://google.com
 # Example: HTTP ping to POST "http://10.2.3.10:8080/token" with count: 10 and interval: 2 sec
 nt http -c 10 -i 2 -m POST http://10.2.3.10:8080/token
 
-# Example: HTTP ping to GET "http://www.youtube.com" with proxy: http://user01:S3cret%40Pass%21@172.16.200.102:3128 (username: user01, password: S3cret@Pass!)
-nt http -x http://user01:S3cret%40Pass%21@172.16.200.102:3128 https://www.youtube.com
+# Example: HTTP ping to GET "http://www.youtube.com" with an authenticated proxy URL supplied through the environment
+nt http -x "$NT_HTTP_PROXY" https://www.youtube.com
 `,
 }
 
@@ -106,6 +106,9 @@ func HttpCommandMain(recording bool,
 	timeout int,
 	interval int,
 	HttpProxy string) error {
+	if displayRow <= 0 {
+		return fmt.Errorf("display row count must be greater than zero")
+	}
 
 	// Wait Group
 	var wgRecord sync.WaitGroup
@@ -121,11 +124,9 @@ func HttpCommandMain(recording bool,
 
 	// Channel - outputChan (if there are N go routine, the channel deep is N)
 	outputChan := make(chan ntPinger.Packet, 1)
-	defer close(outputChan)
 
 	// Channel - error (for Go Routines)
 	errChan := make(chan error, 1)
-	defer close(errChan)
 
 	// Channel - recordingChan, closed in the end of the testing, no need to defer close
 	recordingChan := make(chan ntPinger.Packet, 1)
@@ -155,7 +156,11 @@ func HttpCommandMain(recording bool,
 
 	// Output
 	//// Go Routine: OutputFunc
-	go terminalOutput.OutputFunc(outputChan, displayRow, recording)
+	outputDone := make(chan struct{})
+	go func() {
+		defer close(outputDone)
+		terminalOutput.OutputFunc(outputChan, displayRow, recording)
+	}()
 
 	// Recording
 	if recording {
@@ -172,11 +177,13 @@ func HttpCommandMain(recording bool,
 		recordingFilePath = filepath.Join(exeFileFolder, recordingFileName)
 
 		// Go Routine: RecordingFunc
+		wgRecord.Add(1)
 		go record.RecordingFunc(exeFileFolder, recordingFileName, bucket, recordingChan, &wgRecord)
 	}
 
 	// harvest the result
 	loopClose := false
+	var runErr error
 	for {
 		// check loopClose Flag
 		if loopClose {
@@ -199,21 +206,24 @@ func HttpCommandMain(recording bool,
 				recordingChan <- pkt
 			}
 		case err := <-errChan:
-			return err
+			runErr = err
+			loopClose = true
 		}
 	}
 
-	// wait for the last interval
-	time.Sleep(time.Duration(1) * time.Second)
+	close(outputChan)
+	<-outputDone
 
 	// close recordingChan
 	if recording {
-		wgRecord.Add(1)
 		close(recordingChan)
 		// waiting the recording function to save the last records
 		wgRecord.Wait()
 	} else {
 		close(recordingChan)
+	}
+	if runErr != nil {
+		return runErr
 	}
 
 	// display testing completed
@@ -281,6 +291,12 @@ func ParseURL(inputURL string) (HttpVar, error) {
 
 	HttpVarNew.Scheme = parsedURL.Scheme
 	HttpVarNew.Hostname = parsedURL.Hostname()
+	if HttpVarNew.Scheme != "http" && HttpVarNew.Scheme != "https" {
+		return HttpVarNew, fmt.Errorf("URL scheme must be http or https")
+	}
+	if HttpVarNew.Hostname == "" {
+		return HttpVarNew, fmt.Errorf("URL hostname cannot be empty")
+	}
 
 	// Handle default ports for http and https
 	if parsedURL.Port() != "" {
@@ -293,9 +309,13 @@ func ParseURL(inputURL string) (HttpVar, error) {
 	} else if HttpVarNew.Scheme == "https" {
 		HttpVarNew.Port = 443
 	}
+	if HttpVarNew.Port < 1 || HttpVarNew.Port > 65535 {
+		return HttpVarNew, fmt.Errorf("URL port must be between 1 and 65535")
+	}
 
-	if parsedURL.Path != "" {
-		HttpVarNew.Path = parsedURL.Path
+	HttpVarNew.Path = parsedURL.EscapedPath()
+	if parsedURL.RawQuery != "" {
+		HttpVarNew.Path += "?" + parsedURL.RawQuery
 	}
 
 	return HttpVarNew, nil

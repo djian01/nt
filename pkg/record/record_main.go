@@ -27,9 +27,6 @@ func RecordingFunc(filePath string, fileName string, bucket int, recordingChan <
 	for {
 		r, ok := <-recordingChan
 
-		// count
-		count++
-
 		// if the recordingChan is closed, save the rest of the accumulatedRecords to CSV
 		if !ok {
 			// save to CSV
@@ -53,6 +50,7 @@ func RecordingFunc(filePath string, fileName string, bucket int, recordingChan <
 
 			// else adding result to accumulatedRecords
 		} else {
+			count++
 
 			accumulatedRecords = append(accumulatedRecords, r)
 
@@ -85,7 +83,6 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
-	defer writer.Flush()
 
 	// if accumulatedRecords is empty
 	if len(accumulatedRecords) == 0 {
@@ -341,6 +338,10 @@ func SaveToCSV(filePath string, accumulatedRecords []ntPinger.Packet, writeHeade
 				}
 			}
 		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return fmt.Errorf("could not flush records to file: %v", err)
 	}
 	return nil
 }
